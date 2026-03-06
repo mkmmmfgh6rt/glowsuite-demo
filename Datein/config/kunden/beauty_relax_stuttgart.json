@@ -1,0 +1,34 @@
+{
+  "branding": {
+    "brandName": "Beauty Relax Stuttgart",
+    "brandColor": "#3A7A66",
+    "accentColor": "#E9F7F2",
+    "textColor": "#1C1C1C",
+    "logo": "/logos/beauty_relax.png",
+    "address": {
+      "street": "Königstraße 22",
+      "postalCode": "70173",
+      "city": "Stuttgart",
+      "country": "Deutschland"
+    },
+    "contact": {
+      "email": "kontakt@beauty-relax.de",
+      "phone": "+49 1520 9911223",
+      "whatsapp": "+49 1520 9911223",
+      "website": "https://beauty-relax-stuttgart.de"
+    },
+    "openingHours": { "start": 9, "end": 19 },
+    "description": "Massagen, Kosmetik, Wellness & Entspannung – alles unter einem Dach.",
+    "social": {
+      "instagram": "https://instagram.com/beautyrelax.stuttgart"
+    },
+    "pdfPreisliste": "/pdf/preisliste.pdf"
+  },
+  "services": [
+    { "name": "Fußreflexzonenmassage", "price": 49, "duration": 45, "description": "Aktiviert Energiepunkte zur Entspannung." },
+    { "name": "Klassische Rückenmassage", "price": 39, "duration": 30, "description": "Entspannung & Lösung von Verspannungen." },
+    { "name": "Relax Facial", "price": 59, "duration": 50, "description": "Sanfte Gesichtsbehandlung für gestresste Haut." },
+    { "name": "Pediküre Spa", "price": 45, "duration": 50, "description": "Pflege & Wellness für Füße." },
+    { "name": "Deep Tissue Massage", "price": 89, "duration": 60, "description": "Intensive Tiefengewebsmassage." }
+  ]
+}

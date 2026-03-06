@@ -1,0 +1,35 @@
+{
+  "branding": {
+    "brandName": "Luxury Spa Berlin",
+    "brandColor": "#C39A6B",
+    "accentColor": "#FAF5EF",
+    "textColor": "#1A1A1A",
+    "logo": "/logos/luxury_spa.png",
+    "address": {
+      "street": "Kurfürstendamm 88",
+      "postalCode": "10709",
+      "city": "Berlin",
+      "country": "Deutschland"
+    },
+    "contact": {
+      "email": "kontakt@lux-spa.de",
+      "phone": "+49 178 3344556",
+      "whatsapp": "+49 178 3344556",
+      "website": "https://luxuryspa-berlin.de"
+    },
+    "openingHours": { "start": 10, "end": 20 },
+    "description": "Premium Wellness & Kosmetik auf höchstem Niveau im Herzen Berlins.",
+    "social": {
+      "instagram": "https://instagram.com/luxuryspa.berlin",
+      "facebook": "https://facebook.com/luxuryspa.berlin"
+    },
+    "pdfPreisliste": "/pdf/preisliste.pdf"
+  },
+  "services": [
+    { "name": "Hot Stone Massage", "price": 89, "duration": 60, "description": "Intensive Ganzkörperentspannung mit heißen Steinen." },
+    { "name": "Aromaöl-Massage", "price": 79, "duration": 60, "description": "Entspannende Massage mit hochwertigen Aromaölen." },
+    { "name": "HydraFacial Deluxe", "price": 149, "duration": 75, "description": "Tiefenreinigung & Anti-Aging in einem." },
+    { "name": "Lash & Brow Deluxe", "price": 65, "duration": 45, "description": "Wimpernlifting + Browlifting kombiniert." },
+    { "name": "Luxus Maniküre", "price": 49, "duration": 45, "description": "Umfassende Nagelpflege mit Peeling & Massage." }
+  ]
+}

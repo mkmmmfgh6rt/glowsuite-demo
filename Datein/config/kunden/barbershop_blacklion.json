@@ -1,0 +1,34 @@
+{
+  "branding": {
+    "brandName": "Black Lion Barbershop",
+    "brandColor": "#1F1F1F",
+    "accentColor": "#E4D7C5",
+    "textColor": "#F8F8F8",
+    "logo": "/logos/blacklion.png",
+    "address": {
+      "street": "Bahnhofsstraße 13",
+      "postalCode": "44787",
+      "city": "Bochum",
+      "country": "Deutschland"
+    },
+    "contact": {
+      "email": "kontakt@blacklion.de",
+      "phone": "+49 157 88221133",
+      "whatsapp": "+49 157 88221133",
+      "website": "https://blacklion-barbershop.de"
+    },
+    "openingHours": { "start": 9, "end": 20 },
+    "description": "Barbershop für moderne Männer – präzise Schnitte, Rasuren & Bartpflege.",
+    "social": {
+      "instagram": "https://instagram.com/blacklion.barbershop"
+    },
+    "pdfPreisliste": "/pdf/preisliste.pdf"
+  },
+  "services": [
+    { "name": "Haarschnitt Herren", "price": 29, "duration": 40, "description": "Moderne & klassische Männerhaarschnitte." },
+    { "name": "Fade Cut", "price": 34, "duration": 45, "description": "Perfekter Fade für jeden Typ." },
+    { "name": "Bartpflege & Konturen", "price": 19, "duration": 20, "description": "Frische Konturen & Pflege." },
+    { "name": "Hot Towel Shave", "price": 39, "duration": 45, "description": "Klassische Nassrasur." },
+    { "name": "Premium Haarschnitt + Bart", "price": 59, "duration": 75, "description": "Komplettpaket für den Gentleman." }
+  ]
+}

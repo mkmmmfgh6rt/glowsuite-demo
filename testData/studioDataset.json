@@ -1,0 +1,75 @@
+{
+  "customers": [
+    {
+      "id": "c001",
+      "name": "Anna Müller",
+      "lastVisit": "2025-02-01",
+      "totalVisits": 12,
+      "servicesUsed": ["Gesichtsbehandlung", "Lash Lifting"],
+      "totalRevenue": 450,
+      "inactiveDays": 24
+    },
+    {
+      "id": "c002",
+      "name": "Laura Schmidt",
+      "lastVisit": "2024-12-18",
+      "totalVisits": 6,
+      "servicesUsed": ["Waxing"],
+      "totalRevenue": 180,
+      "inactiveDays": 74
+    }
+  ],
+
+  "appointments": [
+    {
+      "id": "t001",
+      "customerId": "c001",
+      "service": "Lash Lifting",
+      "price": 49,
+      "duration": 45,
+      "date": "2025-02-01T14:00"
+    },
+    {
+      "id": "t002",
+      "customerId": "c002",
+      "service": "Waxing",
+      "price": 39,
+      "duration": 30,
+      "date": "2025-01-10T11:00"
+    }
+  ],
+
+  "services": [
+    {
+      "name": "Lash Lifting",
+      "avgPrice": 49,
+      "duration": 45,
+      "bookings30Days": 17,
+      "revenue30Days": 833
+    },
+    {
+      "name": "Waxing",
+      "avgPrice": 39,
+      "duration": 30,
+      "bookings30Days": 12,
+      "revenue30Days": 468
+    }
+  ],
+
+  "revenueHistory": [
+    { "date": "2025-01-15", "revenue": 180 },
+    { "date": "2025-01-17", "revenue": 120 },
+    { "date": "2025-01-22", "revenue": 260 },
+    { "date": "2025-01-27", "revenue": 140 },
+    { "date": "2025-02-01", "revenue": 300 }
+  ],
+
+  "kpis": {
+    "totalRevenue30": 4200,
+    "bookingCount30": 91,
+    "avgBookingValue": 46.15,
+    "activeCustomers": 37,
+    "inactiveCustomers": 12,
+    "utilizationRate": 68
+  }
+}

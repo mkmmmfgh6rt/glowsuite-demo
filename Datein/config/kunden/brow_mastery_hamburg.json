@@ -1,0 +1,34 @@
+{
+  "branding": {
+    "brandName": "Brow Mastery Hamburg",
+    "brandColor": "#8B5E3C",
+    "accentColor": "#F5ECE4",
+    "textColor": "#2F2F2F",
+    "logo": "/logos/brow_mastery.png",
+    "address": {
+      "street": "Jungfernstieg 18",
+      "postalCode": "20095",
+      "city": "Hamburg",
+      "country": "Deutschland"
+    },
+    "contact": {
+      "email": "kontakt@browmastery.de",
+      "phone": "+49 176 55002211",
+      "whatsapp": "+49 176 55002211",
+      "website": "https://browmastery-hamburg.de"
+    },
+    "openingHours": { "start": 10, "end": 19 },
+    "description": "Spezialisiert auf perfekte Augenbrauen: Lifting, PMU & Styling.",
+    "social": {
+      "instagram": "https://instagram.com/browmastery.hamburg"
+    },
+    "pdfPreisliste": "/pdf/preisliste.pdf"
+  },
+  "services": [
+    { "name": "Augenbrauenlifting", "price": 49, "duration": 40, "description": "Perfekte Form & Fülle." },
+    { "name": "Brow Henna", "price": 39, "duration": 35, "description": "Natürliche Färbung der Augenbrauen." },
+    { "name": "Augenbrauen Waxing", "price": 19, "duration": 15, "description": "Präzise Brow-Form." },
+    { "name": "Wimpernlifting", "price": 49, "duration": 45, "description": "Langanhaltender Wimpernschwung." },
+    { "name": "Brow Mapping Pro", "price": 29, "duration": 20, "description": "Professionelle Vermessung & Formen." }
+  ]
+}

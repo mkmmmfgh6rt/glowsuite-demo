@@ -1,0 +1,19 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//sebbo.net//ical-generator//EN
+NAME:Beauty Lounge Termine
+X-WR-CALNAME:Beauty Lounge Termine
+TIMEZONE-ID:Europe/Berlin
+X-WR-TIMEZONE:Europe/Berlin
+BEGIN:VEVENT
+UID:023768a7-df95-47f9-a0f9-d4c63d4b43df
+SEQUENCE:0
+DTSTAMP:20251007T193515
+DTSTART:20250912T140000
+DTEND:20250912T143000
+SUMMARY:Termin: Maniküre
+LOCATION:Beauty Lounge\, Musterstraße 1\, 12345 Musterstadt
+DESCRIPTION:Ihr Termin im Kosmetikstudio Beauty Lounge.\n\nService: Manik
+ üre\nKunde: Harreschneiden 15 uhr Maier
+END:VEVENT
+END:VCALENDAR

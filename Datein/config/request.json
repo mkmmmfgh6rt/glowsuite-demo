@@ -1,0 +1,14 @@
+﻿{
+    "message":  "Freitag, 15:00 Uhr",
+    "channel":  "test",
+    "context":  [
+                    {
+                        "content":  "Ich möchte einen Termin für eine Gesichtsbehandlung.",
+                        "role":  "user"
+                    },
+                    {
+                        "content":  "Gern! Welche Behandlung wünschen Sie? ...",
+                        "role":  "assistant"
+                    }
+                ]
+}

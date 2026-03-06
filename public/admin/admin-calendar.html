@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GlowSuite AI – Kalender</title>
+
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/admin/admin.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- FullCalendar -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+  <style>
+    /* ==========================================
+       ❤️ BASE
+    =========================================== */
+
+    :root {
+      --brand: #cfa86f;
+      --calendar-bg-light: #ffffff;
+      --calendar-bg-dark: #1b1517;
+      --calendar-cell-light: #f7f4ef;
+      --calendar-cell-dark: rgba(255,255,255,0.05);
+      --calendar-text-light: #2b2b2b;
+      --calendar-text-dark: #f5f5f5;
+    }
+
+    /* ==========================================
+       🌗 THEME – automatisch passend zu admin.css
+    =========================================== */
+
+    html[data-theme="light"] {
+      --calendar-bg: var(--calendar-bg-light);
+      --calendar-cell: var(--calendar-cell-light);
+      --calendar-text: var(--calendar-text-light);
+    }
+
+    html[data-theme="dark"] {
+      --calendar-bg: var(--calendar-bg-dark);
+      --calendar-cell: var(--calendar-cell-dark);
+      --calendar-text: var(--calendar-text-dark);
+    }
+
+    /* ==========================================
+       📌 Kalender Card
+    =========================================== */
+    #calendarContainer {
+      background: var(--calendar-bg);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.14);
+      border: 1px solid rgba(255,255,255,0.05);
+      margin-top: 10px;
+    }
+
+    /* ==========================================
+       🎛 Custom Toolbar
+    =========================================== */
+
+    #calendarToolbar {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .pill-btn {
+      border-radius:999px;
+      padding:6px 14px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      cursor:pointer;
+      font-size:0.85rem;
+      background:var(--calendar-cell);
+      color:var(--calendar-text);
+      border:1px solid rgba(255,255,255,0.1);
+      transition:.2s;
+    }
+
+    .pill-btn.primary {
+      background:var(--brand);
+      color:#fff;
+      border-color:transparent;
+      box-shadow:0 6px 15px rgba(0,0,0,0.25);
+    }
+
+    .pill-btn:hover {
+      transform:scale(1.03);
+    }
+
+    /* ==========================================
+       📅 FULLCALENDAR FIXES (Dark/Light)
+    =========================================== */
+
+    .fc,
+    .fc-view-harness,
+    .fc-scrollgrid,
+    .fc-theme-standard .fc-scrollgrid {
+      background:transparent !important;
+      color: var(--calendar-text) !important;
+    }
+
+    .fc-col-header-cell-cushion {
+      color: var(--calendar-text) !important;
+      font-weight: 600;
+    }
+
+    .fc-daygrid-day-number {
+      color: var(--calendar-text) !important;
+      padding:4px;
+    }
+
+    .fc-daygrid-day {
+      background: var(--calendar-bg) !important;
+      border: 1px solid rgba(255,255,255,0.06) !important;
+    }
+
+    .fc-timegrid-slot {
+      background: var(--calendar-bg) !important;
+      border-color: rgba(255,255,255,0.1) !important;
+    }
+
+    /* Heute */
+    .fc-day-today {
+      background: rgba(255,223,170,0.12) !important;
+      border-radius: 6px;
+    }
+
+    /* Buttons (FullCalendar native) */
+    .fc-button {
+      background: var(--calendar-cell) !important;
+      color: var(--calendar-text) !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+    }
+
+    .fc-button:hover {
+      filter: brightness(1.1);
+    }
+
+    .fc-button.fc-button-active {
+      background: var(--brand) !important;
+      color: #fff !important;
+    }
+
+    /* Events */
+    .fc-event {
+      border-radius: 10px !important;
+      padding: 3px 6px !important;
+      font-size:0.78rem !important;
+      font-weight: 500 !important;
+      border:none !important;
+    }
+
+    /* ❌ Abgebrochene Termine */
+    .fc-event.status-canceled {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    /* Listenansicht */
+    .fc-list-table,
+    .fc-list {
+      background: var(--calendar-bg) !important;
+      color: var(--calendar-text) !important;
+    }
+
+    .fc-list-event-title a {
+      color: var(--calendar-text) !important;
+    }
+
+    /* ==========================================
+       📝 Event Details Box
+    =========================================== */
+
+    #eventDetails {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--calendar-cell);
+      display:none;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    #eventDetails h3 { margin:0 0 6px; font-size:1rem; }
+    #eventDetails .meta { font-size:0.85rem; opacity:.8; }
+
+    /* ==========================================
+       🧩 LEGENDE UNTER DEM KALENDER
+    =========================================== */
+
+    #calendarLegend {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 30px;
+      align-items: flex-start;
+    }
+
+    .legend-group {
+      min-width: 220px;
+    }
+
+    .legend-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--calendar-text);
+      background: rgba(0,0,0,0.02);
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .legend-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+    }
+
+    /* ==========================================
+       ✅ SCHRITT 1 – Side Edit Panel (nur UI)
+    =========================================== */
+
+    #eventEditPanel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 380px;
+      max-width: 92vw;
+      background: var(--calendar-bg);
+      color: var(--calendar-text);
+      border-left: 1px solid rgba(255,255,255,0.08);
+      box-shadow: -18px 0 50px rgba(0,0,0,0.25);
+      transform: translateX(110%);
+      transition: transform 220ms ease;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #eventEditPanel.open {
+      transform: translateX(0);
+    }
+
+    .panel-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(2px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+      z-index: 99998;
+    }
+
+    .panel-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .panel-head {
+      padding: 14px 14px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(90deg, rgba(207,168,111,0.18), rgba(207,168,111,0.04));
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      line-height: 1.2;
+    }
+
+    .panel-close {
+      border: 1px solid rgba(255,255,255,0.14);
+      background: var(--calendar-cell);
+      color: var(--calendar-text);
+      border-radius: 12px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: transform .15s;
+    }
+
+    .panel-close:hover {
+      transform: scale(1.03);
+    }
+
+    .panel-body {
+      padding: 14px;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel-muted {
+      font-size: 0.82rem;
+      opacity: 0.75;
+      line-height: 1.25;
+    }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .panel-field label {
+      display: block;
+      font-size: 0.78rem;
+      opacity: 0.75;
+      margin-bottom: 4px;
+    }
+
+    .panel-field input,
+    .panel-field select {
+      width: 100%;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      background: var(--calendar-cell);
+      color: var(--calendar-text);
+      border: 1px solid rgba(255,255,255,0.12);
+      outline: none;
+    }
+
+    .panel-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .panel-actions .pill-btn {
+      justify-content: center;
+      width: 100%;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- Loading -->
+  <div id="loadingOverlay"
+       style="position:fixed;inset:0;background:var(--calendar-bg);
+              color:var(--calendar-text);display:flex;align-items:center;
+              justify-content:center;flex-direction:column;z-index:9999;">
+    <img src="/favicon.ico" alt="Logo" style="width:64px;height:64px;animation:pulse 1.5s infinite;">
+    <h2 style="margin-top:12px;">GlowSuite AI Kalender lädt …</h2>
+  </div>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="brand">
+      <img id="brandLogo" src="/favicon.ico" alt="Logo" />
+      <div>
+        <h1 id="brandTitle">GlowSuite AI – Kalender</h1>
+        <div class="small" id="dateToday"></div>
+      </div>
+    </div>
+
+    <button id="themeToggle" class="icon-btn">
+      <i data-lucide="sun-moon"></i>
+    </button>
+  </header>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <a href="/admin.html"><i data-lucide="bar-chart-3"></i> Dashboard</a>
+    <a href="/admin-appointments.html"><i data-lucide="calendar-days"></i> Termine</a>
+    <a href="/admin-employees.html"><i data-lucide="users"></i> Mitarbeiter</a>
+    <a href="/admin-calendar.html" class="active"><i data-lucide="calendar"></i> Kalender</a>
+    <a href="/datenschutz.html" target="_blank"><i data-lucide="scale"></i> Datenschutz</a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="container">
+    <section class="card fade-in">
+
+      <h2><i data-lucide="calendar"></i> Jahreskalender & Terminübersicht</h2>
+      <p class="muted small">Alle Termine farbig im Überblick · Filter nach Mitarbeiter & Service</p>
+
+      <div id="status" class="status">⏳ Lade Kalender-Daten …</div>
+
+      <!-- Toolbar -->
+      <div id="calendarToolbar">
+        <div id="calendarToolbar-left">
+          <button class="pill-btn primary" id="btnToday">
+            <i data-lucide="crosshair"></i> Heute
+          </button>
+          <button class="pill-btn" data-view="dayGridMonth"><i data-lucide="layout-grid"></i> Monat</button>
+          <button class="pill-btn" data-view="timeGridWeek"><i data-lucide="calendar-range"></i> Woche</button>
+          <button class="pill-btn" data-view="timeGridDay"><i data-lucide="focus"></i> Tag</button>
+          <button class="pill-btn" data-view="listWeek"><i data-lucide="list"></i> Liste</button>
+        </div>
+
+        <div id="calendarToolbar-right">
+          <select id="filterEmployee" class="pill-btn">
+            <option value="all">Alle Mitarbeiter</option>
+          </select>
+          <select id="filterService" class="pill-btn">
+            <option value="all">Alle Services</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="calendarContainer">
+        <div id="calendar"></div>
+      </div>
+
+      <!-- 🔹 Legende -->
+      <div id="calendarLegend"></div>
+
+      <!-- Event Details -->
+      <div id="eventDetails">
+        <h3><i data-lucide="info"></i> Termin-Details</h3>
+
+        <div id="eventDetailsMain" class="meta"></div>
+        <div id="eventDetailsMeta" class="meta"></div>
+
+        <!-- 🔹 Aktionen (Schritt 3A) -->
+        <div id="eventDetailsActions" style="margin-top:12px; display:none;">
+
+          <label class="small muted">Mitarbeiter</label>
+          <select id="editEmployee" class="pill-btn" style="margin-bottom:8px;"></select>
+
+          <label class="small muted">Preis (€)</label>
+          <input
+            id="editPrice"
+            type="number"
+            step="0.01"
+            class="pill-btn"
+            style="margin-bottom:8px;"
+          />
+
+          <div style="margin-top:12px; display:flex; gap:8px;">
+            <button id="btnSaveEvent" class="pill-btn primary">
+              Speichern
+            </button>
+
+            <button
+              id="btnDeleteEvent"
+              class="pill-btn"
+              style="background:#e57373;color:#fff"
+            >
+              Löschen
+            </button>
+          </div>
+        </div>
+
+        <div id="eventDetailsLinks"></div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- FOOTER – leer, aber vorhanden -->
+  <footer></footer>
+
+  <script type="module" src="/admin/admin-calendar.js"></script>
+  <script>
+    lucide.createIcons();
+    document.getElementById('dateToday').textContent =
+      new Date().toLocaleDateString('de-DE',{
+        weekday:'long',
+        day:'2-digit',
+        month:'long',
+        year:'numeric'
+      });
+  </script>
+
+  <!-- 🔹 Side Edit Panel (hidden by default) -->
+  <div id="eventEditPanel"></div>
+
+</body>
+</html>

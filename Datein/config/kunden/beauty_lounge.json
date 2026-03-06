@@ -1,0 +1,41 @@
+{
+  "branding": {
+    "brandName": "GloweSuite AI",
+    "brandColor": "#BC3B5F",
+    "accentColor": "#F6EFE8",
+    "textColor": "#1F2937",
+    "logo": "/logos/beauty_lounge.png",
+    "address": {
+      "street": "Bahnhofstraße 12",
+      "postalCode": "16303",
+      "city": "Schwedt/Oder",
+      "country": "Deutschland"
+    },
+    "contact": {
+      "email": "info@beauty-lounge.de",
+      "phone": "+49 177 7875051",
+      "whatsapp": "+49 177 7875051",
+      "website": "https://beautylounge-agent.de"
+    },
+    "openingHours": {
+      "start": 9,
+      "end": 18
+    },
+    "description": "Exklusive Beauty-Behandlungen in stilvoller Atmosphäre – Ihre Schönheit in besten Händen.",
+    "social": {
+      "instagram": "https://www.instagram.com/beauty.lounge.de",
+      "facebook": "https://www.facebook.com/beautylounge"
+    },
+    "pdfPreisliste": "/pdf/preisliste.pdf"
+  },
+
+  "services": [
+    { "name": "Haarschnitt Damen", "price": 45, "duration": 60, "description": "Waschen, Schneiden & Föhnen" },
+    { "name": "Haarschnitt Herren", "price": 30, "duration": 45, "description": "Schnitt & Styling für Herren" },
+    { "name": "Maniküre", "price": 25, "duration": 30, "description": "Pflege & Lackierung der Nägel" },
+    { "name": "Pediküre", "price": 35, "duration": 45, "description": "Fußpflege & Wellness für die Füße" },
+    { "name": "Augenbrauenlifting", "price": 40, "duration": 40, "description": "Perfekt geformte, volle Augenbrauen" },
+    { "name": "Wimpernlifting", "price": 45, "duration": 45, "description": "Schöne, geschwungene Wimpern – ganz ohne Extensions" },
+    { "name": "Gesichtsbehandlung", "price": 60, "duration": 60, "description": "Tiefenreinigung & Pflege für strahlende Haut" }
+  ]
+}

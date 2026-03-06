@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GlowSuite AI – Mitarbeiter</title>
+
+  <link rel="stylesheet" href="/admin/admin.css?v=10.9-pro" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Layout OHNE Sidebar – wie Termine-Seite */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 100px 24px 60px;
+      width: 100%;
+    }
+
+    @media (max-width: 780px) {
+      .container {
+        padding: 86px 12px 32px;
+      }
+    }
+
+    /* ------- GRID FIX (DER WICHTIGSTE TEIL) ------- */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 540px 1fr;
+      gap: 24px;
+      width: 100%;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 1100px) {
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Toast */
+    #statusToast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 260px;
+      max-width: 420px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(10px);
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all .35s ease;
+      pointer-events: none;
+      z-index: 2000;
+      font-weight: 500;
+    }
+    #statusToast.show { opacity:1; transform: translateY(0); }
+
+    #statusToast.success { background: rgba(40,199,111,.95); }
+    #statusToast.error   { background: rgba(234,84,85,.95); }
+    #statusToast.warning { background: rgba(255,159,67,.95); }
+    #statusToast.info    { background: rgba(163,121,76,.95); }
+
+    .table-wrap {
+      overflow-x: auto;
+      padding-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <img id="brandLogo" src="/favicon.ico" alt="Logo" />
+    <div>
+      <h1 id="brandTitle">GlowSuite AI – Mitarbeiter</h1>
+      <div class="small" id="dateToday"></div>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <a class="link" href="/admin.html">
+      <i data-lucide="arrow-left"></i> Zurück
+    </a>
+    <button id="themeToggle" aria-label="Theme umschalten">
+      <i data-lucide="sun-moon"></i>
+    </button>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="card fade-in">
+    <h2><i data-lucide="users"></i> Mitarbeiterverwaltung</h2>
+    <p class="muted small">Verwalte dein Team direkt im GlowSuite Dashboard</p>
+
+    <div id="statusToast" class="info"></div>
+
+    <div class="grid-3">
+
+      <!-- FORMULAR -->
+      <div class="card" style="margin:0">
+        <h3><i data-lucide="user-plus"></i> Neuer / Bearbeiten</h3>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <input id="f_id" type="hidden" />
+
+          <label>Name
+            <input id="f_name" placeholder="z. B. Lisa Müller" required />
+          </label>
+
+          <label>Rolle
+            <input id="f_role" placeholder="z. B. Kosmetikerin" />
+          </label>
+
+          <label>E-Mail (intern)
+            <input id="f_email" type="email" placeholder="lisa@studio.de" />
+          </label>
+
+          <label>Telefon
+            <input id="f_phone" placeholder="0151 1234567" />
+          </label>
+
+          <label>Start
+            <input id="f_start" type="time" value="09:00" />
+          </label>
+
+          <label>Ende
+            <input id="f_end" type="time" value="18:00" />
+          </label>
+
+          <label style="grid-column:1 / -1">Arbeitstage
+            <input id="f_days" value="Mo,Di,Mi,Do,Fr" />
+          </label>
+
+          <label>Puffer (min)
+            <input id="f_buffer" type="number" min="0" step="5" value="15" />
+          </label>
+
+          <label>Aktiv
+            <select id="f_active">
+              <option value="1" selected>Ja</option>
+              <option value="0">Nein</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="toolbar" style="margin-top:10px">
+          <button id="btnSave" class="success"><i data-lucide="save"></i> Speichern</button>
+          <button id="btnClear" class="ghost"><i data-lucide="brush"></i> Leeren</button>
+        </div>
+      </div>
+
+      <!-- LISTE -->
+      <div class="card" style="grid-column: span 2; margin:0">
+        <h3><i data-lucide="list"></i> Mitarbeiterliste</h3>
+
+        <div class="search-bar">
+          <input id="searchName" placeholder="🔍 Name suchen…" />
+          <select id="filterActive">
+            <option value="all">Alle</option>
+            <option value="1">Aktive</option>
+            <option value="0">Inaktive</option>
+          </select>
+          <button id="btnReload" class="ghost">
+            <i data-lucide="refresh-cw"></i> Neu laden
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Rolle</th>
+                <th>Kontakt</th>
+                <th>Zeit</th>
+                <th>Tage</th>
+                <th>Puffer</th>
+                <th>Aktiv</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="8" class="muted">Noch keine Einträge…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer></footer>
+
+<script>
+const $ = s => document.querySelector(s);
+let list = [];
+
+/* Toast */
+function setStatus(msg, type="info"){
+  const el = $("#statusToast");
+  if(!el) return;
+
+  const icons = {
+    success:"check-circle",
+    error:"x-circle",
+    warning:"alert-triangle",
+    info:"info"
+  };
+
+  el.classList.remove("show","success","error","warning","info");
+  el.classList.add(type);
+  el.innerHTML = `<i data-lucide="${icons[type] || "info"}"></i> ${msg}`;
+
+  requestAnimationFrame(()=>{
+    el.classList.add("show");
+    lucide.createIcons();
+  });
+
+  clearTimeout(el.timer);
+  el.timer = setTimeout(()=> el.classList.remove("show"), 3500);
+}
+
+/* Theme */
+(function(){
+  const saved = localStorage.getItem("theme");
+  if(saved) document.documentElement.setAttribute("data-theme", saved);
+
+  $("#themeToggle").onclick = ()=>{
+    const root = document.documentElement;
+    const next = root.getAttribute("data-theme")==="dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+  };
+})();
+
+/* Branding */
+async function loadBranding(){
+  try{
+    const r = await fetch("/api/branding", {cache:"no-store"});
+    if(!r.ok) return;
+    const j = await r.json();
+    const b = j.branding || {};
+    if (b.brandName) $("#brandTitle").textContent = `${b.brandName} – Mitarbeiter`;
+    if (b.logo)      $("#brandLogo").src = b.logo;
+  }catch(e){}
+}
+
+/* =======================================================
+   Load employee list – Supabase Unified (Phase 3.2)
+======================================================= */
+async function loadList(){
+  try{
+    setStatus("Lade Mitarbeiter …","info");
+    const r = await fetch("/api/employees", { cache: "no-store" });
+    const j = await r.json();
+
+    list = (j.data || []).map(enrichEmployee);
+
+    render();
+    setStatus(`${list.length} Mitarbeiter geladen ✓`,"success");
+
+  }catch(e){
+    console.error(e);
+    setStatus("Fehler beim Laden ❌","error");
+  }
+}
+
+/* =======================================================
+   Supabase → UI Mapping (EINMAL, zentral)
+======================================================= */
+function enrichEmployee(emp){
+
+  // 🟢 SQLITE = MASTER (AKTUELL)
+  if (emp.source === "sqlite") {
+    return {
+      ...emp,
+      work_start: emp.work_start || "",
+      work_end: emp.work_end || "",
+
+      // 🔥 HIER IST DER ENTSCHEIDENDE FIX
+      days:
+        emp.days && emp.days !== "-" && emp.days.trim() !== ""
+          ? emp.days
+          : "Mo,Di,Mi,Do,Fr",
+
+      buffer: Number(emp.buffer ?? 0),
+    };
+  }
+
+  // 🔵 SUPABASE (SPÄTER, NOCH NICHT AKTIV)
+  const wh = (emp.working_hours || []).filter(w => w.active);
+
+  if (!wh.length) {
+    return {
+      ...emp,
+      work_start: "",
+      work_end: "",
+      days: "Mo,Di,Mi,Do,Fr",
+      buffer: emp.buffer_minutes ?? 0,
+    };
+  }
+
+  const daysMap = { 0:"So",1:"Mo",2:"Di",3:"Mi",4:"Do",5:"Fr",6:"Sa" };
+
+  return {
+    ...emp,
+    work_start: wh[0].start?.slice(0,5) || "",
+    work_end:   wh[0].end?.slice(0,5)   || "",
+    days:       wh.map(w => daysMap[w.weekday]).join(","),
+    buffer:     wh[0].buffer ?? 0,
+  };
+}
+
+
+/* =======================================================
+   Render table
+======================================================= */
+function render(){
+  const tb = $("#tbl tbody");
+  tb.innerHTML = "";
+
+  const nf = $("#searchName").value.toLowerCase().trim();
+  const af = $("#filterActive").value;
+
+  const filtered = list.filter(emp=>{
+    const nameMatch = (emp.name || "").toLowerCase().includes(nf);
+    const activeStr = emp.active ? "1" : "0";
+    const activeMatch = (af === "all") || (activeStr === af);
+    return nameMatch && activeMatch;
+  });
+
+  if(!filtered.length){
+    tb.innerHTML = `<tr><td colspan="8" class="muted">Keine passenden Einträge …</td></tr>`;
+    return;
+  }
+
+  filtered.forEach(emp=>{
+    const contact = [emp.email, emp.phone].filter(Boolean).join(" · ") || "-";
+
+    const time =
+      emp.work_start && emp.work_end
+        ? `${emp.work_start}–${emp.work_end}`
+        : "---";
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${emp.name || "-"}</td>
+      <td>${emp.role || "-"}</td>
+      <td>${contact}</td>
+      <td>${time}</td>
+      <td>${emp.days || "-"}</td>
+      <td>${emp.buffer ?? 0} min</td>
+      <td>${emp.active ? "✅" : "❌"}</td>
+      <td>
+        <div class="toolbar">
+          <button class="ghost" data-act="edit" data-id="${emp.id}">
+            <i data-lucide="edit-3"></i> Bearbeiten
+          </button>
+          <button class="danger" data-act="del" data-id="${emp.id}">
+            <i data-lucide="trash-2"></i> Löschen
+          </button>
+        </div>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  lucide.createIcons();
+}
+
+/* =======================================================
+   Fill form (READ-ONLY korrekt)
+======================================================= */
+function fillForm(emp){
+  $("#f_id").value     = emp?.id || "";
+  $("#f_name").value   = emp?.name || "";
+  $("#f_role").value   = emp?.role || "";
+  $("#f_email").value  = emp?.email || "";
+  $("#f_phone").value  = emp?.phone || "";
+
+  // ⛔ keine "--" mehr → sonst Browser-Warnung
+  $("#f_start").value  = emp?.work_start || "";
+  $("#f_end").value    = emp?.work_end || "";
+  $("#f_days").value   = emp?.days || "";
+  $("#f_buffer").value = emp?.buffer ?? 0;
+  $("#f_active").value = emp?.active ? "1" : "0";
+}
+
+/* =======================================================
+   Read form (Phase 3 = lokal, Write-Back folgt später)
+======================================================= */
+function readForm(){
+  return {
+    id: $("#f_id").value || undefined,
+    name: $("#f_name").value.trim(),
+    role: $("#f_role").value.trim(),
+    email: $("#f_email").value.trim(),
+    phone: $("#f_phone").value.trim(),
+    buffer: Number($("#f_buffer").value || 0),
+    active: $("#f_active").value === "1"
+  };
+}
+
+/* Save – Phase 3.1 (nur Stammdaten) */
+async function save() {
+  const data = readForm();
+
+  if (!data.name) {
+    setStatus("⚠️ Name ist erforderlich.","warning");
+    return;
+  }
+
+  // ✅ TAGE SICHER NORMALISIEREN
+  const rawDays = document.getElementById("f_days").value;
+
+  const payload = {
+    id: data.id || undefined,
+    name: data.name,
+    role: data.role,
+    email: data.email,
+    phone: data.phone,
+
+    work_start: document.getElementById("f_start").value || "09:00",
+    work_end: document.getElementById("f_end").value || "18:00",
+
+    // 🔒 HIER LIEGT DER FIX
+    days:
+      rawDays && rawDays.trim() !== "-" && rawDays.trim() !== ""
+        ? rawDays.trim()
+        : "Mo,Di,Mi,Do,Fr",
+
+    buffer: Number(document.getElementById("f_buffer").value || 15),
+    active: document.getElementById("f_active").value === "1",
+
+    tenant: "beauty_lounge"
+  };
+
+  const method = payload.id ? "PUT" : "POST";
+  const url = payload.id
+    ? `/api/employees/${payload.id}`
+    : `/api/employees`;
+
+  try {
+    const r = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const j = await r.json();
+    if (!r.ok || !j.success) {
+      throw new Error(j.error || "Speichern fehlgeschlagen");
+    }
+
+    setStatus("💾 Mitarbeiter gespeichert ✓","success");
+    fillForm(null);
+    await loadList();
+  } catch (e) {
+    console.error(e);
+    setStatus("❌ Speichern fehlgeschlagen","error");
+  }
+}
+
+
+/* Delete */
+async function delEmployee(id){
+  if(!confirm("Diesen Mitarbeiter wirklich löschen?")) return;
+  try{
+    const r = await fetch(`/api/employees/${id}`,{method:"DELETE"});
+    const j = await r.json();
+    if(!j.success) throw new Error();
+    setStatus("🗑️ Mitarbeiter gelöscht ✓","success");
+    await loadList();
+  }catch(e){
+    setStatus("❌ Löschen fehlgeschlagen","error");
+  }
+}
+
+/* Init */
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.getElementById("dateToday").textContent =
+    new Date().toLocaleDateString("de-DE",{
+      weekday:'long', day:'2-digit', month:'long', year:'numeric'
+    });
+
+  loadBranding();
+  loadList();
+
+  $("#btnSave").onclick   = save;
+  $("#btnClear").onclick  = ()=> fillForm(null);
+  $("#btnReload").onclick = loadList;
+
+  $("#searchName").addEventListener("input", render);
+  $("#filterActive").addEventListener("change", render);
+
+  $("#tbl").addEventListener("click", e=>{
+    const btn = e.target.closest("button");
+    if(!btn) return;
+    const id  = btn.dataset.id;
+    const act = btn.dataset.act;
+    if(act === "edit"){
+      const emp = list.find(x => String(x.id) === String(id));
+      if(emp){
+        fillForm(emp);
+        window.scrollTo({top:0,behavior:"smooth"});
+      }
+    } else if(act === "del"){
+      delEmployee(id);
+    }
+  });
+
+  lucide.createIcons();
+});
+</script>
+
+</body>
+</html>>

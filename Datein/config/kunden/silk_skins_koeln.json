@@ -1,0 +1,34 @@
+{
+  "branding": {
+    "brandName": "Silk Skins Köln",
+    "brandColor": "#D89B69",
+    "accentColor": "#FBF1E7",
+    "textColor": "#222",
+    "logo": "/logos/silk_skin.png",
+    "address": {
+      "street": "Hohe Straße 71",
+      "postalCode": "50667",
+      "city": "Köln",
+      "country": "Deutschland"
+    },
+    "contact": {
+      "email": "studio@silkskins.de",
+      "phone": "+49 177 1223344",
+      "whatsapp": "+49 177 1223344",
+      "website": "https://silkskins-koeln.de"
+    },
+    "openingHours": { "start": 10, "end": 19 },
+    "description": "Facials, Anti-Aging und Hautverbesserung für höchste Ansprüche.",
+    "social": {
+      "instagram": "https://instagram.com/silkskins.koeln"
+    },
+    "pdfPreisliste": "/pdf/preisliste.pdf"
+  },
+  "services": [
+    { "name": "Anti-Aging Lifting Facial", "price": 129, "duration": 75, "description": "Regenerierende Luxus-Behandlung." },
+    { "name": "Microdermabrasion", "price": 79, "duration": 45, "description": "Professionelles Hautpeeling." },
+    { "name": "Microneedling Pro", "price": 119, "duration": 60, "description": "Intensivbehandlung für straffe Haut." },
+    { "name": "Hydra Glow Facial", "price": 99, "duration": 60, "description": "Tiefenhydration & Glow." },
+    { "name": "Relax Gesichtsmassage", "price": 39, "duration": 25, "description": "Sanfte Massage für Gesicht & Dekolleté." }
+  ]
+}

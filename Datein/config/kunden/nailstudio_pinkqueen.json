@@ -1,0 +1,34 @@
+{
+  "branding": {
+    "brandName": "Pink Queen Nails",
+    "brandColor": "#FF3EB5",
+    "accentColor": "#FFF1FA",
+    "textColor": "#222",
+    "logo": "/logos/pinkqueen.png",
+    "address": {
+      "street": "Rosenstraße 5",
+      "postalCode": "80331",
+      "city": "München",
+      "country": "Deutschland"
+    },
+    "contact": {
+      "email": "studio@pinkqueen.de",
+      "phone": "+49 1511 2244667",
+      "whatsapp": "+49 1511 2244667",
+      "website": "https://pinkqueen-nails.de"
+    },
+    "openingHours": { "start": 9, "end": 18 },
+    "description": "Modernes Nagelstudio mit Trend-Designs, schnellen Terminen und Top-Qualität.",
+    "social": {
+      "instagram": "https://instagram.com/pinkqueen.nails"
+    },
+    "pdfPreisliste": "/pdf/preisliste.pdf"
+  },
+  "services": [
+    { "name": "Gelmodellage Neu", "price": 55, "duration": 75, "description": "Gel-Neumodellage inkl. Farbe." },
+    { "name": "Auffüllen Gel", "price": 40, "duration": 60, "description": "Auffüllen inkl. Feilen & Lack." },
+    { "name": "Maniküre Classic", "price": 25, "duration": 30, "description": "Feilen, Nagelhaut & Pflege." },
+    { "name": "Nagelreparatur", "price": 8, "duration": 10, "description": "Einzelne Nagelreparatur." },
+    { "name": "Spa Pediküre", "price": 49, "duration": 60, "description": "Wellness-Pediküre mit Massage." }
+  ]
+}

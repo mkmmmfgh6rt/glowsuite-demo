@@ -1,0 +1,53 @@
+{
+  "brandName": "Beauty Lounge",
+  "brandColor": "#C38B5F",
+  "brandDark": "#A3794C",
+  "accentColor": "#F6EFE8",
+  "textColor": "#3A2F24",
+  "backgroundColor": "#FDF8F3",
+  "cardColor": "#FFF9F0",
+  "mutedColor": "#8A7A65",
+  "logo": "/logos/beauty_lounge.png",
+
+  "address": {
+    "street": "Bahnhofstraße 12",
+    "postalCode": "16303",
+    "city": "Schwedt/Oder",
+    "country": "Deutschland"
+  },
+
+  "contact": {
+    "email": "info@beautylounge.de",
+    "phone": "+49 177 7875051",
+    "whatsapp": "+49 177 7875051",
+    "website": "https://beautylounge-agent.de"
+  },
+
+  "social": {
+    "instagram": "https://www.instagram.com/beautylounge",
+    "facebook": "https://www.facebook.com/beautylounge",
+    "tiktok": "https://www.tiktok.com/@beautylounge"
+  },
+
+  "openingHours": {
+    "monday": "09:00 - 18:00",
+    "tuesday": "09:00 - 18:00",
+    "wednesday": "09:00 - 18:00",
+    "thursday": "09:00 - 19:00",
+    "friday": "09:00 - 18:00",
+    "saturday": "09:00 - 14:00",
+    "sunday": "geschlossen"
+  },
+
+  "meta": {
+    "currency": "EUR",
+    "language": "de",
+    "timezone": "Europe/Berlin"
+  },
+
+  "agent": {
+    "greeting": "👋 Willkommen bei Beauty Lounge! Wie kann ich Ihnen helfen?",
+    "thankYou": "💅 Vielen Dank für Ihre Buchung!",
+    "closingNote": "📅 Sie können Termine jederzeit per WhatsApp verschieben oder stornieren."
+  }
+}

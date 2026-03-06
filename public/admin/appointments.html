@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GlowSuite AI – Termine</title>
+
+  <link rel="stylesheet" href="/admin/admin.css?v=10.9-pro"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* =========================
+       HEADER – Dashboard Style
+       ========================= */
+    .app-header {
+      background: linear-gradient(90deg, var(--brandDark), var(--brand));
+      padding: 18px 26px;
+      border-radius: 0 0 18px 18px;
+      color: white;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .app-header .brand h1,
+    .app-header .brand .small {
+      color: white;
+    }
+
+    /* =========================
+       Buttons – Dashboard Style
+       ========================= */
+    button {
+      background: linear-gradient(90deg, var(--brandDark), var(--brand));
+      border: none;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    button.danger {
+      background: linear-gradient(90deg, #d43f3f, #b52626);
+    }
+
+    button.ghost {
+      background: transparent;
+      border: 2px solid var(--brandDark);
+      color: var(--brandDark);
+    }
+
+    button.ghost:hover {
+      background: var(--brandDark);
+      color: white;
+    }
+
+    /* Tabellen-Buttons */
+    #tbl button {
+      background: linear-gradient(90deg, var(--brandDark), var(--brand)) !important;
+      border-radius: var(--radius);
+      font-weight: 600;
+      color: white;
+      padding: 8px 14px;
+    }
+
+    #tbl button.danger {
+      background: linear-gradient(90deg, #d43f3f, #b52626) !important;
+    }
+
+    /* Layout */
+    .page-container {
+      margin: 0 auto;
+      padding: 100px 24px 70px;
+      max-width: 1300px;
+      width: 100%;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 520px 1fr;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 1100px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* Toast */
+    #statusToast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 260px;
+      max-width: 420px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(10px);
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all .35s ease;
+      pointer-events: none;
+      z-index: 2000;
+      font-weight: 600;
+    }
+    #statusToast.show { opacity:1; transform: translateY(0); }
+    #statusToast.success { background: rgba(40,199,111,.95); }
+    #statusToast.error   { background: rgba(234,84,85,.95); }
+    #statusToast.warning { background: rgba(255,159,67,.95); }
+    #statusToast.info    { background: rgba(163,121,76,.95); }
+
+    .table-wrap { overflow-x: auto; width: 100%; padding-bottom: 14px; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+
+    tbody tr { background: var(--card); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .kpi { 
+      background: linear-gradient(155deg, var(--card), var(--accent));
+      border: 1px solid rgba(210,180,130,0.35);
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+
+<body><body class="appointments-page">
+
+
+<header class="app-header">
+  <div class="brand">
+    <img id="brandLogo" src="/favicon.ico" alt="Logo">
+    <div>
+      <h1 id="brandTitle">GlowSuite AI – Termine</h1>
+      <div class="small" id="dateToday"></div>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <a class="link" href="/admin.html"><i data-lucide="arrow-left"></i> Zurück</a>
+    <button id="themeToggle"><i data-lucide="sun-moon"></i></button>
+  </div>
+</header>
+
+<main class="page-container appointments-page">
+
+  <section class="card fade-in">
+    <h2><i data-lucide="calendar-days"></i> Terminverwaltung</h2>
+    <p class="muted small">
+      Neue Termine anlegen, Mitarbeiter zuweisen, bearbeiten & stornieren.
+    </p>
+
+    <div id="statusToast" class="info"></div>
+
+    <div class="grid-2">
+
+      <!-- =========================
+           FORMULAR – Neuer Termin
+           ========================= -->
+      <div class="card">
+        <h3><i data-lucide="plus-circle"></i> Neuer Termin</h3>
+
+        <div class="form-grid">
+          <label>Name <input id="f_name" placeholder="Anna Müller"></label>
+          <label>Telefon <input id="f_phone" placeholder="0151 1234567"></label>
+          <label>Service <input id="f_service" placeholder="Gesichtsbehandlung"></label>
+          <label>Preis (€) <input id="f_price" type="number" step="0.01" value="0"></label>
+          <label>Dauer (min) <input id="f_duration" type="number" value="60"></label>
+          <label>Mitarbeiter <select id="f_employee"></select></label>
+          <label>Datum <input id="f_date" type="date"></label>
+          <label>Uhrzeit <input id="f_time" type="time"></label>
+        </div>
+
+        <div class="toolbar" style="margin-top: 12px;">
+          <button id="btnCreate" class="success">
+            <i data-lucide="save"></i> Anlegen
+          </button>
+          <button id="btnClear" class="ghost">
+            <i data-lucide="brush"></i> Leeren
+          </button>
+          <button id="btnTest" class="ghost">
+            <i data-lucide="flask-conical"></i> Test-Buchung
+          </button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;">
+          <div class="kpi">
+            <div class="lbl">Termine gesamt</div>
+            <div id="kpiTotal" class="val">–</div>
+          </div>
+          <div class="kpi">
+            <div class="lbl">30 Tage Umsatz</div>
+            <div id="kpiRevenue" class="val">–</div>
+          </div>
+          <div class="kpi">
+            <div class="lbl">Ø Buchungswert</div>
+            <div id="kpiAvg" class="val">–</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========================
+           TABELLE – Termine
+           ========================= -->
+      <div class="card">
+        <h3><i data-lucide="list"></i> Termine</h3>
+
+        <div class="search-bar">
+          <input id="qName" placeholder="🔍 Name/Service …">
+          <select id="qEmployee"></select>
+          <input id="qDate" type="date">
+          <button id="btnReload" class="ghost">
+            <i data-lucide="refresh-cw"></i> Neu laden
+          </button>
+        </div>
+
+        <!-- 🔮 A.U.R.A – CO-MANAGER CONTEXT (MARKTFÜHRER-STYLE) -->
+        <div class="aura-panel">
+          <div class="aura-panel-main">
+            <div class="aura-panel-title">A.U.R.A empfiehlt</div>
+            <div class="aura-panel-subtitle">
+              Moderate Auslastung · Randzeiten frei · Ideal für Neukunden & Aktionen
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th>Kunde</th>
+                <th>Telefon</th>
+                <th>Service</th>
+                <th>Preis</th>
+                <th>Datum</th>
+                <th>Mitarbeiter</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="7" class="muted">
+                  Noch keine Termine …
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+
+<script>
+/* ---------- Hilfsfunktionen ---------- */
+const $ = s => document.querySelector(s);
+let bookings = [];
+let employees = [];
+let empMap = new Map();
+
+/* Toast */
+function setStatus(msg, type="info") {
+  const el = $("#statusToast");
+  const icons = { success:"check-circle", error:"x-circle", warning:"alert-triangle", info:"info" };
+  el.className = type + " show";
+  el.innerHTML = `<i data-lucide="${icons[type]}"></i> ${msg}`;
+  lucide.createIcons();
+  clearTimeout(el.timer);
+  el.timer = setTimeout(()=>el.classList.remove("show"), 3000);
+}
+
+/* Theme */
+(function(){
+  const saved = localStorage.getItem("theme");
+  if(saved) document.documentElement.setAttribute("data-theme", saved);
+  $("#themeToggle").onclick = () => {
+    const html = document.documentElement;
+    const next = html.getAttribute("data-theme") === "light" ? "dark" : "light";
+    html.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+  };
+})();
+
+/* Branding */
+async function loadBranding(){
+  try{
+    const r = await fetch("/api/branding");
+    const j = await r.json();
+    if(j.branding?.brandName) $("#brandTitle").textContent = `${j.branding.brandName} – Termine`;
+    if(j.branding?.logo) $("#brandLogo").src = j.branding.logo;
+  }catch{}
+}
+
+/* Employees */
+async function loadEmployees(){
+  const r = await fetch("/api/employees");
+  const j = await r.json();
+
+  employees = j.data || [];
+  empMap = new Map(employees.map(e => [String(e.id), e.name]));
+
+  $("#f_employee").innerHTML = `<option value="">– keiner –</option>`;
+  $("#qEmployee").innerHTML = `<option value="all">Alle</option>`;
+
+  employees.forEach(e => {
+    $("#f_employee").innerHTML += `<option value="${e.id}">${e.name}</option>`;
+    $("#qEmployee").innerHTML += `<option value="${e.id}">${e.name}</option>`;
+  });
+}
+
+/* Bookings */
+async function loadBookings(){
+ const r = await fetch("/api/bookings");
+  bookings = await r.json();
+  render();
+  updateKPIs();
+}
+
+/* KPIs */
+function euro(n){ return Number(n||0).toFixed(2); }
+
+function updateKPIs(){
+  const since = Date.now() - 30*864e5;
+  const last30 = bookings.filter(b => new Date(b.dateTime) >= since);
+
+  const revenue = last30.reduce((s,b)=>s + Number(b.price||0), 0);
+  const avg = last30.length ? revenue / last30.length : 0;
+
+  $("#kpiTotal").textContent = bookings.length;
+  $("#kpiRevenue").textContent = euro(revenue) + " €";
+  $("#kpiAvg").textContent = euro(avg) + " €";
+}
+
+/* Filter */
+function applyFilters(list){
+  const q = $("#qName").value.toLowerCase();
+  const emp = $("#qEmployee").value;
+  const day = $("#qDate").value;
+
+  return list.filter(b => {
+    const matchQ = !q || (`${b.name} ${b.service}`.toLowerCase().includes(q));
+    const matchE = emp === "all" || String(b.employeeId) === emp;
+    const matchD = !day || (b.dateTime || "").startsWith(day);
+    return matchQ && matchE && matchD;
+  });
+}
+
+/* Format */
+function formatDE(x){
+  try {
+    const d = new Date(x);
+    const date = d.toLocaleDateString("de-DE");
+    const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    return `${date}\n${time}`;
+  } catch {
+    return x;
+  }
+}
+
+/* Render */
+function render(){
+  const tb = $("#tbl tbody");
+  tb.innerHTML = "";
+
+  const list = applyFilters(bookings);
+  if(!list.length){
+    tb.innerHTML = `<tr><td colspan="7" class="muted">Keine passenden Einträge …</td></tr>`;
+    return;
+  }
+
+  list.forEach(b => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${b.name}</td>
+      <td>${b.phone}</td>
+      <td>${b.service}</td>
+      <td>${euro(b.price)} €</td>
+      <td>${formatDE(b.dateTime)}</td>
+      <td>${empMap.get(String(b.employeeId)) || "–"}</td>
+      <td>
+        <button
+          data-id="${b.id}"
+          data-act="pdf"
+          data-tip="PDF anzeigen">
+        </button>
+
+        <button
+          data-id="${b.id}"
+          data-act="move"
+          data-tip="Termin verschieben">
+        </button>
+
+        <button
+          class="danger"
+          data-id="${b.id}"
+          data-act="cancel"
+          data-tip="Termin stornieren">
+        </button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+
+/* Clear form */
+function clearForm(){
+  $("#f_name").value = "";
+  $("#f_phone").value = "";
+  $("#f_service").value = "";
+  $("#f_price").value = "0";
+  $("#f_duration").value = "60";
+  $("#f_employee").value = "";
+  $("#f_date").value = "";
+  $("#f_time").value = "";
+}
+
+/* Create booking */
+async function createBooking(){
+  const name = $("#f_name").value.trim();
+  const service = $("#f_service").value.trim();
+  const date = $("#f_date").value;
+  const time = $("#f_time").value;
+
+  if(!name || !service || !date || !time){
+    return setStatus("Bitte alle Pflichtfelder ausfüllen!", "warning");
+  }
+
+  const employeeRaw = $("#f_employee").value;
+  const employeeId = employeeRaw ? employeeRaw.trim() : null;
+
+  const payload = {
+    name,
+    phone: $("#f_phone").value,
+    service,
+    price: +$("#f_price").value,
+    duration: +$("#f_duration").value,
+    date,
+    time,
+    employeeId,
+    source: "admin"
+  };
+
+  const r = await fetch("/api/admin/bookings", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const j = await r.json();
+  if(!j.success) return setStatus("Fehler beim Anlegen!", "error");
+
+  setStatus("Termin erfolgreich angelegt ✓", "success");
+  clearForm();
+  loadBookings();
+}
+
+/* Test booking */
+async function createTest(){
+  const r = await fetch("/api/test-booking", { method:"POST" });
+  const j = await r.json();
+  if(!j.success) return setStatus("Test-Buchung fehlgeschlagen", "error");
+  loadBookings();
+}
+
+/* Move booking */
+async function moveBooking(id){
+  let date = prompt("Neues Datum (TT.MM.JJJJ):");
+  if(!date) return;
+
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(date)) {
+    const [d, m, y] = date.split(".");
+    date = `${y}-${m}-${d}`;
+  }
+
+  let time = prompt("Neue Uhrzeit (HH:MM):");
+  if(!time) return;
+
+  time = time.replace(/:00$/, "");
+
+  const r = await fetch(`/api/bookings/${id}/move`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ date, time })
+  });
+
+  if(!r.ok) return setStatus("Fehler beim Verschieben!", "error");
+
+  setStatus("Termin verschoben ✓", "success");
+  loadBookings();
+}
+
+/* Cancel */
+async function cancelBooking(id){
+  if(!confirm("Termin wirklich stornieren?")) return;
+  const r = await fetch(`/api/bookings/${id}/cancel`, { method:"POST" });
+  if(!r.ok) return setStatus("Fehler beim Stornieren!", "error");
+  setStatus("Termin storniert ✓", "success");
+  loadBookings();
+}
+
+/* PDF */
+function openPDF(id){
+  window.open(`/api/bookings/${id}/pdf`, "_blank");
+}
+
+/* Init */
+document.addEventListener("DOMContentLoaded", async () => {
+  $("#dateToday").textContent = new Date().toLocaleDateString("de-DE", {
+    weekday:"long", day:"2-digit", month:"long", year:"numeric"
+  });
+
+  await loadBranding();
+  await loadEmployees();
+  await loadBookings();
+
+  $("#btnCreate").onclick = createBooking;
+  $("#btnClear").onclick = clearForm;
+  $("#btnTest").onclick = createTest;
+  $("#btnReload").onclick = loadBookings;
+
+  $("#qName").oninput = render;
+  $("#qEmployee").onchange = render;
+  $("#qDate").onchange = render;
+
+  $("#tbl").onclick = e => {
+    const btn = e.target.closest("button");
+    if(!btn) return;
+    const id = btn.dataset.id;
+    const act = btn.dataset.act;
+
+    if(act==="pdf") openPDF(id);
+    if(act==="move") moveBooking(id);
+    if(act==="cancel") cancelBooking(id);
+  };
+
+  lucide.createIcons();
+});
+</script>
+
+</body>
+</html>

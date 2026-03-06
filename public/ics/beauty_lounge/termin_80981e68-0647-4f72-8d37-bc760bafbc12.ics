@@ -1,0 +1,22 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Beauty Agent//BookingSystem//DE
+NAME:Beauty Lounge – Terminübersicht
+X-WR-CALNAME:Beauty Lounge – Terminübersicht
+TIMEZONE-ID:Europe/Berlin
+X-WR-TIMEZONE:Europe/Berlin
+BEGIN:VEVENT
+UID:8d58dba2-cdd3-4935-b471-392051fb5f24
+SEQUENCE:0
+DTSTAMP:20251026T194431
+DTSTART:20251026T194430
+DTEND:20251026T204430
+SUMMARY:Termin: Gesichtsbehandlung
+LOCATION:Beauty Lounge\, Musterstraße 1\, 12345 Musterstadt
+DESCRIPTION:Ihr Termin bei Beauty Lounge\n\n👤 Kunde: Testkunde\n📞 Ko
+ ntakt: 01511234567\n💅 Service: Gesichtsbehandlung\n💶 Preis: 50 €\n
+ \nVielen Dank für Ihre Buchung! Wir freuen uns auf Sie.
+ORGANIZER;CN="Beauty Lounge":mailto:info@beauty-lounge.de
+URL;VALUE=URI:https://beauty-lounge.de
+END:VEVENT
+END:VCALENDAR

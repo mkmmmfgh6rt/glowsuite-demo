@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datenschutzerklärung – GlowSuite AI</title>
+  <meta name="color-scheme" content="light dark">
+
+  <style>
+    :root {
+      --bg: linear-gradient(160deg,#fff8f1 0%,#fdeee4 40%,#f9e4da 100%);
+      --card: #ffffff;
+      --text: #3a2f24;
+      --muted: #8a7a65;
+      --brand: #d4af73;
+      --brandDark: #b56a7d;
+      --shadow: 0 8px 25px rgba(120, 90, 60, 0.12);
+      --glow: 0 0 22px rgba(212,175,115,0.35);
+      --radius: 14px;
+    }
+
+    [data-theme="dark"] {
+      --bg: linear-gradient(165deg,#1b0f14 0%,#0d070a 35%,#050406 100%);
+      --card: #181114;
+      --text: #fef8f2;
+      --muted: #caa9c1;
+      --brand: #ffb199;
+      --brandDark: #d9786a;
+      --shadow: 0 0 28px rgba(255,184,150,0.20);
+      --glow: 0 0 35px rgba(255,184,150,0.45);
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: 0.4s ease;
+    }
+
+    header {
+      background: linear-gradient(135deg,var(--brand),var(--brandDark));
+      color: #fff;
+      padding: 22px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    header img {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: var(--glow);
+      background: #fff2;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 70px auto;
+      background: var(--card);
+      padding: 45px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(4px);
+      transition: 0.4s ease;
+    }
+
+    h2 {
+      color: var(--brandDark);
+      border-bottom: 2px solid var(--brand);
+      padding-bottom: 4px;
+      margin-top: 35px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    p, li {
+      font-size: 15.8px;
+      line-height: 1.65;
+      margin-top: 10px;
+      color: var(--text);
+    }
+
+    ul { padding-left: 20px; }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding: 25px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .theme-toggle {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid #fff6;
+      padding: 8px 14px;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 0 10px rgba(255,255,255,0.25);
+      transition: 0.25s ease;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(255,255,255,0.25);
+      box-shadow: 0 0 18px rgba(255,255,255,0.45);
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <img id="logo" src="/favicon.ico" alt="Logo">
+      <h1 id="brandName">GlowSuite AI</h1>
+    </div>
+
+    <button id="themeToggle" class="theme-toggle">🌙 Dark Mode</button>
+  </header>
+
+  <main>
+
+    <h2>Datenschutzerklärung</h2>
+    <p>
+      Wir freuen uns über Ihr Interesse an unserem Unternehmen. Der Schutz Ihrer persönlichen Daten ist uns sehr wichtig.
+      Nachfolgend informieren wir Sie über den Umgang mit Ihren Daten gemäß der DSGVO.
+    </p>
+
+    <h2>1. Verantwortlicher</h2>
+    <p>
+      Verantwortlich für die Datenverarbeitung:<br>
+      <strong id="companyName">GlowSuite AI</strong><br>
+      <span id="companyAddress">Beispielstraße 123, 12345 Musterstadt</span><br>
+      E-Mail: <a id="companyEmail" href="mailto:info@glowsuite.ai">info@glowsuite.ai</a>
+    </p>
+
+    <h2>2. Erhebung und Verarbeitung personenbezogener Daten</h2>
+    <p>
+      Wir verarbeiten personenbezogene Daten ausschließlich zur Terminverwaltung
+      und Kundenkommunikation. Eine Weitergabe an Dritte erfolgt nicht.
+    </p>
+
+    <h2>3. Speicherung und Löschung</h2>
+    <p>
+      Daten werden gemäß DSGVO nach gesetzlichen Fristen gelöscht.
+    </p>
+
+    <h2>4. Ihre Rechte</h2>
+    <ul>
+      <li>Auskunft</li>
+      <li>Berichtigung</li>
+      <li>Löschung</li>
+      <li>Datenübertragbarkeit</li>
+      <li>Widerspruch</li>
+    </ul>
+
+    <h2>5. Datensicherheit</h2>
+    <p>
+      Ihre Daten werden auf sicheren Servern gespeichert und geschützt.
+    </p>
+
+  </main>
+
+  <footer>
+    © 2025 GlowSuite AI – Terminverwaltung Glow Deluxe
+  </footer>
+
+  <script>
+    // Branding – keine Änderung nötig, aber korrigiert
+    fetch("/config/branding.json")
+      .then(r => r.json())
+      .then(b => {
+        document.getElementById("brandName").textContent = b.brandName;
+        document.getElementById("logo").src = "/" + b.logo;
+
+        if (b.address?.street)
+          document.getElementById("companyAddress").textContent =
+            `${b.address.street}, ${b.address.postalCode} ${b.address.city}`;
+
+        if (b.contact?.email) {
+          document.getElementById("companyEmail").textContent = b.contact.email;
+          document.getElementById("companyEmail").href =
+            "mailto:" + b.contact.email;
+        }
+      });
+
+    // Theme Toggle
+    const html = document.documentElement;
+    const toggle = document.getElementById("themeToggle");
+
+    toggle.addEventListener("click", () => {
+      const next = html.getAttribute("data-theme") === "light" ? "dark" : "light";
+      html.setAttribute("data-theme", next);
+      toggle.textContent = next === "light" ? "🌙 Dark Mode" : "☀️ Light Mode";
+    });
+  </script>
+
+</body>
+</html>

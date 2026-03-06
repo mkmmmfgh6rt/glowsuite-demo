@@ -1,0 +1,9 @@
+{
+  "Haarschnitt Damen": { "price": 45, "duration": 60, "description": "Waschen, Schneiden & Föhnen" },
+  "Haarschnitt Herren": { "price": 30, "duration": 45, "description": "Schnitt & Styling für Herren" },
+  "Maniküre": { "price": 25, "duration": 30, "description": "Pflege & Lackierung der Nägel" },
+  "Pediküre": { "price": 35, "duration": 45, "description": "Fußpflege & Wellness für die Füße" },
+  "Augenbrauenlifting": { "price": 40, "duration": 40, "description": "Perfekt geformte, volle Augenbrauen" },
+  "Wimpernlifting": { "price": 45, "duration": 45, "description": "Schöne, geschwungene Wimpern – ganz ohne Extensions" },
+  "Gesichtsbehandlung": { "price": 60, "duration": 60, "description": "Tiefenreinigung & Pflege für strahlende Haut" }
+}

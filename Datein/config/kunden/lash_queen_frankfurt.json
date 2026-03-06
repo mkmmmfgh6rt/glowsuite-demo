@@ -1,0 +1,34 @@
+{
+  "branding": {
+    "brandName": "Lash Queen Frankfurt",
+    "brandColor": "#9144A6",
+    "accentColor": "#F6E9FF",
+    "textColor": "#1E1E1E",
+    "logo": "/logos/lashqueen.png",
+    "address": {
+      "street": "Zeil 45",
+      "postalCode": "60313",
+      "city": "Frankfurt am Main",
+      "country": "Deutschland"
+    },
+    "contact": {
+      "email": "studio@lashqueen.de",
+      "phone": "+49 160 44332211",
+      "whatsapp": "+49 160 44332211",
+      "website": "https://lashqueen-frankfurt.de"
+    },
+    "openingHours": { "start": 9, "end": 20 },
+    "description": "Wimpernverlängerung & Lifting auf höchstem Qualitätsniveau.",
+    "social": {
+      "instagram": "https://instagram.com/lashqueen.frankfurt"
+    },
+    "pdfPreisliste": "/pdf/preisliste.pdf"
+  },
+  "services": [
+    { "name": "Wimpernverlängerung Classic", "price": 75, "duration": 90, "description": "Natürliche 1:1 Technik." },
+    { "name": "Wimpernverlängerung Volumen", "price": 95, "duration": 110, "description": "Dichtere, voluminöse Wimpern." },
+    { "name": "Wimpernlifting", "price": 49, "duration": 45, "description": "Langanhaltender Schwung." },
+    { "name": "Auffüllen Classic", "price": 45, "duration": 60, "description": "Refill alle 3–4 Wochen." },
+    { "name": "Auffüllen Volumen", "price": 55, "duration": 70, "description": "Refill für Volumen-Sets." }
+  ]
+}
