@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Sidebar from "../../components/Sidebar";
 import { auraIntroMessage } from "../../components/config/auraPersona";
@@ -20,7 +20,7 @@ function getSessionId() {
   return id;
 }
 
-export default function AuraChatPage() {
+function AuraChatPageInner() {
   const searchParams = useSearchParams();
   const source = searchParams.get("source");
   const focus = searchParams.get("focus");
@@ -172,5 +172,13 @@ export default function AuraChatPage() {
 
       </main>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="p-10 text-white">Chat lädt…</div>}>
+      <AuraChatPageInner />
+    </Suspense>
   );
 }
