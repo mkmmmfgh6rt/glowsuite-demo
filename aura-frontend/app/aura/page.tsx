@@ -1,8 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type AuraAction = {
@@ -20,7 +18,7 @@ type AuraResult = {
 const API_BASE = "http://localhost:8083";
 const TENANT = "beauty_lounge"; // 🔑 später aus Auth / Session
 
-export default function AuraAnalysisPage() {
+function AuraAnalysisPage() {
   const searchParams = useSearchParams();
   const focusFromUrl = searchParams.get("focus");
 
@@ -158,5 +156,13 @@ export default function AuraAnalysisPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="p-10 text-white">Lade Analyse...</div>}>
+      <AuraAnalysisPage />
+    </Suspense>
   );
 }
