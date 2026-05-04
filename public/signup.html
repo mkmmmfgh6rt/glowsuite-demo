@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<title>Studio Registrierung</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f4f4;
+text-align:center;
+padding:60px;
+}
+
+.card{
+background:white;
+padding:40px;
+border-radius:20px;
+max-width:420px;
+margin:auto;
+box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+input{
+width:100%;
+padding:12px;
+margin:10px 0;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+padding:12px 20px;
+border:none;
+background:black;
+color:white;
+border-radius:10px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Studio erstellen</h2>
+
+<input id="studio" placeholder="Studio Name">
+
+<input id="email" placeholder="E-Mail">
+
+<button onclick="signup()">Studio erstellen</button>
+
+<p id="msg"></p>
+
+</div>
+
+<script>
+
+async function signup(){
+
+const studio = document.getElementById("studio").value;
+const email = document.getElementById("email").value;
+
+const res = await fetch("/api/studio/signup",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({studio,email})
+});
+
+const data = await res.json();
+
+document.getElementById("msg").innerText = data.message;
+
+}
+
+</script>
+
+</body>
+</html>

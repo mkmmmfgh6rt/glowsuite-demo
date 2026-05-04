@@ -187,3 +187,43 @@ export async function runAgent(userId, input, tenant = process.env.TENANT_DEFAUL
     return "❌ Interner Fehler.";
   }
 }
+
+
+
+// =======================================================
+// 🌌 AURA CLI – Terminal Command
+// =======================================================
+
+import { runAuraBusinessOptimizer } from "./auraBusinessOptimizerService.js";;
+
+const command = process.argv[2];
+const tenant = process.env.TENANT_DEFAULT || "beauty_lounge";
+
+async function run() {
+
+  if (!command) {
+    console.log("\nAURA CLI\n");
+    console.log("Commands:");
+    console.log("aura optimize");
+    console.log("aura analyse\n");
+    return;
+  }
+
+  if (command === "optimize") {
+
+    console.log("\n🤖 AURA analysing studio...\n");
+
+    const result = await runAuraBusinessOptimizer({
+      tenant
+    });
+
+    console.log("📊 AURA optimization result:\n");
+    console.log(result);
+
+    console.log("\n✅ Campaign engine finished\n");
+
+  }
+
+}
+
+run();

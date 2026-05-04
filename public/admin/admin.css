@@ -5,46 +5,52 @@
 
 /* ---------- Farbvariablen ---------- */
 :root {
---bg: linear-gradient(160deg, #f4e1d2 0%, #f3d3c5 40%, #eac2b3 100%);
 
-  --card: #ffffff;
-  --text: #3a2f24;
-  --muted: #8a7a65;
+--bg: linear-gradient(160deg, #f8f3ec 0%, #f4ede3 40%, #efe6da 100%);
 
-  --brand: #d4af73;      /* Gold */
-  --brandDark: #b56a7d;  /* Rosé-Akzent */
+--card: #ffffff;
 
-  --accent: #f4ebe2;
-  --radius: 14px;
+--text: #3E3126;
+--muted: #8A7763;
 
-  --shadow: 0 8px 25px rgba(120, 90, 60, 0.12);
-  --glow: 0 0 22px rgba(212,175,115,0.35);
+--brand: #B8945E;     /* Haupt Goldton */
+--brandDark: #8E6B3E; /* dunkler Goldton */
 
-  --success: #2ca85c;
-  --danger: #d43f3f;
+--accent: #F4EDE3;
 
-  /* AURA Accent (Soft Lila / Future Glow) */
-  --aura: #f4d9ff;
-  --auraDeep: #c58adb;
+--radius: 14px;
+
+--shadow: 0 8px 25px rgba(120, 90, 60, 0.12);
+--glow: 0 0 22px rgba(184,148,94,0.35);
+
+--success: #2ca85c;
+--danger: #d43f3f;
+
+--aura: #f4d9ff;
+--auraDeep: #c58adb;
+
 }
 
 /* ---------- Dark Mode ---------- */
 :root[data-theme="dark"] {
-  --bg: linear-gradient(165deg, #1b0f14 0%, #0d070a 35%, #050406 100%);
-  --card: #181114;
-  --text: #fef8f2;
-  --muted: #caa9c1;
 
-  --brand: #ffb199;
-  --brandDark: #d9786a;
+--bg: linear-gradient(160deg, #1E1916 0%, #161210 40%, #110e0c 100%);
 
-  --accent: #22181d;
+--card: #2A221D;
 
-  --shadow: 0 0 28px rgba(255, 184, 150, 0.25);
-  --glow: 0 0 35px rgba(255, 184, 150, 0.45);
+--text: #F4EDE3;
+--muted: #B8A999;
 
-  --aura: #3a213f;
-  --auraDeep: #ffb3ff;
+--brand: #B8945E;
+--brandDark: #8E6B3E;
+
+--accent: #1E1916;
+
+--shadow: 0 8px 30px rgba(0,0,0,0.45);
+--glow: 0 0 18px rgba(184,148,94,0.35);
+
+  --aura: #3a2a1d;
+  --auraDeep: #B8945E;
 }
 
 /* ---------- Basis ---------- */
@@ -213,7 +219,9 @@ a.link:hover {
   color: var(--text);
   font-weight: 600;
   border-left: 4px solid transparent;
-  transition: 0.25s ease;
+
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 .sidebar a i {
@@ -222,17 +230,38 @@ a.link:hover {
 }
 
 .sidebar a:hover {
-  background: var(--accent);
+  background: rgba(212, 175, 115, 0.08);
   border-left-color: var(--brand);
-  box-shadow: var(--glow);
+
+  box-shadow: 0 0 10px rgba(207,168,111,0.25);
+
+  transform: translateX(3px);
 }
 
 .sidebar a.active {
-  background: linear-gradient(90deg, var(--brand), var(--brandDark));
-  color: #fff;
+  background: rgba(184,148,94,0.15);
+  color: var(--brand);
   border-left-color: var(--brand);
-  box-shadow: var(--glow);
+
+  box-shadow:
+    0 0 12px rgba(207,168,111,0.35),
+    inset 0 0 8px rgba(207,168,111,0.15);
 }
+
+.sidebar a.active::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 20%;
+  height: 60%;
+  width: 3px;
+
+  background: var(--brand);
+  border-radius: 4px;
+
+  box-shadow: 0 0 10px rgba(207,168,111,0.6);
+}
+
 /* ===== Sidebar Logo – SaaS Clean Edition ===== */
 .sidebar-logo-box {
   padding: 24px 16px;
@@ -371,10 +400,12 @@ a.link:hover {
 
 /* ---------- Main Container (FINAL – SINGLE SOURCE OF TRUTH) ---------- */
 .container {
-  margin-left: 210px;            /* Sidebar-Breite */
-  padding: 90px 32px 40px;       /* Header + Luft */
-  width: calc(100% - 210px);     /* Restfläche */
-  max-width: none;               /* WICHTIG */
+  margin-left: 210px;
+  padding: 90px 32px 40px;
+
+  width: auto;        /* 🔥 DAS IST DER FIX */
+  max-width: 100%;
+
   box-sizing: border-box;
 }
 
@@ -420,10 +451,16 @@ a.link:hover {
 
 .kpi {
   background: linear-gradient(155deg, var(--card), var(--accent));
-  border: 1px solid rgba(210, 180, 130, 0.3);
-  padding: 16px;
-  border-radius: 14px;
+  border: 1px solid rgba(200,169,106,0.22);
+  padding: 14px 16px;
+  border-radius: 12px;
   text-align: center;
+  transition: all 0.2s ease;
+}
+
+.kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.10);
 }
 
 .kpi-label {
@@ -441,12 +478,52 @@ a.link:hover {
 }
 
 .kpi-value {
-  font-size: 28px;
-  font-weight: 800;
-  margin-top: 6px;
-  color: var(--brand);
-  text-shadow: 0 0 10px rgba(207, 168, 111, 0.45);
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 4px;
+  color: var(--text);
+  letter-spacing: 0.3px;
 }
+
+.appointments-page .kpi .lbl {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.appointments-page .kpi .val {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+
+
+
+/* ---------- Back Button (Dashboard) ---------- */
+
+.btn-back{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+
+  padding:8px 14px;
+  margin:14px 0 10px 0;
+
+  border-radius:10px;
+
+  background:#f3ede4;
+  color:#8B6A3E;
+
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+
+  border:1px solid #e2d7c5;
+
+  transition:all .2s;
+}
+
 
 /* ---------- Buttons ---------- */
 button {
@@ -525,7 +602,7 @@ select:focus {
 
 /* ---------- Tables ---------- */
 .table-wrap {
-  overflow-x: auto;
+  overflow-x:  auto;
 }
 
 table {
@@ -798,7 +875,7 @@ footer {
 
 /* ersetzt Footer-Text überall automatisch */
 footer::before {
-  content: "© 2025 GlowSuite AI – Terminverwaltung Glow Deluxe";
+  content: "© 2025 GlowSuite AI";
   display: block;
   color: var(--text);
 }
@@ -827,7 +904,7 @@ footer::before {
 .appointments-page .grid-2,
 .appointments-page .appointments-grid {
   display: grid;
-  grid-template-columns: 1fr 1.3fr;
+  grid-template-columns: 1fr 1fr;
   gap: 18px;
   align-items: start;
 }
@@ -848,7 +925,7 @@ footer::before {
 .appointments-page .table-wrap {
   max-height: 520px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto; /* 🔥 DAS IST DER FIX */
   border-radius: 14px;
 }
 
@@ -875,12 +952,60 @@ footer::before {
 /* =========================
    Tabellen-Layout kompakt
    ========================= */
+.appointments-page table {
+  width: 100%;
+  table-layout: fixed !important;
+}
+
 .appointments-page table tbody td {
   padding: 7px 10px;
   font-size: 13px;
   vertical-align: middle;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* =========================================
+   Spaltenbreiten stabil halten
+========================================= */
+
+.appointments-page th:nth-child(1),
+.appointments-page td:nth-child(1) {
+  width: 18%;
+}
+
+.appointments-page th:nth-child(2),
+.appointments-page td:nth-child(2) {
+  width: 16%;
+}
+
+.appointments-page th:nth-child(3),
+.appointments-page td:nth-child(3) {
+  width: 28%;
+}
+
+.appointments-page th:nth-child(4),
+.appointments-page td:nth-child(4) {
+  width: 10%;
+}
+
+.appointments-page th:nth-child(5),
+.appointments-page td:nth-child(5) {
+  width: 16%;
+}
+
+.appointments-page th:nth-child(6),
+.appointments-page td:nth-child(6) {
+  width: 12%;
+}
+
+.appointments-page th:nth-child(7),
+.appointments-page td:nth-child(7) {
+  width: 120px;
+}
+
+
 
 /* Primärinfos (Kunde + Service) */
 .appointments-page td:nth-child(1),
@@ -930,8 +1055,8 @@ footer::before {
   height: 32px;
   padding: 0;
   border-radius: 8px;
-  background: transparent;
-  border: 1px solid rgba(0,0,0,0.07);
+  background: rgba(200,169,106,0.10);
+  border: 1px solid rgba(200,169,106,0.25);
   font-size: 0;
   display: inline-flex;
   align-items: center;
@@ -941,21 +1066,26 @@ footer::before {
 }
 
 .appointments-page td:last-child button:hover {
-  background: rgba(0,0,0,0.035);
-  border-color: rgba(0,0,0,0.16);
+  background: rgba(200,169,106,0.18);
+  border-color: rgba(200,169,106,0.4);
+  box-shadow: 0 4px 10px rgba(200,169,106,0.25);
 }
 
-/* Icons – neutral & ruhig */
+/* Icons – klarer & besser sichtbar */
 .appointments-page button[data-act="pdf"]::before {
   content: "📄";
-  font-size: 14px;
-  opacity: 0.6;
+  font-size: 15px;
+  opacity: 0.9;
+  filter: brightness(0.82);
+  transition: all 0.2s ease;
 }
 
 .appointments-page button[data-act="move"]::before {
-  content: "⏱";
-  font-size: 14px;
-  opacity: 0.6;
+  content: "🕓";
+  font-size: 15px;
+  opacity: 0.9;
+  filter: brightness(0.82);
+  transition: all 0.2s ease;
 }
 
 /* Danger Action – kontrolliert */
@@ -965,20 +1095,29 @@ footer::before {
 
 .appointments-page button[data-act="cancel"]::before {
   content: "✕";
-  font-size: 14px;
+  font-size: 15px;
   color: #d43f3f;
-  opacity: 0.9;
+  opacity: 0.95;
+  transition: all 0.2s ease;
 }
 
 .appointments-page button[data-act="cancel"]:hover {
-  background: rgba(212,63,63,0.06);
+  background: rgba(212,63,63,0.12);
+  border-color: rgba(212,63,63,0.45);
+  box-shadow: 0 4px 10px rgba(212,63,63,0.25);
+}
+
+/* Hover – Icons werden klarer */
+.appointments-page td:last-child button:hover::before {
+  opacity: 1;
+  filter: brightness(1);
 }
 
 /* ================================
-   STEP 2.1 – Action Tooltips
+   STEP 2.1 – Action Tooltips (SAFE DISABLED)
    ================================ */
 .appointments-page td:last-child button::after {
-  content: attr(data-tip);
+  content: attr(data-tip); /* bleibt drin für später */
   position: absolute;
   bottom: 115%;
   left: 50%;
@@ -991,13 +1130,17 @@ footer::before {
   padding: 4px 8px;
   border-radius: 6px;
 
+  /* 👇 HIER deaktivieren wir sauber */
+  display: none;
   opacity: 0;
   pointer-events: none;
   transition: opacity .15s ease;
 }
 
 .appointments-page td:last-child button:hover::after {
-  opacity: 1;
+  /* 👇 bleibt aus */
+  display: none;
+  opacity: 0;
 }
 
 /* ================================
@@ -1029,14 +1172,377 @@ footer::before {
   font-size: 12px;
   color: var(--muted);
 }
+/* ===== FIX HEADER ICON BUTTONS ===== */
+
+#themeToggle,
+#logoutBtn {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0,0,0,0.12) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+}
+
+#themeToggle i,
+#logoutBtn i {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+#themeToggle:hover,
+#logoutBtn:hover {
+  background: rgba(0,0,0,0.25) !important;
+  transform: translateY(-1px);
+}
+
+/* Sidebar Hover */
+.sidebar a:hover {
+  background: rgba(200, 169, 106, 0.10);
+  box-shadow: inset 3px 0 0 rgba(200, 169, 106, 0.4);
+}
+
+/* Active */
+.sidebar a.active {
+  background: rgba(200, 169, 106, 0.15);
+  box-shadow: inset 3px 0 0 rgba(200, 169, 106, 0.6);
+}
+
+/* Icons */
+.sidebar a i {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.85;
+}
+
+.sidebar a:hover i {
+  transform: scale(1.05);
+  opacity: 1;
+}
+/* Nur optischer Hover – kein Override */
+button:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 4px 10px rgba(200, 169, 106, 0.2);
+  transition: all 0.2s ease;
+}
+
+/* Klick Feedback */
+button:active {
+  transform: translateY(1px);
+}
+.card {
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+}
+/* =========================================
+   BUTTON SYSTEM (SAFE)
+========================================= */
+
+/* Base (alle Buttons bekommen nur Animation) */
+button {
+  transition: all 0.2s ease;
+  border-radius: 10px;
+}
+
+/* PRIMARY (Gold) */
+.btn-primary {
+  background: var(--brand);
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px rgba(200,169,106,0.3);
+}
+
+/* SECONDARY (Outline) */
+.btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(200,169,106,0.5);
+  color: var(--text);
+}
+
+.btn-secondary:hover {
+  background: rgba(200,169,106,0.08);
+}
+
+/* SUCCESS (Grün – z. B. "Anlegen") */
+.btn-success {
+  background: #2e9e5b;
+  color: white;
+  border: none;
+}
+
+.btn-success:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px rgba(46,158,91,0.3);
+}
+
+/* DANGER (Rot – löschen etc.) */
+.btn-danger {
+  background: #d64545;
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px rgba(214,69,69,0.3);
+}
 
 
+/* =========================================
+   BUTTON RIPPLE EFFECT (SAFE EXTENSION)
+========================================= */
 
+button {
+  position: relative;
+  overflow: hidden;
+}
 
+button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle,
+    rgba(255,255,255,0.25),
+    transparent
+  );
+  opacity: 0;
+  transition: 0.3s;
+}
 
+button:active::after {
+  opacity: 1;
+}
 
+/* =========================================
+   KPI CARDS UPGRADE (SAFE)
+========================================= */
 
+.kpi-card {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
 
+/* Hover Effekt */
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 10px 25px rgba(0,0,0,0.10),
+    0 0 10px rgba(200,169,106,0.12);
+}
 
+/* Dezenter Glow Streifen */
+.kpi-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(200,169,106,0.7),
+    rgba(200,169,106,0.2)
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
 
+.kpi-card:hover::before {
+  opacity: 1;
+}
+.chart-card {
+  background: rgba(255,255,255,0.96);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+}
+
+.chart-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 12px 28px rgba(0,0,0,0.12),
+    0 0 10px rgba(200,169,106,0.15);
+}
+.aura-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.aura-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #C8A96A;
+  box-shadow: 0 0 8px rgba(200,169,106,0.6);
+  animation: auraPulse 1.6s infinite;
+}
+
+@keyframes auraPulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.6; }
+}
+/* =========================================
+   AURA ANIMATION
+========================================= */
+
+.impact-value {
+  animation: auraMoney 2s infinite;
+}
+
+@keyframes auraMoney {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+/* =========================================
+   MICRO FEEDBACK (SAFE)
+========================================= */
+
+/* Klick Feedback für Buttons */
+button:active {
+  transform: scale(0.97);
+}
+
+/* Hover Feedback für Links */
+a:active {
+  opacity: 0.8;
+}
+
+/* Input Fokus angenehmer */
+input:focus,
+textarea:focus,
+select:focus {
+  transform: scale(1.01);
+}
+
+/* Link Feedback */
+a {
+  transition: all 0.15s ease;
+}
+
+a:active {
+  transform: scale(0.97);
+}
+
+/* =========================================
+   PAGE TRANSITION (SAFE)
+========================================= */
+
+body {
+  animation: pageFadeIn 0.35s ease;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   TABLE ACTION BUTTONS FIX
+========================= */
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-buttons button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(200, 169, 106, 0.12);
+  border: 1px solid rgba(200, 169, 106, 0.3);
+  color: var(--brandDark);
+  transition: all 0.2s ease;
+}
+
+/* Hover */
+.action-buttons button:hover {
+  background: rgba(200, 169, 106, 0.2);
+  box-shadow: 0 4px 10px rgba(200, 169, 106, 0.2);
+}
+
+/* Danger (löschen) */
+.action-buttons button.danger {
+  background: rgba(212, 63, 63, 0.1);
+  border: 1px solid rgba(212, 63, 63, 0.4);
+  color: #d43f3f;
+}
+
+.action-buttons button.danger:hover {
+  background: rgba(212, 63, 63, 0.2);
+}
+
+/* =========================
+   HEADER ICONS – FINAL PREMIUM
+========================= */
+
+.header-actions button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  backdrop-filter: blur(6px);
+  transition: all 0.2s ease;
+}
+
+/* Icons */
+.header-actions button i {
+  width: 18px;
+  height: 18px;
+  color: white;
+  opacity: 0.9;
+  transition: all 0.2s ease;
+}
+
+/* Hover */
+.header-actions button:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+}
+
+/* Icon Hover */
+.header-actions button:hover i {
+  opacity: 1;
+  transform: scale(1.1);
+}
 

@@ -9,7 +9,7 @@ import path from "path";
 // 🔧 Tenant-Konfiguration laden (für Multi-Studio-System)
 // -----------------------------------------------------
 export function loadTenantConfig(tenant = "beauty_lounge") {
-  const basePath = path.resolve("./config/kunden");
+  const basePath = path.join(process.cwd(), "Datein", "config", "kunden");
   const filePath = path.join(basePath, `${tenant}.json`);
 
   try {
@@ -23,6 +23,8 @@ export function loadTenantConfig(tenant = "beauty_lounge") {
           logo: "/favicon.ico",
         },
         services: data.services || [],
+        upsells: data.upsells || {},               // ✅ NEU
+        defaultUpsells: data.defaultUpsells || []  // ✅ NEU
       };
     } else {
       console.warn(`⚠️ Kein Config-File gefunden für Tenant "${tenant}" → Fallback aktiv`);
@@ -34,6 +36,8 @@ export function loadTenantConfig(tenant = "beauty_lounge") {
           logo: "/favicon.ico",
         },
         services: [],
+        upsells: {},               // ✅ NEU
+        defaultUpsells: []         // ✅ NEU
       };
     }
   } catch (err) {
@@ -46,6 +50,8 @@ export function loadTenantConfig(tenant = "beauty_lounge") {
         logo: "/favicon.ico",
       },
       services: [],
+      upsells: {},               // ✅ NEU
+      defaultUpsells: []         // ✅ NEU
     };
   }
 }

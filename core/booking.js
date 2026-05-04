@@ -41,6 +41,8 @@ export const serviceMap = {
   "maniküre": { name: "Maniküre", price: 25, duration: 30 },
   "pediküre": { name: "Pediküre", price: 35, duration: 45 },
   "gesichtsbehandlung": { name: "Gesichtsbehandlung", price: 50, duration: 60 },
+  "wimpernlifting": { name: "Wimpernlifting", price: 45, duration: 45 },
+  "augenbrauenlifting": { name: "Augenbrauenlifting", price: 40, duration: 40 },
 };
 
 export function services() {

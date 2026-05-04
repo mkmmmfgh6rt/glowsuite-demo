@@ -1,0 +1,14 @@
+[
+  {
+    "phone": "491771234567",
+    "visits": 1,
+    "points": 10,
+    "tenant": "default"
+  },
+  {
+    "phone": "+491777875051",
+    "visits": 37,
+    "points": 370,
+    "tenant": "beauty_lounge"
+  }
+]

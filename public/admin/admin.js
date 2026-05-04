@@ -152,28 +152,44 @@ function formatAuraTime(ts) {
 // =======================================================
 function getAuraActionMeta(action) {
   const map = {
+    loyalty_bonus: {
+      label: "VIP-Bonus",
+      short: "Bindung stärken",
+    },
     suggest_discount: {
-      label: "Rabatt empfohlen",
-      icon: "💸",
+      label: "Rabatt-Aktion",
+      short: "Rückgewinnung fördern",
     },
     scheduled: {
       label: "Geplant",
-      icon: "🗓️",
+      short: "Aktion vorbereitet",
     },
     posted: {
       label: "Veröffentlicht",
-      icon: "📢",
+      short: "Aktion wurde gestartet",
+    },
+    executed: {
+      label: "Umgesetzt",
+      short: "Empfehlung wurde ausgeführt",
     },
     ignored: {
-      label: "Ignoriert",
-      icon: "🚫",
+      label: "Abgelehnt",
+      short: "Empfehlung wurde nicht übernommen",
+    },
+    low_bookings: {
+      label: "Wenig Buchungen",
+      short: "Auslastung verbessern",
+    },
+    upsell_opportunity: {
+      label: "Zusatzverkauf",
+      short: "Mehr Umsatz pro Termin",
     },
   };
 
   return (
     map[action] || {
-      label: action || "Unbekannt",
-      icon: "❓",
+      label: "Empfehlung",
+      short: "Studioleistung verbessern",
     }
   );
 }
@@ -431,7 +447,7 @@ async function loadAuraMarketing() {
 
 // =======================================================
 // 📜 AURA MARKETING – Historie / letzte Empfehlung (SaaS-clean)
-// Phase 6.7.6 – ROI integriert (stabil + null-safe)
+// Phase 6.7.6 – ROI integriert (Studio verständlich)
 // =======================================================
 async function loadAuraMarketingHistory() {
   try {
@@ -447,11 +463,9 @@ async function loadAuraMarketingHistory() {
       return;
     }
 
-    // 🔝 neuester Eintrag (DESC sortiert)
     const last = json.records[0];
     if (!last) return;
 
-    // 🔑 Change Detection
     const historyKey = [
       last.id || "",
       last.status || "",
@@ -470,7 +484,8 @@ async function loadAuraMarketingHistory() {
     const oldCard = document.getElementById("auraMarketingHistoryCard");
     if (oldCard) oldCard.remove();
 
-    // 🧠 Ruhige Confidence-Anzeige (kein Badge, keine %)
+    const meta = getAuraActionMeta(last.headline || last.action || last.type);
+
     const confidenceLabel =
       typeof getConfidenceLabel === "function"
         ? getConfidenceLabel(last.confidence)
@@ -481,82 +496,113 @@ async function loadAuraMarketingHistory() {
         ? formatAuraTime(last.created_at)
         : null;
 
-    const hasROI =
-      last.status === "executed" &&
-      last.impact_revenue !== null;
+    const reasons = Array.isArray(last.reason)
+      ? last.reason
+      : last.reason
+      ? String(last.reason).split("·").map(x => x.trim()).filter(Boolean)
+      : [];
+
+    const summary =
+      reasons[0] || meta.short || "AURA hat eine sinnvolle Marketingmaßnahme erkannt.";
+
+    // ===================================================
+    // Verständlicher Status für Studios
+    // ===================================================
+
+    const statusLabelMap = {
+      executed: "Aktion gestartet",
+      approved: "freigegeben",
+      ignored: "später prüfen",
+      posted: "Kampagne aktiv",
+      scheduled: "geplant",
+      generated: "erstellt"
+    };
+
+    const statusLabel = statusLabelMap[last.status] || "gespeichert";
 
     const card = document.createElement("div");
     card.id = "auraMarketingHistoryCard";
     card.className = "card";
+
     card.style.cssText = `
       padding:12px 14px;
       font-size:13px;
       display:flex;
       flex-direction:column;
       gap:6px;
-      opacity:0.9;
+      opacity:0.92;
     `;
 
     card.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-weight:600">
-          📌 Letzte AURA-Empfehlung
+          Letzte AURA-Aktion
         </div>
-        ${timeLabel ? `<div class="small muted">🕒 ${timeLabel}</div>` : ""}
+        ${timeLabel ? `<div class="small muted">${timeLabel}</div>` : ""}
       </div>
 
-      <div style="font-weight:500">
-        ${last.headline || "Marketing-Aktion"}
+      <div style="font-weight:600">
+        ${meta.label}
       </div>
 
-      ${
-        last.reason
-          ? `<div class="small muted">
-              ${
-                Array.isArray(last.reason)
-                  ? last.reason.join(", ")
-                  : last.reason
-              }
-            </div>`
-          : ""
-      }
+      <div class="small muted" style="line-height:1.5">
+        ${summary}
+      </div>
 
       ${
         confidenceLabel
           ? `<div class="small muted">
-               Sicherheit: <strong>${confidenceLabel}</strong>
+               Priorität: <strong>${confidenceLabel}</strong>
              </div>`
           : ""
       }
 
       <div class="small muted">
-        Status: <b>${last.status || "generated"}</b>
+        Status: <b>${statusLabel}</b>
       </div>
 
       ${
-        hasROI
+        last.status === "executed"
           ? `
-            <div style="margin-top:6px;border-top:1px solid #eee;padding-top:6px">
-              <div class="small">
-                📈 Umsatz-Impact:
-                <b>${Number(last.impact_revenue).toFixed(2)} €</b>
-              </div>
-
-              <div class="small">
-                📅 Buchungs-Impact:
-                <b>${last.impact_bookings ?? 0}</b>
-              </div>
+            <div style="margin-top:6px;border-top:1px solid #eee;padding-top:8px;display:grid;gap:4px">
 
               ${
-                last.roi_score !== null
+                Number(last.impact_revenue) > 0
                   ? `
                     <div class="small">
-                      🧠 ROI Score:
+                      Zusatzumsatz:
+                      <b>${Number(last.impact_revenue).toFixed(2)} €</b>
+                    </div>
+                  `
+                  : `
+                    <div class="small muted">
+                      Ergebnis wird analysiert …
+                    </div>
+                  `
+              }
+
+              ${
+                Number(last.impact_bookings) > 0
+                  ? `
+                    <div class="small">
+                      Zusätzliche Buchungen:
+                      <b>${last.impact_bookings}</b>
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                last.roi_score !== null && Number(last.roi_score) > 0
+                  ? `
+                    <div class="small">
+                      Erfolgswert:
                       <b>${(Number(last.roi_score) * 100).toFixed(1)} %</b>
                     </div>
                   `
                   : ""
               }
+
             </div>
           `
           : ""
@@ -626,7 +672,7 @@ setInterval(fetchDashboardSilent, 60000);
 
 
 // =======================================================
-// 🧾 AURA MARKETING – Aktive Empfehlung rendern (SaaS-clean, reduziert)
+// 🧾 AURA MARKETING – Aktive Empfehlung rendern
 // =======================================================
 
 function renderAuraMarketingBox(m) {
@@ -642,7 +688,27 @@ function renderAuraMarketingBox(m) {
   card.style.flexDirection = "column";
   card.style.gap = "6px";
 
-  // 🧠 Confidence nur als ruhige Textinfo (kein %, kein Badge)
+  // -----------------------------------------------------
+  // 🧠 Titel verständlich machen
+  // -----------------------------------------------------
+
+  const actionMap = {
+    loyalty_bonus: "Stammkunden-Bonus vorschlagen",
+    suggest_discount: "Rabattaktion zur Auslastung starten",
+    low_bookings: "Wenig Buchungen erkannt",
+    upsell_opportunity: "Zusatzbehandlung empfehlen"
+  };
+
+  const headline =
+    actionMap[m.headline] ||
+    actionMap[m.action] ||
+    m.headline ||
+    "Marketing-Empfehlung";
+
+  // -----------------------------------------------------
+  // 🧠 Confidence Label
+  // -----------------------------------------------------
+
   const confidenceLabel =
     typeof m.confidence === "number"
       ? m.confidence >= 0.8
@@ -653,7 +719,7 @@ function renderAuraMarketingBox(m) {
       : null;
 
   // -----------------------------------------------------
-  // 📦 Card Content (clean SaaS)
+  // 📦 Card Content
   // -----------------------------------------------------
 
   card.innerHTML = `
@@ -661,7 +727,7 @@ function renderAuraMarketingBox(m) {
       <div style="flex:1">
 
         <div style="font-weight:600;font-size:15px;line-height:1.3">
-          ${m.headline || "Marketing-Empfehlung"}
+          ${headline}
         </div>
 
         ${
@@ -670,7 +736,7 @@ function renderAuraMarketingBox(m) {
                 ${m.reason}
                 ${
                   confidenceLabel
-                    ? ` · Sicherheit: ${confidenceLabel}`
+                    ? ` · Priorität: ${confidenceLabel}`
                     : ""
                 }
                </div>`
@@ -683,11 +749,11 @@ function renderAuraMarketingBox(m) {
     <!-- 🔘 Actions -->
     <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn-primary" data-status="executed">
-        ⚡ Ausführen
+        Maßnahme starten
       </button>
 
       <button class="btn-secondary" data-status="ignored">
-        Ablehnen
+        Später prüfen
       </button>
     </div>
 
@@ -719,6 +785,7 @@ function renderAuraMarketingBox(m) {
     </div>
   `;
 
+
 // ===================================================
 // 🔒 EXECUTE / IGNORE HANDLER
 // ===================================================
@@ -731,7 +798,7 @@ card.querySelectorAll("button[data-status]").forEach((btn) => {
 
     btn.disabled = true;
     const originalText = btn.textContent;
-    btn.textContent = "…";
+    btn.textContent = "...";
 
     try {
       const res = await fetch("/api/aura/marketing/action", {
@@ -746,22 +813,16 @@ card.querySelectorAll("button[data-status]").forEach((btn) => {
 
       if (!res.ok) throw new Error("Status Update Fehler");
 
-      // ===================================================
-      // ✅ SaaS-Style State Update (B-Variante)
-      // ===================================================
-
       if (status === "executed") {
         card.style.opacity = "0.7";
 
-        // Buttons entfernen
         const actionRow = card.querySelector("div[style*='display:flex'][style*='gap']");
         if (actionRow) actionRow.remove();
 
-        // Statusanzeige hinzufügen
         const statusInfo = document.createElement("div");
         statusInfo.className = "small muted";
         statusInfo.style.marginTop = "6px";
-        statusInfo.innerHTML = "✔ Empfehlung wurde ausgeführt.";
+        statusInfo.innerHTML = "Empfehlung wurde umgesetzt.";
 
         card.appendChild(statusInfo);
       }
@@ -775,14 +836,10 @@ card.querySelectorAll("button[data-status]").forEach((btn) => {
         const statusInfo = document.createElement("div");
         statusInfo.className = "small muted";
         statusInfo.style.marginTop = "6px";
-        statusInfo.innerHTML = "✖ Empfehlung wurde abgelehnt.";
+        statusInfo.innerHTML = "Empfehlung wurde zurückgestellt.";
 
         card.appendChild(statusInfo);
       }
-
-      // ===================================================
-      // 🔄 Sync ohne Reload
-      // ===================================================
 
       setTimeout(async () => {
         lastAuraActiveKey = null;
@@ -821,7 +878,7 @@ if (explainBtn && explainPanel && explainList) {
     if (!expanded) {
       explainPanel.style.maxHeight = "160px";
       explainPanel.style.opacity = "1";
-      explainList.innerHTML = "<li>⏳ Gründe werden geladen …</li>";
+      explainList.innerHTML = "<li>Analyse wird geladen ...</li>";
 
       try {
         const res = await fetch(`/api/aura/explain?tenant=beauty_lounge&period=today`);
@@ -837,12 +894,12 @@ if (explainBtn && explainPanel && explainList) {
             : [];
 
         explainList.innerHTML = reasons.length
-          ? reasons.map((r) => `<li>👉 ${r}</li>`).join("")
-          : "<li>ℹ️ Keine weiteren Details verfügbar.</li>";
+          ? reasons.map((r) => `<li>${r}</li>`).join("")
+          : "<li>Keine weiteren Details verfügbar.</li>";
 
       } catch (err) {
         console.error("❌ AURA Explain Fehler:", err);
-        explainList.innerHTML = "<li>❌ Erklärung konnte nicht geladen werden.</li>";
+        explainList.innerHTML = "<li>Erklärung konnte nicht geladen werden.</li>";
       }
 
     } else {
@@ -867,6 +924,13 @@ function buildRevenueTrendData(bookings) {
 
   bookings.forEach((b) => {
     const d = new Date(b.dateTime);
+
+    // ❗ FIX + DEBUG
+    if (isNaN(d.getTime())) {
+      console.warn("❌ Ungültiges Datum in Booking:", b);
+      return;
+    }
+
     if (d < since) return;
 
     const key = d.toISOString().slice(0, 10);
@@ -894,6 +958,13 @@ function buildTopServicesData(bookings) {
 
   bookings.forEach((b) => {
     const d = new Date(b.dateTime);
+
+    // ❗ gleicher Schutz hier
+    if (isNaN(d.getTime())) {
+      console.warn("❌ Ungültiges Datum (Service):", b);
+      return;
+    }
+
     if (d < since) return;
 
     const s = b.service || "Unbekannt";
@@ -1115,8 +1186,23 @@ function updateChartsFromBookings() {
   const r = buildRevenueTrendData(allBookings);
   const t = buildTopServicesData(allBookings);
 
-  const c1 = $("#chartRevenueTrend").getContext("2d");
-  const c2 = $("#chartTopServices").getContext("2d");
+  const c1El = $("#chartRevenueTrend");
+  const c2El = $("#chartTopServices");
+
+  // ❗ CRASH FIX: DOM noch nicht ready
+  if (!c1El || !c2El) {
+    console.warn("⚠️ Charts DOM noch nicht bereit");
+    return;
+  }
+
+  const c1 = c1El.getContext("2d");
+  const c2 = c2El.getContext("2d");
+
+  // ❗ zusätzliche Sicherheit (Canvas vorhanden, aber kein Context)
+  if (!c1 || !c2) {
+    console.warn("⚠️ Canvas Context nicht verfügbar");
+    return;
+  }
 
   if (revenueTrendChart) {
     revenueTrendChart.data.labels = r.labels;
@@ -1379,6 +1465,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
+  // 📊 AURA Umsatzanalyse (NEU)
+  // =====================================================
+  if (typeof loadAuraRevenueInsights === "function") {
+    loadAuraRevenueInsights();
+  }
+
+  // =====================================================
   // 🔁 AURA AUTO REFRESH – Phase 6.7.5 (zentral gesteuert)
   // =====================================================
   if (typeof startAuraAutoRefresh === "function") {
@@ -1421,6 +1514,71 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// =======================================================
+// 📊 AURA Umsatzanalyse
+// =======================================================
+
+async function loadAuraRevenueInsights() {
+
+  const box = document.getElementById("auraRevenueBox");
+  if(!box) return;
+
+  try{
+
+    const res = await fetch("/api/aura/analytics?tenant=beauty_lounge&period=30");
+
+    if(!res.ok) return;
+
+    const data = await res.json();
+
+    const revenue = Number(data.revenue || 0);
+    const bookings = Number(data.bookings || 0);
+    const avg = bookings ? (revenue / bookings).toFixed(2) : 0;
+
+    let recommendation = "Auslastung stabil.";
+
+    if(bookings < 50){
+      recommendation = "Auslastung niedrig – Marketingaktion empfohlen.";
+    }
+
+    if(avg > 70){
+      recommendation = "Hoher Terminwert – Zusatzbehandlungen hervorheben.";
+    }
+
+    box.innerHTML = `
+
+    <div class="card" style="padding:12px">
+
+      <div style="font-weight:600;margin-bottom:8px">
+        Umsatzanalyse (letzte 30 Tage)
+      </div>
+
+      <div class="small muted">
+        Umsatz: <b>${revenue.toFixed(2)} €</b>
+      </div>
+
+      <div class="small muted">
+        Buchungen: <b>${bookings}</b>
+      </div>
+
+      <div class="small muted">
+        Ø Terminwert: <b>${avg} €</b>
+      </div>
+
+      <div style="margin-top:10px;font-size:13px">
+        Empfehlung:
+        <b>${recommendation}</b>
+      </div>
+
+    </div>
+
+    `;
+
+  }catch(err){
+    console.error("❌ AURA Revenue Fehler:",err);
+  }
+
+}
 
 
 

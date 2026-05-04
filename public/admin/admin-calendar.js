@@ -248,6 +248,7 @@ function showEventDetails(event) {
 
   $("#eventDetailsMeta").innerHTML = `
     Mitarbeiter: <strong>${employeeLabel}</strong><br>
+    Telefon: <strong>${raw.phone || "-"}</strong><br>
     Preis: ${euro(raw.price)}
   `;
 
@@ -340,13 +341,25 @@ async function handleReschedule(info) {
   setStatus("⏳ Termin wird verschoben …");
 
   try {
+    const d = ev.start;
+
+    const date =
+      `${String(d.getDate()).padStart(2, "0")}.` +
+      `${String(d.getMonth() + 1).padStart(2, "0")}.` +
+      `${d.getFullYear()}`;
+
+    const time =
+      `${String(d.getHours()).padStart(2, "0")}:` +
+      `${String(d.getMinutes()).padStart(2, "0")}`;
+
     const res = await fetch(
-      `/api/calendar/appointments/${ev.id}/reschedule`,
+      `/api/bookings/${ev.id}/move`,
       {
-        method: "PATCH",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          start_time: ev.start.toISOString(),
+          date,
+          time
         }),
       }
     );
@@ -607,6 +620,11 @@ function initCalendar() {
     initialView: "dayGridMonth",
     locale: "de",
     firstDay: 1,
+
+    // ✅ Monatsansicht sauber halten
+    dayMaxEvents: 2,
+    moreLinkClick: "popover",
+    moreLinkContent: (args) => `+${args.num} weitere`,
 
     editable: true,
     eventDrop: handleReschedule,

@@ -7,6 +7,7 @@ import { recordAuraActionFeedback } from "./auraActionFeedbackService.js";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 
 const isTest = process.env.TEST_MODE === "true";
 const dbFile = isTest ? "bookings_test.db" : "bookings.db";
@@ -50,6 +51,16 @@ if (!bookingColumns.includes("employeeId")) {
     console.log("🛠️ Spalte 'employeeId' zu bookings hinzugefügt.");
   } catch (err) {
     console.warn("⚠️ employeeId konnte nicht hinzugefügt werden:", err.message);
+  }
+}
+
+// ⭐ Review-Status für Google Bewertung
+if (!bookingColumns.includes("reviewSent")) {
+  try {
+    db.exec(`ALTER TABLE bookings ADD COLUMN reviewSent INTEGER DEFAULT 0;`);
+    console.log("⭐ Spalte 'reviewSent' zu bookings hinzugefügt.");
+  } catch (err) {
+    console.warn("⚠️ reviewSent konnte nicht hinzugefügt werden:", err.message);
   }
 }
 
@@ -129,34 +140,139 @@ function logAction(action, details = {}) {
   console.log(`📝 [${time}] ${action}`, details);
 }
 
+
+// =======================================================
+// 📊 EVENTS – AURA Learning Grundlage
+// =======================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS events (
+    id TEXT PRIMARY KEY,
+    tenant TEXT,
+    event_type TEXT,
+    value TEXT,
+    meta TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+const eventInsert = db.prepare(`
+  INSERT INTO events (
+    id,
+    tenant,
+    event_type,
+    value,
+    meta
+  )
+  VALUES (
+    @id,
+    @tenant,
+    @event_type,
+    @value,
+    @meta
+  )
+`);
+
+export function logEvent(event) {
+
+  try {
+
+    const record = {
+      id: crypto.randomUUID(),
+      tenant: event.tenant ?? null,
+      event_type: event.event_type,
+      value: event.value ?? null,
+      meta: JSON.stringify(event.meta ?? {})
+    };
+
+    eventInsert.run(record);
+
+    return true;
+
+  } catch (err) {
+
+    console.error("❌ logEvent:", err.message);
+
+    return false;
+
+  }
+
+}
+
 // =======================================================
 // BOOKINGS – API
 // =======================================================
+
 const stmtInsert = db.prepare(`
   INSERT INTO bookings (id,name,phone,service,price,duration,dateTime,employeeId,tenant)
   VALUES (@id,@name,@phone,@service,@price,@duration,@dateTime,@employeeId,@tenant)
 `);
 
-const stmtGetAll = db.prepare(`SELECT * FROM bookings ORDER BY dateTime`);
-const stmtGetByDate = db.prepare(`SELECT * FROM bookings WHERE service = ? AND dateTime = ?`);
-const stmtDelete = db.prepare(`DELETE FROM bookings WHERE id = ?`);
+const stmtGetAll = db.prepare(`
+  SELECT * FROM bookings 
+  ORDER BY dateTime
+`);
+
+// 🔒 Slotprüfung pro Mitarbeiter + Zeit
+const stmtGetByDate = db.prepare(`
+  SELECT * FROM bookings 
+  WHERE employeeId = ? 
+  AND dateTime = ?
+`);
+
+const stmtDelete = db.prepare(`
+  DELETE FROM bookings 
+  WHERE id = ?
+`);
+
 const stmtUpdate = db.prepare(`
   UPDATE bookings 
      SET dateTime = @dateTime,
-         employeeId = @employeeId       -- 👈 Mitarbeiter bleibt erhalten
+         employeeId = @employeeId
    WHERE id = @id
 `);
 
+
 export function insertBooking(booking) {
+
   try {
+
+    // ⭐ ID sicherstellen
+    if (!booking.id) {
+      booking.id = crypto.randomUUID();
+    }
+
+    // 🔒 Race-Condition Schutz
+    const existing = stmtGetByDate.get(
+      booking.employeeId,
+      booking.dateTime
+    );
+
+    if (existing) {
+      console.warn(
+        "⚠️ Slot bereits belegt:",
+        booking.employeeId,
+        booking.dateTime
+      );
+      return null;
+    }
+
     stmtInsert.run(booking);
+
     logAction("➕ Neue Buchung", booking);
-    return true;
+
+    return booking;
+
   } catch (err) {
+
     console.error("❌ insertBooking:", err.message);
-    return false;
+
+    return null;
+
   }
+
 }
+
 
 export function getAllBookings() {
   try {
@@ -167,9 +283,9 @@ export function getAllBookings() {
   }
 }
 
-export function getBookingByDate(service, dateTime) {
+export function getBookingByDate(employeeId, dateTime) {
   try {
-    return stmtGetByDate.get(service, dateTime) || null;
+    return stmtGetByDate.get(employeeId, dateTime) || null;
   } catch (err) {
     console.error("❌ getBookingByDate:", err.message);
     return null;
@@ -195,6 +311,42 @@ export function updateBooking(id, newDateTime, employeeId) {
     return info.changes > 0;
   } catch (err) {
     console.error("❌ updateBooking:", err.message);
+    return false;
+  }
+}
+
+// =======================================================
+// ⭐ REVIEW STATUS – Google Bewertungslogik
+// =======================================================
+
+const stmtMarkReviewSent = db.prepare(`
+  UPDATE bookings
+  SET reviewSent = 1
+  WHERE id = ?
+`);
+
+const stmtGetReviewStatus = db.prepare(`
+  SELECT reviewSent
+  FROM bookings
+  WHERE id = ?
+`);
+
+export function isReviewSent(id) {
+  try {
+    const row = stmtGetReviewStatus.get(id);
+    return row?.reviewSent === 1;
+  } catch (err) {
+    console.error("❌ isReviewSent:", err.message);
+    return false;
+  }
+}
+
+export function markReviewSent(id) {
+  try {
+    stmtMarkReviewSent.run(id);
+    return true;
+  } catch (err) {
+    console.error("❌ markReviewSent:", err.message);
     return false;
   }
 }

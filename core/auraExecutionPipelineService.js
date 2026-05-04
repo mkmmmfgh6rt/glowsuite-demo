@@ -12,50 +12,69 @@ import { recordAuraActionFeedback } from "./auraActionFeedbackService.js";
 import { isExecutionBlockedByLimits } from "./auraExecutionLimitsService.js";
 
 export async function executeApprovedTriggers({ tenant, limit = 5 }) {
+
   if (!tenant) throw new Error("tenant fehlt");
 
   const results = [];
-  const candidates = await getTopTriggerCandidates({ tenant, limit });
+
+  const candidates =
+    (await getTopTriggerCandidates({ tenant, limit })) || [];
 
   for (const candidate of candidates) {
 
+    if (!candidate?.customerKey) {
+      results.push({
+        status: "skipped",
+        reason: ["candidate ohne customerKey"]
+      });
+      continue;
+    }
+
     // ===================================================
-    // 1️⃣ GATE
+    // 1️⃣ EXECUTION GATE
     // ===================================================
+
     const gate = shouldExecuteTrigger({
       triggerType: candidate.triggerType,
       priority: candidate.priority
     });
 
-    if (gate.decision !== "EXECUTE") {
+    if (!gate || gate.decision !== "EXECUTE") {
       results.push({
         customerKey: candidate.customerKey,
         status: "skipped",
-        reason: gate.reason
+        reason: gate?.reason || ["Gate blockiert"]
       });
       continue;
     }
 
     // ===================================================
-    // 2️⃣ CONFIDENCE FILTER (NEU 🔥)
+    // 2️⃣ CONFIDENCE FILTER
     // ===================================================
-    if (candidate.confidence !== undefined && candidate.confidence < 0.6) {
+
+    const confidence =
+      typeof candidate.confidence === "number"
+        ? candidate.confidence
+        : 0.5;
+
+    if (confidence < 0.6) {
       results.push({
         customerKey: candidate.customerKey,
         status: "skipped",
-        reason: [`Confidence zu niedrig (${candidate.confidence})`]
+        reason: [`Confidence zu niedrig (${confidence})`]
       });
       continue;
     }
 
     // ===================================================
-    // 3️⃣ LIMITS (MUSS VOR INSERT/EXECUTION)
+    // 3️⃣ EXECUTION LIMITS
     // ===================================================
+
     const limits = isExecutionBlockedByLimits({
       tenant,
       customerKey: candidate.customerKey,
       maxPerDayTenant: 10,
-      maxPerDayCustomer: 2,   // leicht erhöht für realistischere Tests
+      maxPerDayCustomer: 2,
       killSwitch: false
     });
 
@@ -63,10 +82,10 @@ export async function executeApprovedTriggers({ tenant, limit = 5 }) {
       results.push({
         customerKey: candidate.customerKey,
         status: "blocked",
-        reason: limits.reason || ["Execution limit blocked"],
+        reason: limits.reason || ["Execution limit erreicht"],
         metrics: {
-          tenantCount: limits.tenantCount ?? 0,
-          customerCount: limits.customerCount ?? 0
+          tenantCount: limits?.tenantCount ?? 0,
+          customerCount: limits?.customerCount ?? 0
         }
       });
       continue;
@@ -75,22 +94,24 @@ export async function executeApprovedTriggers({ tenant, limit = 5 }) {
     try {
 
       // ===================================================
-      // 4️⃣ ACTION ID
+      // 4️⃣ ACTION ID GENERIEREN
       // ===================================================
+
       const actionId = uuidv4();
 
       // ===================================================
       // 5️⃣ MARKETING ACTION SPEICHERN
       // ===================================================
+
       const inserted = insertAuraMarketingAction({
         id: actionId,
         tenant,
-        headline: candidate.triggerType,
-        channels: [candidate.channel],
+        headline: candidate.triggerType || "unknown_trigger",
+        channels: [candidate.channel || "app"],
         offers: [],
         cta: "Jetzt Termin buchen",
-        confidence: candidate.confidence ?? 0.5,
-        reason: candidate.reason,
+        confidence,
+        reason: candidate.reason || [],
         status: "generated"
       });
 
@@ -99,8 +120,9 @@ export async function executeApprovedTriggers({ tenant, limit = 5 }) {
       }
 
       // ===================================================
-      // 6️⃣ EXECUTION
+      // 6️⃣ ACTION EXECUTION
       // ===================================================
+
       const executionResult = await executeAuraAction({
         action_id: actionId,
         decision: "auto",
@@ -109,13 +131,14 @@ export async function executeApprovedTriggers({ tenant, limit = 5 }) {
           mode: "pipeline",
           customerKey: candidate.customerKey,
           triggerType: candidate.triggerType,
-          confidence: candidate.confidence
+          confidence
         }
       });
 
       // ===================================================
-      // 7️⃣ FEEDBACK
+      // 7️⃣ FEEDBACK LEARNING
       // ===================================================
+
       recordAuraActionFeedback({
         action_log_id: actionId,
         success: true,
@@ -128,18 +151,22 @@ export async function executeApprovedTriggers({ tenant, limit = 5 }) {
         customerKey: candidate.customerKey,
         status: "executed",
         actionId,
-        confidence: candidate.confidence,
+        confidence,
         executionResult
       });
 
     } catch (err) {
+
       results.push({
         customerKey: candidate.customerKey,
         status: "error",
         error: err.message
       });
+
     }
+
   }
 
   return results;
+
 }

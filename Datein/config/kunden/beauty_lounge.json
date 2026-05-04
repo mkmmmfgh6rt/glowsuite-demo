@@ -1,10 +1,10 @@
 {
   "branding": {
-    "brandName": "GloweSuite AI",
-    "brandColor": "#BC3B5F",
-    "accentColor": "#F6EFE8",
-    "textColor": "#1F2937",
-    "logo": "/logos/beauty_lounge.png",
+    "brandName": "GlowSuite AI",
+    "brandColor": "#B8945E",
+    "accentColor": "#F4EDE3",
+    "textColor": "#3E3126",
+    "logo": "/img/logo-glowsuite.png",
     "address": {
       "street": "Bahnhofstraße 12",
       "postalCode": "16303",
@@ -15,7 +15,8 @@
       "email": "info@beauty-lounge.de",
       "phone": "+49 177 7875051",
       "whatsapp": "+49 177 7875051",
-      "website": "https://beautylounge-agent.de"
+      "website": "https://beautylounge-agent.de",
+      "googleReviewUrl": "https://g.page/r/DEINLINK/review"
     },
     "openingHours": {
       "start": 9,
@@ -29,13 +30,92 @@
     "pdfPreisliste": "/pdf/preisliste.pdf"
   },
 
+  "upsells": {
+    "maniküre": "Pediküre",
+    "pediküre": "Maniküre",
+    "wimpernlifting": "Augenbrauenlifting",
+    "gesichtsbehandlung": "Microneedling"
+  },
+
+  "defaultUpsells": [
+    "Maniküre",
+    "Pediküre",
+    "Augenbrauenlifting"
+  ],
+
   "services": [
-    { "name": "Haarschnitt Damen", "price": 45, "duration": 60, "description": "Waschen, Schneiden & Föhnen" },
-    { "name": "Haarschnitt Herren", "price": 30, "duration": 45, "description": "Schnitt & Styling für Herren" },
-    { "name": "Maniküre", "price": 25, "duration": 30, "description": "Pflege & Lackierung der Nägel" },
-    { "name": "Pediküre", "price": 35, "duration": 45, "description": "Fußpflege & Wellness für die Füße" },
-    { "name": "Augenbrauenlifting", "price": 40, "duration": 40, "description": "Perfekt geformte, volle Augenbrauen" },
-    { "name": "Wimpernlifting", "price": 45, "duration": 45, "description": "Schöne, geschwungene Wimpern – ganz ohne Extensions" },
-    { "name": "Gesichtsbehandlung", "price": 60, "duration": 60, "description": "Tiefenreinigung & Pflege für strahlende Haut" }
+    {
+      "name": "Enthaarung",
+      "category": "Körper",
+      "price": 120,
+      "duration": 60,
+      "description": "",
+      "aliases": [
+        "Body"
+      ],
+      "image": ""
+    },
+    {
+      "name": "Maniküre",
+      "category": "Nägel",
+      "price": 0.05,
+      "duration": 30,
+      "description": "",
+      "aliases": [
+        "Finger"
+      ],
+      "image": ""
+    },
+    {
+      "name": "Pediküre",
+      "category": "Nägel",
+      "price": 20,
+      "duration": 30,
+      "description": "",
+      "aliases": [],
+      "image": ""
+    },
+    {
+      "name": "Augenbrauenlifting",
+      "category": "Augen",
+      "price": 25,
+      "duration": 30,
+      "description": "",
+      "aliases": [],
+      "image": ""
+    },
+    {
+      "name": "wimpernlifting",
+      "category": "Augen",
+      "price": 111,
+      "duration": 30,
+      "description": "",
+      "aliases": [],
+      "image": ""
+    },
+    {
+      "name": "gesichtsbehandlung",
+      "category": "Kopf",
+      "price": 123,
+      "duration": 45,
+      "description": "",
+      "aliases": [],
+      "image": ""
+    },
+    {
+      "name": "Microneedling",
+      "category": "Kopf",
+      "price": 34,
+      "duration": 50,
+      "description": "",
+      "aliases": [],
+      "image": ""
+    }
+  ],
+  "categories": [
+    "Körper",
+    "Nägel",
+    "Augen",
+    "Kopf"
   ]
 }

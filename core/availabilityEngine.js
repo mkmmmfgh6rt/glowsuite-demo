@@ -1,6 +1,6 @@
 // =======================================================
 // 🧠 Availability Engine – SINGLE SOURCE OF TRUTH
-// Phase 3.5 + 4.0.1 – Core Logic + Slot Signature
+// Phase 3.6 – Core Logic + Slot Signature + Next Free Slot
 // =======================================================
 
 import crypto from "crypto";
@@ -35,7 +35,7 @@ export function normalizeEmployeeDays(daysRaw) {
   const map = { So: 0, Mo: 1, Di: 2, Mi: 3, Do: 4, Fr: 5, Sa: 6 };
 
   if (daysRaw.includes("-")) {
-    const [from, to] = daysRaw.split("-").map(s => s.trim());
+    const [from, to] = daysRaw.split("-").map((s) => s.trim());
     if (map[from] == null || map[to] == null) return [];
 
     const res = [];
@@ -50,8 +50,8 @@ export function normalizeEmployeeDays(daysRaw) {
 
   return daysRaw
     .split(",")
-    .map(d => map[d.trim()])
-    .filter(d => d !== undefined);
+    .map((d) => map[d.trim()])
+    .filter((d) => d !== undefined);
 }
 
 // =======================================================
@@ -68,6 +68,11 @@ function signSlot({ date, time, employeeId, serviceDuration, tenant }) {
     .digest("hex");
 }
 
+/**
+ * Prüft:
+ * 1. Signatur korrekt
+ * 2. Slot noch frei
+ */
 export function verifySlotSignature({
   date,
   time,
@@ -77,6 +82,7 @@ export function verifySlotSignature({
   signature,
 }) {
   if (!signature) return false;
+  if (!date || !time || !employeeId) return false;
 
   const expected = signSlot({
     date,
@@ -86,7 +92,26 @@ export function verifySlotSignature({
     tenant,
   });
 
-  return expected === signature;
+  if (expected !== signature) return false;
+
+  const bookings = getAllBookings().filter(
+    (b) => b.employeeId === employeeId && b.dateTime.startsWith(date)
+  );
+
+  const newStart = new Date(`${date}T${time}:00`).getTime();
+  const duration = Number(serviceDuration || 60);
+
+  const employeeBookings = bookings.filter((b) => b.employeeId === employeeId);
+
+  const hasConflict = employeeBookings.some((b) => {
+    const buffer = Number(b.buffer || 15);
+    const bt = new Date(b.dateTime).getTime();
+    const be = bt + (Number(b.duration || 0) + buffer) * 60000;
+    const newEnd = newStart + duration * 60000;
+    return !(newEnd <= bt || newStart >= be);
+  });
+
+  return !hasConflict;
 }
 
 // =======================================================
@@ -124,7 +149,7 @@ export function calculateSlotsForEmployee({
   }
 
   const bookings = getAllBookings().filter(
-    b => b.employeeId === emp.id && b.dateTime.startsWith(dateStr)
+    (b) => b.employeeId === emp.id && b.dateTime.startsWith(dateStr)
   );
 
   const slots = [];
@@ -136,7 +161,7 @@ export function calculateSlotsForEmployee({
     const newStart = cur.getTime();
     const newEnd = newStart + duration * 60000;
 
-    const conflict = bookings.some(b => {
+    const conflict = bookings.some((b) => {
       const bt = new Date(b.dateTime).getTime();
       const be = bt + (Number(b.duration || 0) + buffer) * 60000;
       return !(newEnd <= bt || newStart >= be);
@@ -147,6 +172,8 @@ export function calculateSlotsForEmployee({
         date: dateStr,
         time: timeStr,
         employeeId: emp.id,
+        serviceDuration: duration,
+        tenant,
 
         // ✅ Phase 4.4 – Mitarbeiter-Farbe für UI
         employeeColor: emp.color || null,
@@ -165,6 +192,44 @@ export function calculateSlotsForEmployee({
   }
 
   return slots;
+}
+
+// =======================================================
+// 🔎 NÄCHSTEN FREIEN TERMIN FINDEN
+// =======================================================
+
+export async function findNextAvailableSlot({
+  employee,
+  duration,
+  tenant = "beauty_lounge",
+  startDate = new Date(),
+  maxDays = 30,
+}) {
+  if (!employee) return null;
+
+  const date = new Date(startDate);
+
+  for (let i = 0; i < maxDays; i++) {
+    const dateStr = date.toISOString().slice(0, 10);
+
+    const slots = calculateSlotsForEmployee({
+      emp: employee,
+      serviceDuration: duration,
+      date: dateStr,
+      tenant,
+    });
+
+    if (slots.length > 0) {
+      return {
+        date: dateStr,
+        slot: slots[0],
+      };
+    }
+
+    date.setDate(date.getDate() + 1);
+  }
+
+  return null;
 }
 
 // =======================================================

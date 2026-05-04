@@ -1,3 +1,5 @@
+"use client";
+
 export default function DemoPage() {
   return (
     <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
@@ -32,7 +34,7 @@ export default function DemoPage() {
         }}
       >
         <h1 style={{ fontSize: 44, fontWeight: 700, marginBottom: 12 }}>
-          Mehr Termine für dein Kosmetikstudio
+          Mehr Termine für dein Kosmetikstudio – automatisch
         </h1>
 
         <p
@@ -43,13 +45,13 @@ export default function DemoPage() {
             margin: "0 auto"
           }}
         >
-          GlowSuite AI beantwortet Kundenfragen, zeigt Preise und nimmt Termine
-          automatisch entgegen – inklusive Bestätigung und WhatsApp-Erinnerung.
+          Verliere keine Kundenanfragen mehr und buche Termine automatisch – rund um die Uhr.<br />
+          Reduziere No-Shows mit WhatsApp-Erinnerungen und spare täglich Zeit im Studio.
         </p>
       </div>
 
 
-      {/* SOCIAL PROOF */}
+      {/* SOCIAL PROOF / HOOK */}
       <div
         style={{
           textAlign: "center",
@@ -58,20 +60,8 @@ export default function DemoPage() {
           opacity: 0.8
         }}
       >
-        Beispielstudio: <b>Beauty Lounge Berlin</b> · ⭐ 4.9 Bewertung · 200+ Kunden
+        Teste jetzt live, wie dein Studio automatisch Termine & Kundenanfragen übernimmt 👇
       </div>
-
-
-      {/* DEMO HINWEIS */}
-      <p
-        style={{
-          textAlign: "center",
-          marginBottom: 20,
-          fontWeight: 500
-        }}
-      >
-        Teste den Beauty-Agent live 👇
-      </p>
 
 
       {/* DEMO WIDGET */}
@@ -104,9 +94,9 @@ export default function DemoPage() {
           fontWeight: 500
         }}
       >
-        <div>✓ automatische Terminbuchung rund um die Uhr</div>
-        <div>✓ WhatsApp Erinnerungen gegen No-Shows</div>
-        <div>✓ mehr Google Bewertungen durch Follow-ups</div>
+        <div>✓ nie wieder verpasste Kundenanfragen</div>
+        <div>✓ automatische Terminbuchung 24/7</div>
+        <div>✓ weniger No-Shows durch WhatsApp Erinnerungen</div>
       </div>
 
 
@@ -129,6 +119,13 @@ export default function DemoPage() {
         </p>
 
         <button
+          onClick={() => {
+            const text = encodeURIComponent(
+              "Ich habe die Demo getestet und möchte GlowSuite für mein Studio einrichten 🚀"
+            );
+
+            window.open(`https://wa.me/491777875051?text=${text}`, "_blank");
+          }}
           style={{
             padding: "14px 36px",
             fontSize: 16,
@@ -141,9 +138,15 @@ export default function DemoPage() {
             boxShadow: "0 10px 25px rgba(0,0,0,0.15)"
           }}
         >
-          Kostenlose Demo anfordern
+          Jetzt kostenlose Demo starten
         </button>
       </div>
+
+
+      {/* AI HINWEIS */}
+      <p style={{ fontSize: 12, opacity: 0.6, textAlign: "center", marginTop: 30 }}>
+        Hinweis: Teile der Kommunikation erfolgen automatisiert durch einen KI-gestützten Assistenten.
+      </p>
 
     </main>
   );

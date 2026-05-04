@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>GlowSuite – Behandlungen</title>
+
+<link rel="stylesheet" href="/admin/admin.css?v=10.9-pro">
+<script src="https://unpkg.com/lucide@latest"></script>
+
+</head>
+
+<body class="services-page">
+
+<header class="app-header">
+
+  <div class="brand">
+    <img src="/img/logo-glowsuite.png">
+
+    <div>
+      <h1>GlowSuite AI – Behandlungen</h1>
+      <div class="small">Autonomous Salon OS</div>
+      <div class="small" id="dateToday"></div>
+    </div>
+  </div>
+
+  <button id="themeToggle" class="icon-btn">
+    <i data-lucide="sun-moon"></i>
+  </button>
+
+</header>
+
+
+<main class="container">
+
+<a class="btn-back" href="/admin.html">
+← Dashboard
+</a>
+
+
+<div class="card fade-in">
+
+<h2>Behandlungen</h2>
+<div class="muted">Verwalte deine Services und Kategorien</div>
+
+<div class="service-tabs" id="categoryTabs"></div>
+
+<form id="serviceForm">
+
+<input type="text" id="name" placeholder="Service Name" required>
+
+<!-- 🔥 HYBRID KATEGORIE INPUT -->
+<input list="categoryList" id="category" placeholder="Kategorie (z.B. Haare)">
+<datalist id="categoryList"></datalist>
+
+<input type="number" id="price" placeholder="Preis €" step="0.01" min="0">
+<input type="number" id="duration" placeholder="Dauer Minuten">
+
+<textarea id="description" placeholder="Beschreibung"></textarea>
+
+<input type="text" id="aliases" placeholder="Synonyme (z.B. facial, skin care, auffüllen)">
+
+<input type="file" id="image">
+
+<button type="submit">+ Behandlung hinzufügen</button>
+
+</form>
+
+</div>
+
+
+<div class="card fade-in">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Bild</th>
+<th>Kategorie</th>
+<th>Name</th>
+<th>Dauer</th>
+<th>Preis</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody id="serviceList"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</main>
+
+
+<script>
+
+/* ---------- INIT ---------- */
+document.addEventListener("DOMContentLoaded", async ()=>{
+
+  try {
+
+    // 🔥 Icons sicher laden
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+
+    // 🔥 Datum setzen
+    const dateEl = document.getElementById("dateToday");
+    if(dateEl){
+      dateEl.textContent = new Date().toLocaleDateString("de-DE",{
+        weekday:"long",
+        day:"2-digit",
+        month:"long",
+        year:"numeric"
+      });
+    }
+
+    initTheme();
+
+    // 🔥 Kategorien dürfen NICHT crashen
+    try {
+      await loadCategorySuggestions();
+    } catch(e){
+      console.log("Kategorie Fehler ignoriert");
+    }
+
+    loadServices();
+
+  } catch (err) {
+    console.error("INIT CRASH:", err);
+  }
+
+});
+
+
+/* ---------- STATE ---------- */
+window.currentServices = [];
+
+
+/* ---------- THEME ---------- */
+function initTheme(){
+
+  const saved = localStorage.getItem("theme");
+  if(saved) document.documentElement.setAttribute("data-theme", saved);
+
+  document.getElementById("themeToggle").onclick = ()=>{
+    const root = document.documentElement;
+    const next = root.getAttribute("data-theme")==="dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+  };
+
+}
+
+
+/* ---------- API ---------- */
+const API="/api/services";
+let currentCategory="Alle";
+
+
+/* ---------- CATEGORY SUGGESTIONS ---------- */
+async function loadCategorySuggestions() {
+
+  const res = await fetch("/api/categories");
+
+  if (!res.ok) return;
+
+  const categories = await res.json();
+
+  const list = document.getElementById("categoryList");
+  list.innerHTML = "";
+
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    list.appendChild(option);
+  });
+
+}
+
+
+/* ---------- CATEGORY BADGE ---------- */
+function categoryBadge(cat){
+  if(!cat) return `<span class="category-badge">–</span>`;
+  return cat;
+}
+
+
+/* ---------- TABS ---------- */
+function renderCategoryTabs(services){
+
+  const container = document.getElementById("categoryTabs");
+  container.innerHTML = "";
+
+  const categories = ["Alle", ...new Set(
+    services.map(s => s.category).filter(Boolean)
+  )];
+
+  categories.forEach(cat => {
+
+    const btn = document.createElement("button");
+    btn.className = "tab";
+    if(cat === currentCategory) btn.classList.add("active");
+
+    btn.textContent = cat;
+
+    btn.onclick = () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      btn.classList.add("active");
+      currentCategory = cat;
+      loadServices();
+    };
+
+    container.appendChild(btn);
+
+  });
+
+}
+
+
+/* ---------- LOAD SERVICES ---------- */
+async function loadServices(){
+
+  try{
+
+    const res = await fetch(API);
+
+    if (!res.ok) {
+      console.log("API Fehler:", res.status);
+      return;
+    }
+
+    const data = await res.json();
+
+    let services = data.services || [];
+
+    services = services.filter(s => s && s.name);
+
+    window.currentServices = services;
+
+    renderCategoryTabs(services);
+
+    const list = document.getElementById("serviceList");
+    list.innerHTML="";
+
+    if(!services.length){
+      list.innerHTML=`<tr><td colspan="6" class="empty">Keine Services vorhanden</td></tr>`;
+      return;
+    }
+
+    services.forEach((s)=>{
+
+      if(currentCategory!=="Alle" && s.category!==currentCategory){
+        return;
+      }
+
+      const row=document.createElement("tr");
+
+      row.innerHTML=`
+        <td>
+          <img class="service-img" src="${s.image || '/assets/service-placeholder.png'}">
+        </td>
+
+        <td>${categoryBadge(s.category)}</td>
+
+        <td>${s.name}</td>
+
+        <td>${s.duration} min</td>
+
+        <td>${s.price} €</td>
+
+        <td>
+          <button class="danger" onclick="deleteService('${s.name}')">Löschen</button>
+        </td>
+      `;
+
+      list.appendChild(row);
+
+    });
+
+  }catch(e){
+    console.error("LOAD ERROR:", e);
+  }
+
+}
+
+
+/* ---------- DELETE ---------- */
+async function deleteService(name){
+  await fetch(API + "/" + encodeURIComponent(name), { method:"DELETE" });
+  loadServices();
+}
+
+
+/* ---------- SUBMIT ---------- */
+document.getElementById("serviceForm").addEventListener("submit", async e=>{
+
+  e.preventDefault();
+
+  const form = new FormData();
+
+  form.append("name", document.getElementById("name").value);
+  form.append("category", document.getElementById("category").value);
+  form.append("price", document.getElementById("price").value);
+  form.append("duration", document.getElementById("duration").value);
+  form.append("description", document.getElementById("description").value);
+  form.append("aliases", document.getElementById("aliases").value);
+
+  const image = document.getElementById("image").files[0];
+  if(image){
+    form.append("image", image);
+  }
+
+  await fetch(API, {
+    method:"POST",
+    body: form
+  });
+
+  document.getElementById("serviceForm").reset();
+
+  try {
+    await loadCategorySuggestions();
+  } catch(e){}
+
+  loadServices();
+
+});
+</script>
+</body>
+</html>

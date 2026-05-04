@@ -151,11 +151,16 @@
 
     /* Events */
     .fc-event {
-      border-radius: 10px !important;
-      padding: 3px 6px !important;
-      font-size:0.78rem !important;
+      border-radius: 8px !important;
+      padding: 2px 5px !important;
+      font-size: 0.72rem !important;
       font-weight: 500 !important;
-      border:none !important;
+      border: none !important;
+      margin-bottom: 2px !important;
+
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
     }
 
     /* ❌ Abgebrochene Termine */
@@ -176,20 +181,53 @@
     }
 
     /* ==========================================
-       📝 Event Details Box
+       ✨ WEEK / DAY VIEW FEINSCHLIFF
+    =========================================== */
+
+    .fc-timegrid-slot {
+      height: 42px !important;
+    }
+
+    .fc-timegrid-axis {
+      font-size: 0.9rem !important;
+      font-weight: 500 !important;
+    }
+
+    .fc-timegrid-slot-label {
+      color: var(--calendar-text) !important;
+    }
+
+    .fc-timegrid-event {
+      border-radius: 12px !important;
+      padding: 6px 8px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+    }
+
+    /* ==========================================
+       📝 Event Details Box – cleaner
     =========================================== */
 
     #eventDetails {
       margin-top: 16px;
-      padding: 14px;
-      border-radius: 14px;
+      padding: 18px;
+      border-radius: 18px;
       background: var(--calendar-cell);
-      display:none;
-      border: 1px solid rgba(255,255,255,0.06);
+      display: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+      max-width: 720px;
     }
 
-    #eventDetails h3 { margin:0 0 6px; font-size:1rem; }
-    #eventDetails .meta { font-size:0.85rem; opacity:.8; }
+    #eventDetails h3 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+    }
+
+    #eventDetails .meta {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      opacity: 0.9;
+    }
 
     /* ==========================================
        🧩 LEGENDE UNTER DEM KALENDER
@@ -382,18 +420,26 @@
 
   <!-- HEADER -->
   <header class="app-header">
-    <div class="brand">
-      <img id="brandLogo" src="/favicon.ico" alt="Logo" />
-      <div>
-        <h1 id="brandTitle">GlowSuite AI – Kalender</h1>
-        <div class="small" id="dateToday"></div>
-      </div>
+
+  <div class="brand">
+    <img id="brandLogo" src="/img/logo-glowsuite.png" alt="GlowSuite Logo" />
+
+    <div>
+      <h1 id="brandTitle">GlowSuite AI</h1>
+      <div class="small">Autonomous Salon OS</div>
+      <div class="small" id="dateToday"></div>
     </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;">
 
     <button id="themeToggle" class="icon-btn">
       <i data-lucide="sun-moon"></i>
     </button>
-  </header>
+
+  </div>
+
+</header>
 
   <!-- SIDEBAR -->
   <nav class="sidebar">
@@ -489,19 +535,24 @@
   <footer></footer>
 
   <script type="module" src="/admin/admin-calendar.js"></script>
-  <script>
-    lucide.createIcons();
-    document.getElementById('dateToday').textContent =
-      new Date().toLocaleDateString('de-DE',{
-        weekday:'long',
-        day:'2-digit',
-        month:'long',
-        year:'numeric'
-      });
-  </script>
 
-  <!-- 🔹 Side Edit Panel (hidden by default) -->
-  <div id="eventEditPanel"></div>
+<script>
+  // Lucide Icons laden
+  lucide.createIcons();
+
+  // Datum im Header anzeigen
+  document.getElementById('dateToday').textContent =
+    new Date().toLocaleDateString('de-DE',{
+      weekday:'long',
+      day:'2-digit',
+      month:'long',
+      year:'numeric'
+    });
+
+</script>
+
+<!-- 🔹 Side Edit Panel (hidden by default) -->
+<div id="eventEditPanel"></div>
 
 </body>
 </html>

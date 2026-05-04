@@ -77,26 +77,30 @@
 <body>
 
 <header class="app-header">
+
   <div class="brand">
-    <img id="brandLogo" src="/favicon.ico" alt="Logo" />
+    <img id="brandLogo" src="/img/logo-glowsuite.png" alt="GlowSuite Logo" />
+
     <div>
-      <h1 id="brandTitle">GlowSuite AI – Mitarbeiter</h1>
+      <h1 id="brandTitle">GlowSuite AI</h1>
+      <div class="small">Autonomous Salon OS</div>
       <div class="small" id="dateToday"></div>
     </div>
   </div>
 
-  <div class="header-actions">
-    <a class="link" href="/admin.html">
-      <i data-lucide="arrow-left"></i> Zurück
-    </a>
-    <button id="themeToggle" aria-label="Theme umschalten">
-      <i data-lucide="sun-moon"></i>
-    </button>
-  </div>
+  <button id="themeToggle" class="icon-btn">
+    <i data-lucide="sun-moon"></i>
+  </button>
+
 </header>
 
 <main class="container">
 
+  <a class="btn-back" href="/admin.html">
+    ← Dashboard
+  </a>
+
+  <section class="card">
   <section class="card fade-in">
     <h2><i data-lucide="users"></i> Mitarbeiterverwaltung</h2>
     <p class="muted small">Verwalte dein Team direkt im GlowSuite Dashboard</p>

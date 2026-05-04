@@ -6,6 +6,29 @@ import { createBookingPDF } from "./pdf.js";
 import fs from "fs";
 import path from "path";
 
+
+// =======================================================
+// GOOGLE CALENDAR LINK
+// =======================================================
+function createGoogleCalendarLink(appointment) {
+
+  const start = new Date(appointment.start_time)
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .split(".")[0] + "Z";
+
+  const end = new Date(appointment.end_time)
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .split(".")[0] + "Z";
+
+  const text = encodeURIComponent("Termin bei Studio");
+  const details = encodeURIComponent(appointment.notes || "");
+  const location = encodeURIComponent("Studio");
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${start}/${end}&details=${details}&location=${location}`;
+}
+
 // ---------- Helpers ----------
 function roundToQuarterHour(date) {
   const ms = 15 * 60 * 1000;

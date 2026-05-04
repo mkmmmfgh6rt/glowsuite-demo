@@ -12,6 +12,7 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import Stripe from "stripe";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
@@ -21,8 +22,13 @@ import schedule from "node-schedule";
 import twilio from "twilio";
 import cors from "cors";
 import crypto from "crypto";
+import { logEvent } from "./core/db.js";
+import sharp from "sharp";
+
 
 import {
+  isReviewSent,
+  markReviewSent,
   insertBooking,
   getAllBookings,
   deleteBooking,
@@ -36,9 +42,10 @@ import {
   deleteEmployee,
 } from "./core/db.js";
 
+import { createBooking } from "./core/booking.js";
+
 import { createAppointmentPDF } from "./core/pdf.js";
 import { authMiddleware } from "./core/auth.js";
-import { startWhatsAppBot } from "./bots/whatsapp-bot.js";
 import { loadTenantConfig } from "./core/utils.js";
 import auraRoutes from "./aura/routes/auraRoutes.js"; 
 import calendarRoutes from "./aura/routes/calendarRoutes.js";
@@ -46,6 +53,17 @@ import { mirrorEmployeesToSupabase } from "./core/mirrorEmployees.js";
 import { mirrorSingleEmployeeToSupabase } from "./core/mirrorSingleEmployeeToSupabase.js";
 import { mirrorEmployeeWorkingHoursToSupabase } from "./core/mirrorEmployeeWorkingHoursToSupabase.js";
 import { updateAuraMarketingStatus } from "./core/db.js";
+import { addVisit } from "./Datein/src/loyalty/loyaltyEngine.js";
+import loyaltyApi from "./Datein/src/loyalty/loyaltyApi.js";
+import { runRebookingCheck } from "./Datein/src/rebooking/rebookingEngine.js";
+import { runAuraDailyMonitor } from "./core/auraDailyMonitorService.js";
+import { runAuraBusinessOptimizer } from "./core/auraBusinessOptimizerService.js";
+import { generateAuraRecommendations } from "./core/auraRecommendationEngine.js";
+import { executeAuraCampaign } from "./core/auraCampaignExecutor.js";
+
+import serviceMatchRoute from "./aura/routes/serviceMatchRoute.js";
+import beautyChatRoute from "./aura/routes/beautyChatRoute.js";
+import aiBookingRoute from "./aura/routes/aiBookingRoute.js";
 
 import {
   calculateSlotsForEmployee,
@@ -55,12 +73,216 @@ import {
 
 dotenv.config();
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// 🔥 TRACKING: fertige Buchungen (für WhatsApp Stop)
+const completedBookings = new Set();
+
 // =======================================================
 // ⚙️ INIT
 // =======================================================
 const app = express();
-app.use(express.json({ limit: "2mb" }));
+app.use("/api", loyaltyApi);
+
+const upload = multer({
+  dest: "public/uploads/"
+});
+
+// ❗ WICHTIG:
+// express.json() wird später geladen,
+// damit Stripe Webhooks den RAW Body bekommen
+
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/uploads", express.static("public/uploads"));
+
+// =======================================================
+// 🔥 SERVICES API (ZENTRALE QUELLE)
+// =======================================================
+
+// 🔹 Service erstellen
+app.post("/api/services", upload.single("image"), async (req, res) => {
+  try {
+    let { name, category, price, duration, description, aliases } = req.body;
+
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ error: "Name fehlt" });
+    }
+
+    name = name.trim();
+    category = category ? category.trim() : "Allgemein";
+
+    let imagePath = "";
+
+    if (req.file) {
+      const filename = "service_" + Date.now() + ".jpg";
+      const outputPath = "public/uploads/" + filename;
+
+      await sharp(req.file.path)
+        .resize(300, 300)
+        .jpeg({ quality: 80 })
+        .toFile(outputPath);
+
+      fs.unlinkSync(req.file.path);
+      imagePath = "/uploads/" + filename;
+    }
+
+    const newService = {
+      name,
+      category,
+      price: Number(price) || 0,
+      duration: Number(duration) || 0,
+      description: description || "",
+
+      // 🔥 Neu: optionale Aliases pro Studio / Service
+      aliases: aliases
+        ? String(aliases)
+            .split(",")
+            .map(a => a.trim())
+            .filter(Boolean)
+        : [],
+
+      image: imagePath
+    };
+
+    const filePath = "./Datein/config/kunden/beauty_lounge.json";
+    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    // 🔥 Safety
+    if (!Array.isArray(data.categories)) {
+      data.categories = [];
+    }
+
+    if (!Array.isArray(data.services)) {
+      data.services = [];
+    }
+
+    // 🔥 Kategorie speichern ohne Duplikate
+    if (category && !data.categories.includes(category)) {
+      data.categories.push(category);
+    }
+
+    data.services.push(newService);
+
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+    return res.json({ success: true });
+
+  } catch (err) {
+    console.error("❌ Fehler beim Speichern:", err);
+    return res.status(500).json({ error: "Speichern fehlgeschlagen" });
+  }
+});
+
+// 🔹 Service löschen
+app.delete("/api/services/:name", (req, res) => {
+  try {
+    const name = req.params.name;
+
+    const filePath = "./Datein/config/kunden/beauty_lounge.json";
+    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    data.services = data.services.filter(s => s.name !== name);
+
+    // 🔥 Kategorien sauber halten
+    const usedCategories = new Set(
+      data.services.map(s => s.category).filter(Boolean)
+    );
+
+    data.categories = (data.categories || []).filter(cat =>
+      usedCategories.has(cat)
+    );
+
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("❌ Fehler beim Löschen:", err);
+    res.status(500).json({ error: "Löschen fehlgeschlagen" });
+  }
+});
+
+
+// 🔹 Kategorien laden
+app.get("/api/categories", (req, res) => {
+  try {
+    const filePath = "./Datein/config/kunden/beauty_lounge.json";
+    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    res.json(data.categories || []);
+
+  } catch (err) {
+    console.error("❌ Fehler beim Laden der Kategorien:", err);
+    res.status(500).json({ error: "Fehler beim Laden" });
+  }
+});
+
+
+// 🔹 Service bearbeiten
+app.put("/api/services/:name", upload.single("image"), async (req, res) => {
+  try {
+    const oldName = req.params.name;
+
+    let { name, category, price, duration, description } = req.body;
+
+    name = name ? name.trim() : null;
+    category = category ? category.trim() : null;
+
+    const filePath = "./Datein/config/kunden/beauty_lounge.json";
+    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    if (!data.categories) {
+      data.categories = [];
+    }
+
+    let imagePath = null;
+
+    if (req.file) {
+      const filename = "service_" + Date.now() + ".jpg";
+      const outputPath = "public/uploads/" + filename;
+
+      await sharp(req.file.path)
+        .resize(300, 300)
+        .jpeg({ quality: 80 })
+        .toFile(outputPath);
+
+      fs.unlinkSync(req.file.path);
+      imagePath = "/uploads/" + filename;
+    }
+
+    const service = data.services.find(s => s.name === oldName);
+
+    if (!service) {
+      return res.status(404).json({ error: "Service nicht gefunden" });
+    }
+
+    // 🔥 UPDATE
+    if (name) service.name = name;
+    if (category) service.category = category;
+    if (price) service.price = Number(price);
+    if (duration) service.duration = Number(duration);
+    if (description !== undefined) service.description = description;
+
+    if (imagePath) {
+      service.image = imagePath;
+    }
+
+    // 🔥 Kategorie speichern
+    if (service.category && !data.categories.includes(service.category)) {
+      data.categories.push(service.category);
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("❌ Update Fehler:", err);
+    res.status(500).json({ error: "Update fehlgeschlagen" });
+  }
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -115,6 +337,75 @@ if (ENABLE_TWILIO && TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
 } else {
   log("ℹ️ Twilio WhatsApp DEAKTIVIERT");
 }
+
+
+// =======================================================
+// 🔁 WHATSAPP REAKTIVIERUNG (Abgebrochene Buchung)
+// =======================================================
+app.post("/api/abandoned-booking", async (req, res) => {
+  try {
+
+    const { name, phone, service, date, time } = req.body;
+
+    // ❌ keine Nummer
+    if (!phone) {
+      return res.json({ success: false });
+    }
+
+    // 🛑 STOP: Kunde hat bereits gebucht (SOFORT)
+    if (completedBookings.has(phone)) {
+      console.log("🛑 Kunde hat bereits gebucht:", phone);
+      return res.json({ success: false });
+    }
+
+    console.log("⚠️ Abgebrochene Buchung erkannt:", name, phone);
+
+    // 🔥 Reaktivierung senden (nach Delay)
+    setTimeout(async () => {
+
+      // 🛑 STOP wenn Kunde inzwischen gebucht hat
+      if (completedBookings.has(phone)) {
+        console.log("🛑 Kunde hat bereits gebucht → KEINE WhatsApp:", phone);
+        return;
+      }
+
+      try {
+
+        // 🔥 HIGH CONVERSION MESSAGE
+        const msg =
+          `Hey ${name || ""} 👋\n\n` +
+
+          `du warst gerade kurz davor deinen Termin zu sichern ✨\n\n` +
+
+          (service ? `💅 *${service}*\n` : "") +
+          (date ? `📅 ${date}\n` : "") +
+          (time ? `⏰ ${time}\n` : "") +
+
+          `\nIch habe dir den Termin kurz freigehalten.\n\n` +
+
+          `👉 Hier kannst du ihn direkt abschließen:\n` +
+          `${BASE}\n\n` +
+
+          `Sichere ihn dir, bevor er vergeben ist 💛`;
+
+        await sendWhatsAppReminder(phone, msg);
+
+        console.log("📲 Reaktivierung gesendet an:", phone);
+
+      } catch (err) {
+        console.error("❌ Reaktivierung Fehler:", err.message);
+      }
+
+    }, 1 * 60 * 1000); // ⏱️ aktuell 1 Minute (Testmodus)
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("❌ abandoned-booking error:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
 
 // =======================================================
 // 🔧 HELPERS
@@ -180,6 +471,23 @@ function waTextReminder2h({ name, studioName, service, iso }) {
     `💅 ${service}\n⏰ ${time}\n\n` +
     `Bis gleich ✨`
   );
+}
+
+function waTextReviewRequest({ name, studioName, reviewUrl }) {
+  return `Hallo ${name} 😊
+
+vielen Dank für deinen Besuch bei *${studioName}*.
+
+Wir hoffen, du bist mit deinem Termin zufrieden und fühlst dich wohl mit dem Ergebnis ✨
+
+Falls du kurz 30 Sekunden Zeit hast, würden wir uns riesig über eine Bewertung freuen:
+
+⭐ ${reviewUrl}
+
+Dein Feedback hilft uns sehr und unterstützt unser Studio.
+
+Vielen Dank und bis bald 💛
+${studioName}`;
 }
 
 // =======================================================
@@ -273,6 +581,42 @@ function scheduleWhatsAppReminders(booking) {
   }
 }
 
+function scheduleReviewReminder(booking, reviewUrl) {
+  if (!booking?.phone) return;
+
+  // ⭐ Schutz: Bewertung schon gesendet?
+  if (isReviewSent(booking.id)) {
+    console.log("⭐ Review bereits gesendet:", booking.id);
+    return;
+  }
+
+  const bookingTime = new Date(booking.dateTime).getTime();
+  const delay = bookingTime + (3 * 60 * 60 * 1000) - Date.now();
+  console.log("⭐ Review Reminder geplant:", delay, "ms");
+
+  if (delay <= 0) return;
+
+  setTimeout(async () => {
+    try {
+      const text = waTextReviewRequest({
+        name: booking.name,
+        studioName: booking.tenant || "Ihr Studio",
+        reviewUrl
+      });
+
+      await sendWhatsAppReminder(booking.phone, text);
+
+      // ⭐ Nach Versand speichern
+      markReviewSent(booking.id);
+
+      console.log("⭐ Review Reminder gesendet:", booking.id);
+
+    } catch (err) {
+      console.error("❌ Review Reminder Fehler:", err.message);
+    }
+  }, delay);
+}
+
 // =======================================================
 // 🧪 TEST ENDPOINT
 // =======================================================
@@ -288,6 +632,1574 @@ app.get("/api/whatsapp/test", async (req, res) => {
   await sendWhatsAppReminder(to, "✅ WhatsApp Test erfolgreich");
   res.json({ success: true });
 });
+
+
+// =======================================================
+// 📥 WHATSAPP INCOMING
+// =======================================================
+
+const sessions = {};
+const abandonedWhatsappSessions = new Map();
+
+// ---- Helpers ----
+function getTenantServices(tenant = TENANT_DEFAULT) {
+  const cfg = loadTenantConfig(tenant);
+  return Array.isArray(cfg?.services) ? cfg.services : [];
+}
+
+
+function groupServicesByCategory(services = []) {
+  const grouped = {};
+
+  for (const service of services) {
+    const category = service.category || "Allgemein";
+
+    if (!grouped[category]) {
+      grouped[category] = [];
+    }
+
+    grouped[category].push(service);
+  }
+
+  return grouped;
+}
+
+// 🔥 FEHLTEN → JETZT DRIN
+function buildCategoryMenu(services) {
+  if (!services.length) {
+    return "Aktuell sind keine Behandlungen verfügbar.";
+  }
+
+  const grouped = groupServicesByCategory(services);
+  const categories = Object.keys(grouped);
+
+  let message = "Welche Kategorie möchtest du buchen?\n\n";
+
+  categories.forEach((category, i) => {
+    message += `${i + 1}️⃣ ${category}\n`;
+  });
+
+  return message;
+}
+
+// 🔥 FEHLTEN → JETZT DRIN
+function buildServiceMenu(services, categoryName = "Behandlung") {
+  if (!services.length) {
+    return "Aktuell sind keine Behandlungen verfügbar.";
+  }
+
+  const lines = services.map((s, i) => `${i + 1}️⃣ ${s.name}`);
+  return `Welche ${categoryName}-Behandlung möchtest du?\n\n${lines.join("\n")}`;
+}
+
+// =======================================================
+// 🔥 Deutsches Datum sicher parsen (FIX: ohne Jahr + Zukunft)
+// =======================================================
+function parseGermanDate(input) {
+  if (!input) return null;
+
+  const now = new Date();
+  const str = String(input).trim();
+
+  // ✅ erkennt:
+  // 24.04
+  // 24.4
+  // 24.04.2026
+  const match = str.match(/\b(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?\b/);
+
+  if (!match) return null;
+
+  let day = parseInt(match[1], 10);
+  let month = parseInt(match[2], 10) - 1; // JS Monate 0-11
+
+  // 👉 Jahr bestimmen
+  let year = match[3] ? parseInt(match[3], 10) : now.getFullYear();
+
+  let date = new Date(year, month, day);
+
+  // 🔥 WICHTIG:
+  // Wenn KEIN Jahr angegeben wurde und Datum in der Vergangenheit liegt → nächstes Jahr
+  if (!match[3] && date < now) {
+    date.setFullYear(year + 1);
+  }
+
+  // 👉 Format YYYY-MM-DD
+  const isoDay = String(date.getDate()).padStart(2, "0");
+  const isoMonth = String(date.getMonth() + 1).padStart(2, "0");
+  const isoYear = date.getFullYear();
+
+  return `${isoYear}-${isoMonth}-${isoDay}`;
+}
+
+
+function parseBookingIntent(message, services, employees) {
+  const normalize = (str) =>
+    String(str || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+  const levenshtein = (a, b) => {
+    a = String(a || "");
+    b = String(b || "");
+
+    const matrix = Array.from({ length: b.length + 1 }, () =>
+      Array(a.length + 1).fill(0)
+    );
+
+    for (let i = 0; i <= a.length; i++) {
+      matrix[0][i] = i;
+    }
+
+    for (let j = 0; j <= b.length; j++) {
+      matrix[j][0] = j;
+    }
+
+    for (let j = 1; j <= b.length; j++) {
+      for (let i = 1; i <= a.length; i++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1,
+          matrix[j - 1][i] + 1,
+          matrix[j - 1][i - 1] + cost
+        );
+      }
+    }
+
+    return matrix[b.length][a.length];
+  };
+
+  const fuzzyMatchService = (inputMessage, serviceList = []) => {
+    const cleanMsg = normalize(inputMessage);
+
+    let bestMatch = null;
+    let bestScore = 999;
+
+    for (const service of serviceList) {
+      const serviceName = normalize(service.name);
+
+      // 🔥 Aliases laden (optional)
+      const aliases = Array.isArray(service.aliases)
+        ? service.aliases.map(a => normalize(a))
+        : [];
+
+      // ===================================================
+      // 🔥 Exakter Service Name
+      // ===================================================
+      if (cleanMsg.includes(serviceName)) {
+        return service;
+      }
+
+      // ===================================================
+      // 🔥 Exakte Aliases
+      // ===================================================
+      for (const alias of aliases) {
+        if (cleanMsg.includes(alias)) {
+          return service;
+        }
+      }
+
+      const words = cleanMsg.split(/\s+/);
+
+      // ===================================================
+      // 🔥 Fuzzy auf Service Name
+      // ===================================================
+      for (const word of words) {
+        const score = levenshtein(word, serviceName);
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestMatch = service;
+        }
+      }
+
+      // ===================================================
+      // 🔥 Fuzzy auf Aliases
+      // ===================================================
+      for (const alias of aliases) {
+        for (const word of words) {
+          const score = levenshtein(word, alias);
+
+          if (score < bestScore) {
+            bestScore = score;
+            bestMatch = service;
+          }
+        }
+      }
+    }
+
+    // 🔥 nur sichere Treffer
+    if (bestMatch && bestScore <= 3) {
+      return bestMatch;
+    }
+
+    return null;
+  };
+
+  const msg = normalize(message);
+
+  const result = {
+    service: null,
+    category: null,
+    employee: null,
+    date: null,
+    time: null
+  };
+
+  // =======================================================
+  // 🔥 Service erkennen (EXAKT + FUZZY)
+  // =======================================================
+  const fuzzyService = fuzzyMatchService(message, services);
+
+  if (fuzzyService) {
+    result.service = fuzzyService;
+  }
+
+  // =======================================================
+  // 🔥 Kategorie erkennen (sauber: Kategorie ≠ Service)
+  // =======================================================
+if (!result.service) {
+  const categories = [...new Set(
+    services.map(s => s.category).filter(Boolean)
+  )];
+
+
+  // ===================================================
+  // ✅ Nur echte Service Namen / Aliases direkt matchen
+  // ===================================================
+  for (const service of services) {
+    const serviceName = normalize(service.name);
+
+    if (msg.includes(serviceName)) {
+      result.service = service;
+      result.category = service.category; // 🔥 DAS IST DER FIX
+      break;
+    }
+
+    const aliases = Array.isArray(service.aliases)
+      ? service.aliases.map(a => normalize(a))
+      : [];
+
+    const aliasMatched = aliases.some(alias =>
+      msg.includes(alias)
+    );
+
+    if (aliasMatched) {
+      result.service = service;
+      result.category = service.category; // 🔥 AUCH HIER
+      break;
+    }
+  }
+
+  // ===================================================
+  // ✅ Nur Kategorie erkennen, NICHT Service erzwingen
+  // ===================================================
+  if (!result.service) {
+    for (const category of categories) {
+      const cat = normalize(category);
+
+      const matchesSynonym = false;
+
+      if (
+        msg.includes(cat) ||
+        msg.includes(cat.replace("ä", "a")) ||
+        msg.includes(cat.replace("ö", "o")) ||
+        msg.includes(cat.replace("ü", "u")) ||
+        matchesSynonym
+      ) {
+        result.category = category;
+        break;
+      }
+    }
+  }
+}
+
+  // =======================================================
+  // 🔥 Mitarbeiter erkennen
+  // =======================================================
+  for (const e of employees) {
+    if (msg.includes(normalize(e.name))) {
+      result.employee = e;
+      break;
+    }
+  }
+
+  // =======================================================
+  // 🔥 Datum: heute / morgen / übermorgen
+  // =======================================================
+  if (msg.includes("heute")) {
+    result.date = new Date().toISOString().slice(0, 10);
+  }
+
+  if (msg.includes("morgen")) {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    result.date = d.toISOString().slice(0, 10);
+  }
+
+  if (msg.includes("ubermorgen") || msg.includes("übermorgen")) {
+    const d = new Date();
+    d.setDate(d.getDate() + 2);
+    result.date = d.toISOString().slice(0, 10);
+  }
+
+  // =======================================================
+  // 🔥 Wochentage erkennen
+  // =======================================================
+  const weekdays = {
+    montag: 1,
+    dienstag: 2,
+    mittwoch: 3,
+    donnerstag: 4,
+    freitag: 5,
+    samstag: 6,
+    sonntag: 0
+  };
+
+  for (const [dayName, targetDay] of Object.entries(weekdays)) {
+    if (msg.includes(dayName)) {
+      const today = new Date();
+      const currentDay = today.getDay();
+
+      let diff = targetDay - currentDay;
+
+      if (diff <= 0) {
+        diff += 7;
+      }
+
+      today.setDate(today.getDate() + diff);
+      result.date = today.toISOString().slice(0, 10);
+
+      break;
+    }
+  }
+
+  // =======================================================
+  // 🔥 Deutsches Datum erkennen
+  // =======================================================
+  const germanDateMatch = msg.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b/);
+
+  if (germanDateMatch) {
+    const day = germanDateMatch[1].padStart(2, "0");
+    const month = germanDateMatch[2].padStart(2, "0");
+    const year = germanDateMatch[3];
+
+    result.date = `${year}-${month}-${day}`;
+  }
+
+ 
+  // =======================================================
+  // 🔥 Uhrzeit erkennen (sauber, kein Datum-Bug)
+  // =======================================================
+  const timeMatch =
+  msg.match(/\b(\d{1,2}):(\d{2})\b/) ||
+  msg.match(/\b(\d{1,2})\s*uhr\b/i) ||
+  msg.match(/\b(\d{1,2})\b/);
+
+if (timeMatch) {
+  const hour = String(timeMatch[1]).padStart(2, "0");
+  const minute = timeMatch[2]
+    ? String(timeMatch[2]).padStart(2, "0")
+    : "00";
+
+  result.time = `${hour}:${minute}`;
+}
+
+  return result;
+}
+
+
+
+app.post("/api/whatsapp/incoming", async (req, res) => {
+  try {
+    const rawMessage = req.body.Body || "";
+    const message = rawMessage.toLowerCase().trim();
+    const from = req.body.From;
+
+    if (!from) {
+      return res.sendStatus(200);
+    }
+
+    // 🔥 RESET LOGIK (NEU)
+    const msg = message;
+
+    if (
+      msg === "hey" ||
+      msg === "hallo" ||
+      msg === "hi" ||
+      msg === "start" ||
+      msg === "menu"
+    ) {
+      sessions[from] = {
+        step: "menu"
+      };
+
+      const reply =
+        "Hallo 👋\n\n" +
+        "Wie kann ich dir helfen?\n\n" +
+        "1️⃣ Termin buchen\n" +
+        "2️⃣ Preise\n" +
+        "3️⃣ Öffnungszeiten";
+
+      await twilioClient.messages.create({
+        from: TWILIO_WHATSAPP_FROM,
+        to: from,
+        body: reply,
+      });
+
+      return res.sendStatus(200);
+    }
+
+    // 🔁 SESSION INIT
+    if (!sessions[from]) {
+      sessions[from] = { step: "menu" };
+    }
+
+    const session = sessions[from];
+    let reply = "";
+  
+    // =======================================================
+    // 🔥 Abbruch-Tracking NUR starten (nicht resetten)
+    // =======================================================
+  if (session.step !== "menu") {
+    abandonedWhatsappSessions.set(from, {
+      phone: from.replace("whatsapp:", ""),
+      step: session.step,
+      service: session.service || null,
+      date: session.selectedDate || null,
+      time: session.selectedSlot?.time || null,
+      lastActivity: Date.now()
+    });
+  }
+
+    // =======================================================
+    // 🔥 MENU START / AI FLOW
+    // =======================================================
+    if (session.step === "menu") {
+
+      const services = getTenantServices(TENANT_DEFAULT);
+      const employees = getAllEmployees(TENANT_DEFAULT) || [];
+
+      const ai = parseBookingIntent(message, services, employees);
+
+      // =======================================================
+      // 🔥 Kategorie erkannt → direkt Service-Auswahl
+      // =======================================================
+      if (ai.category && !ai.service) {
+        const grouped = groupServicesByCategory(services);
+
+        session.services = services;
+        session.groupedServices = grouped;
+        session.category = ai.category;
+        session.categoryServices = grouped[ai.category] || [];
+        session.step = "service";
+
+        reply = buildServiceMenu(session.categoryServices, ai.category);
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: from,
+          body: reply,
+        });
+
+        return res.sendStatus(200);
+      }
+
+      // =======================================================
+      // 🔥 Service erkannt → Schnellflow starten
+      // =======================================================
+      if (ai.service) {
+
+        session.service = ai.service.name;
+        session.duration = Number(ai.service.duration || 60);
+        session.aiFlow = true;
+
+        if (ai.employee) {
+          session.employee = ai.employee;
+          session.employee_id = ai.employee.id;
+        }
+
+        if (ai.date) {
+          session.selectedDate = ai.date;
+        }
+
+        if (ai.time) {
+          session.aiTime = ai.time;
+        }
+
+        const serviceKey = (session.service || "").toLowerCase().trim();
+        const cfg = loadTenantConfig(TENANT_DEFAULT);
+
+        let upsell = (cfg.upsells || {})[serviceKey];
+
+        if (!upsell && cfg.defaultUpsells) {
+          upsell = cfg.defaultUpsells[
+            Math.floor(Math.random() * cfg.defaultUpsells.length)
+          ];
+        }
+
+
+        // 🔥 DEBUG
+        console.log("SERVICE:", session.service);
+        console.log("KEY:", serviceKey);
+        console.log("UPSELL:", upsell);
+
+
+        // =======================================================
+        // 🔥 Upsell zuerst
+        // =======================================================
+        if (upsell && !session.upsellDone) {
+
+        session.upsell = upsell;
+        session.step = "upsell_offer";
+        session.upsellDone = true;
+
+      reply =
+        `✨ Empfehlung\n\n` +
+        `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+        `${upsell}\n\n` +
+        `👉 spart Zeit & sieht gepflegter aus\n\n` +
+        `Möchtest du das dazu?\n\n` +
+        `1️⃣ Ja hinzufügen\n` +
+        `2️⃣ Nein weiter`;
+
+
+          await twilioClient.messages.create({
+            from: TWILIO_WHATSAPP_FROM,
+            to: from,
+            body: reply,
+          });
+
+          return res.sendStatus(200);
+        }
+
+        // =======================================================
+        // 🔥 Mitarbeiter fehlt
+        // =======================================================
+        if (!session.employee) {
+
+          if (!employees.length) {
+            reply = "Aktuell sind keine Mitarbeiter verfügbar.";
+            session.step = "menu";
+          } else {
+            session.employees = employees;
+            session.step = "employee_pick";
+
+            const employeeLines = employees
+              .map((e, i) => `${i + 1}️⃣ ${e.name}`)
+              .join("\n");
+
+            reply =
+              `Super 👍 ${session.service}\n\n` +
+              `Welcher Mitarbeiter?\n\n` +
+              employeeLines;
+          }
+
+          await twilioClient.messages.create({
+            from: TWILIO_WHATSAPP_FROM,
+            to: from,
+            body: reply,
+          });
+
+          return res.sendStatus(200);
+        }
+
+        // =======================================================
+        // 🔥 Datum fehlt
+        // =======================================================
+        if (!session.selectedDate) {
+          session.step = "date_pick";
+
+          reply =
+            "Bitte wähle ein Datum:\n\n" +
+            "1️⃣ Heute\n" +
+            "2️⃣ Morgen\n" +
+            "3️⃣ Übermorgen\n\n" +
+            "oder schreibe ein Datum:\n" +
+            "z.B. 15.03.2026";
+
+          await twilioClient.messages.create({
+            from: TWILIO_WHATSAPP_FROM,
+            to: from,
+            body: reply,
+          });
+
+          return res.sendStatus(200);
+        }
+
+        // =======================================================
+        // 🔥 Alles erkannt → direkt Slot prüfen
+        // =======================================================
+        const slots = calculateSlotsForEmployee({
+          emp: session.employee,
+          serviceDuration: session.duration,
+          date: session.selectedDate,
+          tenant: TENANT_DEFAULT,
+        });
+
+        if (!slots.length) {
+          reply = "Leider sind an diesem Tag keine Termine frei.";
+          session.step = "menu";
+
+          await twilioClient.messages.create({
+            from: TWILIO_WHATSAPP_FROM,
+            to: from,
+            body: reply,
+          });
+
+          return res.sendStatus(200);
+        }
+
+        let matchedSlot = null;
+
+        if (session.aiTime) {
+           // ✅ exakte Zeit
+           matchedSlot = slots.find(s => s.time === session.aiTime);
+
+           // ✅ fallback → gleiche Stunde
+           if (!matchedSlot) {
+            const hour = session.aiTime.split(":")[0].padStart(2, "0");
+
+            matchedSlot = slots.find(s =>
+            s.time.startsWith(hour)
+          );
+        }
+     }
+       
+      if (matchedSlot) {
+        session.selectedSlot = matchedSlot;
+
+        const serviceKey = (session.service || "").toLowerCase().trim();
+        const cfg = loadTenantConfig(TENANT_DEFAULT);
+
+        let upsell = (cfg.upsells || {})[serviceKey];
+
+        if (!upsell && cfg.defaultUpsells) {
+          upsell = cfg.defaultUpsells[
+            Math.floor(Math.random() * cfg.defaultUpsells.length)
+          ];
+        }
+
+        if (upsell && !session.upsellDone) {
+
+          session.upsell = upsell;
+          session.upsellDone = true;
+          session.step = "upsell_offer";
+
+        reply =
+          `✨ Empfehlung\n\n` +
+          `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+          `${upsell}\n\n` +
+          `👉 spart Zeit & sieht gepflegter aus\n\n` +
+          `Möchtest du das dazu?\n\n` +
+          `1️⃣ Ja hinzufügen\n` +
+          `2️⃣ Nein weiter`;
+
+        } else {
+
+         session.step = "ask_name";
+
+        reply =
+          `Perfekt 👌\n\n` +
+          `${session.service}\n` +
+          `${session.selectedDate} um ${matchedSlot.time}\n\n` +
+          `Wie heißt du?`;
+        }
+      
+
+        } else {
+          session.slots = slots.slice(0, 5);
+          session.step = "slot_pick";
+
+          const slotLines = session.slots
+            .map((s, i) => `${i + 1}️⃣ ${s.time}`)
+            .join("\n");
+
+          reply =
+            `📅 ${session.selectedDate}\n\n` +
+            `Diese Uhrzeiten sind frei:\n\n${slotLines}`;
+        }
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: from,
+          body: reply,
+        });
+
+        return res.sendStatus(200);
+      }
+
+      // =======================================================
+      // 🔥 Normales Menü
+      // =======================================================
+      reply =
+        "Hallo und willkommen bei GlowSuite.\n\n" +
+        "Wie kann ich dir helfen?\n\n" +
+        "1️⃣ Termin buchen\n" +
+        "2️⃣ Preise\n" +
+        "3️⃣ Öffnungszeiten";
+
+      
+
+      // =======================================================
+      // 🔥 NORMALER ZAHLEN FLOW (BLEIBT WIE ER IST)
+      // =======================================================
+      if (message === "1" || message.includes("termin")) {
+        const grouped = groupServicesByCategory(services);
+        const categories = Object.keys(grouped);
+
+        session.services = services;
+        session.groupedServices = grouped;
+        session.categories = categories;
+
+        let matchedCategory = categories.find(c =>
+          message.includes(c.toLowerCase())
+        );
+
+        if (matchedCategory) {
+          session.category = matchedCategory;
+          session.categoryServices = grouped[matchedCategory];
+          session.step = "service";
+
+          reply = buildServiceMenu(session.categoryServices, matchedCategory);
+        } else {
+          session.step = "category_pick";
+          reply = buildCategoryMenu(services);
+        }
+
+      } else if (message === "2" || message.includes("preis")) {
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: from,
+          body: "Hier ist unsere aktuelle Preisliste:",
+          mediaUrl: [`${BASE}/preisliste/current`],
+        });
+
+        return res.sendStatus(200);
+
+      } else if (message === "3" || message.includes("öff")) {
+
+        reply =
+          "Unsere Öffnungszeiten\n\n" +
+          "Montag – Freitag\n09:00 – 18:00\n\n" +
+          "Samstag\n09:00 – 14:00\n\n" +
+          "1️⃣ Termin buchen";
+
+      } else {
+
+        reply =
+          "Hallo und willkommen bei GlowSuite.\n\n" +
+          "Wie kann ich dir helfen?\n\n" +
+          "1️⃣ Termin buchen\n" +
+          "2️⃣ Preise\n" +
+          "3️⃣ Öffnungszeiten";
+      }
+    }
+
+    else if (session.step === "category_pick") {
+      const categories = session.categories || [];
+
+      let selectedCategory = categories[Number(message) - 1];
+
+      if (!selectedCategory) {
+        selectedCategory = categories.find(c =>
+          c.toLowerCase().includes(message)
+        );
+      }
+
+      if (!selectedCategory) {
+        reply = buildCategoryMenu(session.services || []);
+      } else {
+        session.category = selectedCategory;
+        session.categoryServices = session.groupedServices?.[selectedCategory] || [];
+        session.step = "service";
+
+        reply = buildServiceMenu(session.categoryServices, selectedCategory);
+      }
+    }
+
+    else if (session.step === "service") {
+      const services = session.categoryServices || [];
+
+      let selected = services[Number(message) - 1];
+
+      if (!selected) {
+        selected = services.find(s =>
+          s.name.toLowerCase().includes(message)
+        );
+      }
+
+      if (!selected) {
+        reply = buildServiceMenu(services, session.category || "Behandlung");
+      } else {
+        session.service = selected.name;
+        session.duration = Number(selected.duration || 60);
+        session.upsell = null;
+        session.upsellSelected = null;
+
+        const serviceKey = (session.service || "").toLowerCase().trim();
+        const cfg = loadTenantConfig(TENANT_DEFAULT);
+
+        let upsell = (cfg.upsells || {})[serviceKey];
+
+        if (!upsell && cfg.defaultUpsells) {
+          upsell = cfg.defaultUpsells[
+            Math.floor(Math.random() * cfg.defaultUpsells.length)
+          ];
+        }
+
+        if (upsell && !session.upsellDone) {
+          session.upsell = upsell;
+          session.step = "upsell_offer";
+          session.upsellDone = true;
+
+          reply =
+           `✨ Empfehlung\n\n` +
+           `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+           `${upsell}\n\n` +
+           `👉 spart Zeit & sieht gepflegter aus\n\n` +
+           `Möchtest du das dazu?\n\n` +
+           `1️⃣ Ja hinzufügen\n` +
+           `2️⃣ Nein weiter`;
+           
+        } else {
+          const employees = getAllEmployees(TENANT_DEFAULT) || [];
+
+          if (!employees.length) {
+            reply = "Aktuell sind keine Mitarbeiter verfügbar.";
+            session.step = "menu";
+          } else {
+            session.employees = employees;
+            session.step = "employee_pick";
+
+            const employeeLines = employees
+              .map((e, i) => `${i + 1}️⃣ ${e.name}`)
+              .join("\n");
+
+            reply =
+              `Super 👍 ${session.service}\n\n` +
+              `Welcher Mitarbeiter?\n\n` +
+              employeeLines;
+          }
+        }
+      }
+    }
+           
+    else if (session.step === "upsell_offer") {
+      if (message === "1") {
+        session.upsellSelected = session.upsell;
+      } else {
+        session.upsellSelected = null;
+      }
+
+      const employees = getAllEmployees(TENANT_DEFAULT) || [];
+
+
+     // =======================================================
+     // 🔥 AI FLOW: Mitarbeiter schon erkannt
+     // =======================================================
+  if (session.aiFlow && session.employee && session.selectedDate) {
+
+    const slots = calculateSlotsForEmployee({
+      emp: session.employee,
+      serviceDuration: session.duration,
+      date: session.selectedDate,
+      tenant: TENANT_DEFAULT,
+    });
+
+    if (!slots.length) {
+      reply = "Leider sind an diesem Tag keine Termine frei.";
+      session.step = "menu";
+
+    } else {
+
+      let matchedSlot = null;
+
+      if (session.aiTime) {
+    
+           // ✅ exakte Zeit
+           matchedSlot = slots.find(s => s.time === session.aiTime);
+
+           // ✅ fallback → gleiche Stunde
+           if (!matchedSlot) {
+            const hour = session.aiTime.split(":")[0].padStart(2, "0");
+
+            matchedSlot = slots.find(s =>
+            s.time.startsWith(hour)
+          );
+        }
+      }
+       
+
+    if (matchedSlot) {
+      session.selectedSlot = matchedSlot;
+
+      const serviceKey = (session.service || "").toLowerCase().trim();
+      const cfg = loadTenantConfig(TENANT_DEFAULT);
+
+      let upsell = (cfg.upsells || {})[serviceKey];
+
+      if (!upsell && cfg.defaultUpsells) {
+        upsell = cfg.defaultUpsells[
+         Math.floor(Math.random() * cfg.defaultUpsells.length)
+        ];
+      }
+
+      console.log("🔥 SERVICE:", session.service);
+      console.log("🔥 UPSELL:", upsell);
+
+    if (upsell && !session.upsellDone) {
+
+       session.upsell = upsell;
+       session.upsellDone = true;
+       session.step = "upsell_offer";
+
+      reply =
+        `✨ Empfehlung\n\n` +
+        `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+        `${upsell}\n\n` +
+        `👉 spart Zeit & sieht gepflegter aus\n\n` +
+        `Möchtest du das dazu?\n\n` +
+        `1️⃣ Ja hinzufügen\n` +
+        `2️⃣ Nein weiter`;
+
+      } else {
+
+        session.step = "ask_name";
+
+      reply =
+        `Perfekt 👌\n\n` +
+        `${session.service}\n` +
+        `${session.selectedDate} um ${matchedSlot.time}\n\n` +
+        `Wie heißt du?`;
+      }
+
+      } else {
+
+        session.slots = slots.slice(0, 5);
+        session.step = "slot_pick";
+
+        const slotLines = session.slots
+          .map((s, i) => `${i + 1}️⃣ ${s.time}`)
+          .join("\n");
+
+        reply =
+          `Diese Uhrzeiten sind frei:\n\n${slotLines}`;
+      }
+    }
+
+  }
+
+  // =======================================================
+  // 🔥 Mitarbeiter fehlt → normal fragen
+  // =======================================================
+  else if (!session.employee) {
+
+    if (!employees.length) {
+      reply = "Aktuell sind keine Mitarbeiter verfügbar.";
+      session.step = "menu";
+
+    } else {
+
+      session.employees = employees;
+      session.step = "employee_pick";
+
+      const employeeLines = employees
+        .map((e, i) => `${i + 1}️⃣ ${e.name}`)
+        .join("\n");
+
+      reply =
+        `Super 👍 ${session.service}\n\n` +
+        `Welcher Mitarbeiter?\n\n` +
+        employeeLines;
+    }
+
+  }
+
+  // =======================================================
+  // 🔥 Mitarbeiter da, aber Datum fehlt
+  // =======================================================
+  else {
+
+    session.step = "date_pick";
+
+    reply =
+      "Bitte wähle ein Datum:\n\n" +
+      "1️⃣ Heute\n" +
+      "2️⃣ Morgen\n" +
+      "3️⃣ Übermorgen\n\n" +
+      "oder schreibe ein Datum:\n" +
+      "z.B. 15.03.2026";
+  }
+}
+
+
+    else if (session.step === "employee_pick") {
+     const employees = session.employees || [];
+
+     let emp = employees[Number(message) - 1];
+
+  if (!emp) {
+    emp = employees.find(e =>
+      e.name.toLowerCase().includes(message)
+    );
+  }
+
+  if (!emp) {
+    const employeeLines = employees
+      .map((e, i) => `${i + 1}️⃣ ${e.name}`)
+      .join("\n");
+
+    reply =
+      "Bitte wähle einen Mitarbeiter.\n\n" +
+      employeeLines;
+  } else {
+    session.employee = emp;
+    session.employee_id = emp.id;
+
+    session.step = "date_pick";
+
+    reply =
+      "Bitte wähle ein Datum:\n\n" +
+      "1️⃣ Heute\n" +
+      "2️⃣ Morgen\n" +
+      "3️⃣ Übermorgen\n\n" +
+      "oder schreibe ein Datum:\n" +
+      "z.B. 15.03.2026";
+  }
+}
+
+    else if (session.step === "date_pick") {
+      let dateStr = null;
+      const rawDateInput = rawMessage.trim();
+
+      let wishedTime = null;
+
+      const timeMatch = 
+      rawDateInput.match(/\b(\d{1,2}):(\d{2})\b/) ||
+      rawDateInput.match(/\b(\d{1,2})\s*uhr\b/i) ||
+       rawDateInput.match(/\b(\d{1,2})\b/);
+
+      if (timeMatch) {
+        const hour = String(timeMatch[1]).padStart(2, "0");
+        const minute = timeMatch[2]
+          ? String(timeMatch[2]).padStart(2, "0")
+          : "00";
+
+        wishedTime = `${hour}:${minute}`;
+        session.aiTime = wishedTime;
+      }
+
+      if (message === "1" || message.includes("heute")) {
+        dateStr = new Date().toISOString().slice(0, 10);
+      } 
+      else if (message === "2" || message.includes("morgen")) {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        dateStr = d.toISOString().slice(0, 10);
+      } 
+      else if (message === "3" || message.includes("übermorgen")) {
+        const d = new Date();
+        d.setDate(d.getDate() + 2);
+        dateStr = d.toISOString().slice(0, 10);
+      } 
+      else {
+        dateStr = parseGermanDate(rawDateInput);
+      }
+
+      if (!dateStr) {
+        reply =
+          "Bitte Datum eingeben:\n" +
+          "z.B. 15.03.2026";
+      } else {
+        const slots = calculateSlotsForEmployee({
+          emp: session.employee,
+          serviceDuration: session.duration,
+          date: dateStr,
+          tenant: TENANT_DEFAULT,
+        });
+
+        if (!slots.length) {
+          reply = "Leider sind aktuell keine Termine verfügbar.";
+        } else {
+          session.selectedDate = dateStr;
+
+          if (wishedTime) {
+            let matchedSlot = slots.find(s => s.time === wishedTime);
+
+            if (!matchedSlot) {
+              matchedSlot = slots.find(s =>
+                s.time.startsWith(wishedTime.slice(0, 2))
+              );
+            }
+
+          if (matchedSlot) {
+            session.selectedSlot = matchedSlot;
+
+            const serviceKey = (session.service || "").toLowerCase().trim();
+            const cfg = loadTenantConfig(TENANT_DEFAULT);
+
+            let upsell = (cfg.upsells || {})[serviceKey];
+
+            if (!upsell && cfg.defaultUpsells) {
+              upsell = cfg.defaultUpsells[
+                Math.floor(Math.random() * cfg.defaultUpsells.length)
+              ];
+            }
+
+            if (upsell && !session.upsellDone) {
+
+              session.upsell = upsell;
+              session.upsellDone = true;
+              session.step = "upsell_offer";
+
+            reply =
+              `✨ Empfehlung\n\n` +
+              `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+              `${upsell}\n\n` +
+              `👉 spart Zeit & sieht gepflegter aus\n\n` +
+              `Möchtest du das dazu?\n\n` +
+              `1️⃣ Ja hinzufügen\n` +
+              `2️⃣ Nein weiter`;
+
+            } else {
+
+             session.step = "ask_name";
+
+            reply =
+              `Perfekt 👌\n\n` +
+              `${session.service}\n` +
+              `${dateStr} um ${matchedSlot.time}\n\n` +
+              `Wie heißt du?`;
+            }
+
+            } else {
+              session.slots = slots.slice(0, 5);
+              session.step = "slot_pick";
+
+              const slotLines = session.slots
+                .map((s, i) => `${i + 1}️⃣ ${s.time}`)
+                .join("\n");
+
+              reply =
+                `📅 ${dateStr}\n\n` +
+                `Die Uhrzeit ${wishedTime} ist leider nicht frei.\n\n` +
+                "Diese Uhrzeiten sind frei:\n\n" +
+                slotLines;
+            }
+          }
+        }
+      }
+     }
+
+    else if (session.step === "slot_pick") {
+      let slot = null;
+       // 🔥 ALLE Slots neu berechnen (nicht nur Top 5)
+       const allSlots = calculateSlotsForEmployee({
+       emp: session.employee,
+       serviceDuration: session.duration,
+       date: session.selectedDate,
+       tenant: TENANT_DEFAULT,
+     });
+
+      let cleanMessage = message
+        .toLowerCase()
+        .replace(/uhr/g, "")
+        .replace(/\./g, ":")
+        .replace(/\s+/g, "")
+        .trim();
+
+      // ✅ Auswahl per Zahl (Top 5)
+      if (!isNaN(cleanMessage)) {
+        slot = session.slots?.[Number(cleanMessage) - 1];
+      }
+
+      // ✅ Exakte Uhrzeit (z.B. 09:00)
+      if (!slot && cleanMessage.includes(":")) {
+         slot = allSlots.find(s => s.time === cleanMessage);
+      }
+
+      // ✅ Stunde (z.B. "9" → 09:00)
+      if (!slot) {
+        const hourMatch = cleanMessage.match(/\d{1,2}/);
+        if (hourMatch) {
+          const hour = hourMatch[0].padStart(2, "0");
+          slot = allSlots.find(s => s.time.startsWith(hour));
+  
+  
+        }
+      }
+
+      if (!slot) {
+        const slotLines = (session.slots || [])
+          .map((s, i) => `${i + 1}️⃣ ${s.time}`)
+          .join("\n");
+
+        reply =
+          `Diese Uhrzeit ist leider nicht verfügbar.\n\n` +
+          `Bitte wähle eine dieser Zeiten:\n\n` +
+          slotLines;
+      } else {
+        session.selectedSlot = slot;
+        session.step = "ask_name";
+
+        reply =
+          `Termin ${slot.time}\n\n` +
+          "Wie heißt du?";
+      }
+    }
+
+    // 🔥 NUR HIER FIX
+    else if (session.step === "ask_name") {
+      const name = rawMessage.trim();
+
+      if (name.length < 2) {
+        reply = "Bitte gib deinen Namen ein.";
+      } else {
+        session.customerName = name;
+        const phone = from.replace("whatsapp:", "");
+
+        const valid = verifySlotSignature({
+          date: session.selectedDate,
+          time: session.selectedSlot?.time,
+          employeeId: session.employee_id,
+          serviceDuration: session.duration,
+          tenant: TENANT_DEFAULT,
+          signature: session.selectedSlot?.signature,
+        });
+
+        if (!valid) {
+          reply =
+            "Dieser Termin wurde gerade vergeben.\n\n" +
+            "Bitte wähle einen anderen Termin.";
+
+          session.step = "date_pick";
+        } else {
+          try {
+            const dateTime = `${session.selectedDate}T${session.selectedSlot.time}:00`;
+
+            const services = getTenantServices(TENANT_DEFAULT);
+            const matchedService = services.find(s =>
+              s.name.toLowerCase().trim() === session.service.toLowerCase().trim()
+            );
+
+            if (!matchedService) {
+              reply = "Bitte wähle die Behandlung erneut.";
+              session.step = "service";
+            } else {
+              
+              console.log("CREATE BOOKING PAYLOAD:", {
+                name: session.customerName,
+                phone,
+                service: matchedService.name,
+                extras: session.upsellSelected || null,
+                dateTime,
+                employee_id: session.employee_id,
+              });
+                const booking = await createBooking({
+                name: session.customerName,
+                phone,
+                service: matchedService.name,
+                extras: session.upsellSelected || null,
+                dateTime,
+                employee_id: session.employee_id,
+              });
+              // 🔥 FIX: zusätzlich in lokale DB speicher
+              if (booking?.appointment) {
+                insertBooking({
+                  id: booking.appointment.id,
+                  name: booking.appointment.customer_name,
+                  phone: booking.appointment.customer_phone,
+                  service: matchedService.name,
+                  price: booking.appointment.price,
+                  duration: booking.appointment.duration_minutes,
+                  dateTime: booking.appointment.start_time,
+                  employeeId: booking.appointment.employee_id,
+                  tenant: TENANT_DEFAULT,
+                });
+              }
+
+              console.log("BOOKING RESULT:", booking);
+
+              if (!booking || booking.status === "error") {
+                console.error("❌ BOOKING FAILED:", booking);
+
+                reply =
+                  "Der Termin konnte nicht gespeichert werden.\n" +
+                  "Bitte versuche es erneut.";
+
+                session.step = "menu";
+              } else {
+                if (phone) {
+                  completedBookings.add(phone);
+                }
+
+                logEvent({
+                  tenant: TENANT_DEFAULT,
+                  event_type: "booking_created",
+                  value: matchedService.name,
+                  meta: {
+                    employee: session.employee_id,
+                    date: session.selectedDate,
+                    time: session.selectedSlot.time,
+                    upsell: session.upsellSelected || null,
+                  },
+                });
+
+                await addVisit({
+                  tenant: TENANT_DEFAULT,
+                  phone,
+                });
+
+                const bookingId =
+                  booking?.appointment?.id ||
+                  booking?.booking?.id ||
+                  booking?.id ||
+                  booking?.appointmentId ||
+                  null;
+
+                if (!bookingId) {
+                  console.error("❌ BOOKING OHNE ID:", booking);
+
+                  reply =
+                    "Der Termin wurde angelegt, aber es konnte keine Bestätigungs-ID ermittelt werden.\n" +
+                    "Bitte prüfe den Termin im Adminbereich.";
+
+                  session.step = "done";
+                  setTimeout(() => {
+                  delete sessions[from];
+                  }, 2000);
+                } else {
+                  const pdfLink = `${BASE}/api/bookings/${bookingId}/pdf`;
+                  const icsLink = `${BASE}/api/bookings/${bookingId}/ics`;
+
+                  reply =
+                    `Dein Termin wurde erfolgreich eingetragen!\n\n` +
+                    `Service: ${matchedService.name}\n` +
+                    (session.upsellSelected ? `Extra: ${session.upsellSelected}\n` : "") +
+                    `Datum: ${session.selectedDate}\n` +
+                    `Uhrzeit: ${session.selectedSlot.time}\n\n` +
+                    `PDF:\n${pdfLink}\n\n` +
+                    `Kalender:\n${icsLink}`;
+
+                  session.step = "done";
+                  setTimeout(() => {
+                  delete sessions[from];
+                  }, 2000);
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Booking Error:", err);
+
+            reply =
+              "Beim Speichern des Termins ist ein Fehler aufgetreten.\n" +
+              "Bitte versuche es erneut.";
+
+            session.step = "menu";
+          }
+        }
+      }
+    }
+
+    // =========================
+    // DONE
+    // =========================
+    else if (session.step === "done") {
+      reply =
+        "Dein Termin ist bereits gespeichert.\n\n" +
+        "1️⃣ Neuer Termin\n" +
+        "2️⃣ Preise\n" +
+        "3️⃣ Öffnungszeiten";
+
+      session.step = "menu";
+    }
+
+    // =========================
+    // FALLBACK
+    // =========================
+    if (!reply || reply.trim() === "") {
+      reply =
+        "Ich habe das nicht verstanden.\n\n" +
+        "1️⃣ Termin buchen\n" +
+        "2️⃣ Preise\n" +
+        "3️⃣ Öffnungszeiten";
+
+      session.step = "menu";
+    }
+
+    await twilioClient.messages.create({
+      from: TWILIO_WHATSAPP_FROM,
+      to: from,
+      body: reply,
+    });
+
+    res.sendStatus(200);
+
+  } catch (err) {
+    console.error("❌ WhatsApp Fehler:", err);
+    res.sendStatus(500);
+  }
+});
+
+// =======================================================
+// 🔥 WHATSAPP ABANDON ENGINE (SMART FIX)
+// =======================================================
+
+setInterval(async () => {
+
+  const now = Date.now();
+
+  abandonedWhatsappSessions.forEach(async (data, key) => {
+    console.log("ABANDON STEP:", data.step);
+
+    const diff = now - data.lastActivity;
+
+    if (diff > 2 * 60 * 1000) {
+
+      console.log("⚠️ WhatsApp Abbruch erkannt:", data.phone);
+
+      // 🛑 STOP wenn schon gebucht
+      if (completedBookings.has(data.phone)) {
+        abandonedWhatsappSessions.delete(key);
+        return;
+      }
+
+      try {
+
+        let msg = "Hey 👋\n\n";
+
+        // =======================================================
+        // 🔥 SMART REAKTIVIERUNG (NICHT NUR STEP!)
+        // =======================================================
+
+        // 🔥 Kategorie
+        if (data.step === "category_pick") {
+          msg +=
+            "du wolltest gerade eine Kategorie auswählen ✨\n\n" +
+            "👉 Was möchtest du buchen?";
+        }
+
+        // 🔥 Service
+        else if (data.step === "service") {
+          msg +=
+            `du hast dich für "${data.service || "eine Behandlung"}" interessiert ✨\n\n` +
+            "👉 Wähle einfach die passende Behandlung aus.";
+        }
+
+        // 🔥 Upsell
+        else if (data.step === "upsell_offer") {
+          msg +=
+            "du warst gerade bei einer Empfehlung 👇\n\n" +
+            "👉 Möchtest du das noch dazu buchen oder weitermachen?";
+        }
+
+        // 🔥 Mitarbeiter fehlt
+        else if (data.step === "employee_pick") {
+          msg +=
+            "👩‍🔬 Dir fehlt nur noch der passende Mitarbeiter.\n\n" +
+            "👉 Wer soll dich behandeln?";
+        }
+
+        // 🔥 DATUM → NUR WENN WIRKLICH KEINS DA IST
+        else if (data.step === "date_pick") {
+
+          if (!data.date) {
+            msg +=
+              "📅 Dir fehlt nur noch ein Datum für deinen Termin.\n\n" +
+              "👉 Schreib einfach z.B. *morgen* oder *24.04*";
+          } else {
+            msg +=
+              `📅 Dein Datum steht schon (${data.date})\n\n` +
+              "👉 Wähle jetzt nur noch eine Uhrzeit.";
+          }
+
+        }
+
+        // 🔥 SLOT / UHRZEIT
+        else if (data.step === "slot_pick") {
+
+          if (data.date) {
+            msg +=
+              `📅 ${data.date}\n\n` +
+              "⏰ Dir fehlt nur noch die Uhrzeit.\n\n" +
+              "👉 Welche Zeit passt dir?";
+          } else {
+            msg +=
+              "⏰ Nur noch die Uhrzeit auswählen und dein Termin ist fast fertig!\n\n" +
+              "👉 Welche Zeit passt dir?";
+          }
+
+        }
+
+        // 🔥 NAME
+        else if (data.step === "ask_name") {
+          msg +=
+            "✍️ Fast geschafft!\n\n" +
+            "👉 Wie heißt du?";
+        }
+
+        // 🔥 FALLBACK (SMART)
+        else {
+
+          if (data.service && data.date && data.time) {
+            msg +=
+              `du warst kurz davor deinen Termin zu sichern ✨\n\n` +
+              `💅 ${data.service}\n` +
+              `📅 ${data.date}\n` +
+              `⏰ ${data.time}\n\n` +
+              "👉 Möchtest du weitermachen?";
+          }
+
+          else if (data.service && data.date) {
+            msg +=
+              `du warst schon weit ✨\n\n` +
+              `💅 ${data.service}\n` +
+              `📅 ${data.date}\n\n` +
+              "👉 Es fehlt nur noch die Uhrzeit.";
+          }
+
+          else if (data.service) {
+            msg +=
+              `du hast dich für "${data.service}" entschieden ✨\n\n` +
+              "👉 Lass uns den Termin fertig machen.";
+          }
+
+          else {
+            msg +=
+              "du warst gerade dabei deinen Termin zu buchen ✨\n\n" +
+              "👉 Möchtest du weitermachen?";
+          }
+        }
+
+        // =======================================================
+        // 🔥 FOOTER (BLEIBT)
+        // =======================================================
+        msg +=
+          "\n\nIch habe dir deinen Termin kurz freigehalten.\n\n" +
+          "👉 Schreib einfach weiter oder buche hier:\n" +
+          `${BASE}\n\n` +
+          "Sichere ihn dir, bevor er weg ist 💛";
+
+        await sendWhatsAppReminder(data.phone, msg);
+
+        console.log("📲 WhatsApp Reaktivierung gesendet:", data.phone);
+
+        // ❗ WICHTIG: löschen → kein Spam
+        abandonedWhatsappSessions.delete(key);
+
+      } catch (err) {
+        console.error("❌ WhatsApp Reaktivierung Fehler:", err.message);
+      }
+
+    }
+
+  });
+
+}, 30 * 1000);
 
 
 // =======================================================
@@ -332,40 +2244,91 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.SMTP_USER || "";
 // HTML-Mailtemplate (für Studio-Postfach)
 function bookingMailTemplate(booking) {
   const dt = new Date(booking.dateTime);
+
   const d = dt.toLocaleDateString("de-DE", {
     weekday: "long",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   });
+
   const t = dt.toLocaleTimeString("de-DE", {
     hour: "2-digit",
     minute: "2-digit",
   });
+
   const price = Number(booking.price || 0).toFixed(2).replace(".", ",");
 
   return `
-  <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#faf7f2;border:1px solid #eee;border-radius:12px;">
-    <h2 style="margin:0 0 8px;color:#7c5538;">${FROM_NAME} – Neue Online-Buchung</h2>
-    <p style="margin:0 0 16px;color:#666;">Es wurde soeben ein neuer Termin online gebucht:</p>
+  <div style="
+    font-family: Arial, Helvetica, sans-serif;
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 32px;
+    background: #f7f4ef;
+    border: 1px solid #eee;
+    border-radius: 14px;
+  ">
+    <h2 style="
+      margin: 0 0 10px;
+      color: #BC3B5F;
+      text-align: center;
+    ">
+      GlowSuite AI – Neue Online-Buchung
+    </h2>
 
-    <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:16px;margin-bottom:16px;">
-      <p style="margin:0;"><b>Kundin/Kunde:</b> ${booking.name || "Unbekannt"}</p>
-      <p style="margin:6px 0;"><b>Telefon:</b> ${booking.phone || "-"}</p>
-      <p style="margin:6px 0;"><b>Leistung:</b> ${booking.service}</p>
-      <p style="margin:6px 0;"><b>Datum:</b> ${d}</p>
-      <p style="margin:6px 0;"><b>Uhrzeit:</b> ${t}</p>
-      <p style="margin:6px 0;"><b>Dauer:</b> ${booking.duration || 60} Minuten</p>
-      <p style="margin:6px 0;"><b>Preis:</b> ${price} €</p>
+    <p style="
+      margin: 0 0 22px;
+      color: #666;
+      text-align: center;
+      font-size: 14px;
+    ">
+      Es wurde soeben ein neuer Termin online gebucht.
+    </p>
+
+    <div style="
+      background: #ffffff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+    ">
+      <p style="margin: 0 0 10px;"><b>Kundin/Kunde:</b><br>${booking.name || "Unbekannt"}</p>
+      <p style="margin: 0 0 10px;"><b>Telefon:</b><br>${booking.phone || "-"}</p>
+      <p style="margin: 0 0 10px;"><b>Service:</b><br>${booking.service || "-"}</p>
+      <p style="margin: 0 0 10px;"><b>Datum:</b><br>${d}</p>
+      <p style="margin: 0 0 10px;"><b>Uhrzeit:</b><br>${t}</p>
+      <p style="margin: 0 0 10px;"><b>Dauer:</b><br>${booking.duration || 60} Minuten</p>
+      <p style="margin: 0 0 10px;"><b>Preis:</b><br>${price} €</p>
       ${
         booking.employee
-          ? `<p style="margin:6px 0;"><b>Mitarbeiter/in:</b> ${booking.employee}</p>`
+          ? `<p style="margin: 0;"><b>Mitarbeiter/in:</b><br>${booking.employee}</p>`
           : ""
       }
     </div>
 
-    <p style="color:#777;margin:0 0 8px;">Die PDF-Bestätigung und ggf. ICS-Datei sind als Anhang beigefügt.</p>
-    <p style="color:#999;font-size:12px;">Automatische Nachricht deines Beauty Agent Systems ✨</p>
+    <div style="
+      background: #fff;
+      border: 1px solid #f0e4dc;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    ">
+      Die PDF-Bestätigung und ggf. die ICS-Datei sind als Anhang beigefügt.
+    </div>
+
+    <p style="
+      margin: 18px 0 0;
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+    ">
+      Powered by GlowSuite AI
+    </p>
   </div>`;
 }
 
@@ -415,7 +2378,9 @@ const TENANT_DEFAULT = process.env.TENANT_DEFAULT || "beauty_lounge";
 const AURA_AUTO_EXECUTE_CONFIDENCE =
   Number(process.env.AURA_AUTO_EXECUTE_CONFIDENCE) || 0.8;
 
-const CONFIG_BASE = path.resolve(".Datein/config/kunden");
+const CONFIG_BASE = path.resolve("Datein/config/kunden");
+
+console.log("CONFIG_BASE =", CONFIG_BASE);
 
 function getTenantFromReq(req) {
   return (
@@ -483,6 +2448,457 @@ app.post("/api/bookings/:id/cancel", authMiddleware, (req, res) => {
   res.json({ success: true });
 });
 
+
+
+// =======================================================
+// ADMIN – ALLE STUDIOS
+// =======================================================
+
+app.get("/api/admin/studios", authMiddleware, (req,res)=>{
+
+try{
+
+const files = fs.readdirSync(CONFIG_BASE);
+
+const studios = [];
+
+for(const file of files){
+
+if(!file.endsWith(".json")) continue;
+
+const config = JSON.parse(
+fs.readFileSync(path.join(CONFIG_BASE,file),"utf8")
+);
+
+studios.push({
+
+tenant:file.replace(".json",""),
+
+name:config?.branding?.brandName || "Studio",
+
+status:config?.stripe?.status || "inactive",
+
+// 🌍 neue Felder für Map / Analytics
+city:config?.location?.city || null,
+
+country:config?.location?.country || null
+
+});
+
+}
+
+res.json({
+success:true,
+studios
+});
+
+}catch(err){
+
+console.error(err);
+
+res.status(500).json({
+success:false
+});
+
+}
+
+});
+
+
+// =======================================================
+// 📊 SUPER ADMIN – ANALYTICS
+// =======================================================
+
+app.get("/api/admin/analytics", authMiddleware, (req,res)=>{
+
+try{
+
+const files = fs.readdirSync(CONFIG_BASE);
+
+let studios = 0;
+let activeStudios = 0;
+let inactiveStudios = 0;
+
+for(const file of files){
+
+if(!file.endsWith(".json")) continue;
+
+studios++;
+
+let config = {};
+
+try{
+config = JSON.parse(
+fs.readFileSync(path.join(CONFIG_BASE,file),"utf8")
+);
+}catch(e){
+console.warn("⚠️ Config Fehler:", file);
+continue;
+}
+
+if(config?.stripe?.status === "active"){
+activeStudios++;
+}else{
+inactiveStudios++;
+}
+
+}
+
+const bookings = getAllBookings() || [];
+
+res.json({
+success:true,
+stats:{
+studios,
+activeStudios,
+inactiveStudios,
+totalBookings:bookings.length
+}
+});
+
+}catch(err){
+
+console.error("❌ Analytics Fehler:", err);
+
+res.status(500).json({
+success:false
+});
+
+}
+
+});
+
+
+// =======================================================
+// STUDIO SIGNUP
+// =======================================================
+
+app.post("/api/studio/signup",(req,res)=>{
+
+try{
+
+// 🔥 erweitert um city + country
+const {studio,email,city,country} = req.body;
+
+if(!studio){
+return res.status(400).json({
+success:false,
+message:"Studio Name fehlt"
+});
+}
+
+const tenantId = studio
+.toLowerCase()
+.replace(/\s/g,"_");
+
+const filePath = path.join(CONFIG_BASE,`${tenantId}.json`);
+
+if(fs.existsSync(filePath)){
+return res.json({
+success:false,
+message:"Studio existiert bereits"
+});
+}
+
+// 🔐 Login generieren
+const password = Math.random().toString(36).slice(-8);
+
+const config = {
+
+branding:{
+brandName:studio
+},
+
+// 🌍 Standort (für SaaS Map / Analytics)
+location:{
+city: city || "unknown",
+country: country || "DE"
+},
+
+// 📧 Studio Kontakt
+contact:{
+email: email || null
+},
+
+// 🔐 Studio Login
+auth:{
+user:tenantId,
+password:password
+},
+
+// 💳 Stripe Platzhalter (wird später gefüllt)
+stripe:{
+customer_id:null,
+subscription_id:null,
+status:"inactive"
+},
+
+services:[
+
+{name:"Gesichtsbehandlung",duration:60,price:60},
+{name:"Wimpern",duration:45,price:50},
+{name:"Nägel",duration:60,price:55}
+
+]
+
+};
+
+fs.writeFileSync(
+filePath,
+JSON.stringify(config,null,2)
+);
+
+res.json({
+success:true,
+message:"Studio erstellt",
+tenant:tenantId,
+
+// 🔐 Login Daten zurückgeben
+login:{
+user:tenantId,
+password:password
+}
+
+});
+
+}catch(err){
+
+console.error(err);
+
+res.status(500).json({
+success:false
+});
+
+}
+
+});
+
+
+// =======================================================
+// 💳 STRIPE CHECKOUT
+// =======================================================
+
+app.get("/api/stripe/checkout", async (req, res) => {
+
+  try {
+
+    // optionaler Email Parameter
+    const email = req.query.email || "test@glowsuite.ai";
+
+    const session = await stripe.checkout.sessions.create({
+
+      mode: "subscription",
+
+      customer_email: email,
+
+      line_items: [
+        {
+          price: process.env.STRIPE_PRICE_ID,
+          quantity: 1
+        }
+      ],
+
+      success_url: `${BASE}/admin.html`,
+      cancel_url: `${BASE}/signup.html`
+
+    });
+
+    // Direkt zu Stripe weiterleiten
+    res.redirect(session.url);
+
+  } catch (err) {
+
+    console.error("❌ Stripe Checkout Error:", err);
+
+    res.status(500).send("Stripe Checkout Fehler");
+
+  }
+
+});
+
+
+
+// =======================================================
+// 🏢 AUTO CREATE STUDIO FROM STRIPE
+// =======================================================
+
+function createStudioFromStripe(email, customerId = null, subscriptionId = null) {
+
+  try {
+
+    if (!email) return;
+
+    const studioName = email.split("@")[0];
+
+    const tenantId = studioName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "_");
+
+    const filePath = path.join(CONFIG_BASE, `${tenantId}.json`);
+
+    // Falls Studio schon existiert → nichts tun
+    if (fs.existsSync(filePath)) {
+      console.log("ℹ️ Studio existiert bereits:", tenantId);
+      return;
+    }
+
+    const config = {
+
+      branding: {
+        brandName: studioName
+      },
+
+      // 💳 Stripe Infos speichern
+      stripe: {
+        customer_id: customerId,
+        subscription_id: subscriptionId,
+        status: "active"
+      },
+
+      services: [
+        { name: "Gesichtsbehandlung", duration: 60, price: 60 },
+        { name: "Wimpern", duration: 45, price: 50 },
+        { name: "Nägel", duration: 60, price: 55 }
+      ]
+
+    };
+
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify(config, null, 2)
+    );
+
+    console.log("🏢 Neues Studio automatisch erstellt:", tenantId);
+
+  } catch (err) {
+
+    console.error("❌ Studio Auto-Creation Fehler:", err.message);
+
+  }
+
+}
+
+
+
+// =======================================================
+// 🔒 DEACTIVATE STUDIO (Stripe Abo beendet)
+// =======================================================
+
+function deactivateStudioByCustomer(customerId) {
+
+  try {
+
+    const files = fs.readdirSync(CONFIG_BASE);
+
+    for (const file of files) {
+
+      const filePath = path.join(CONFIG_BASE, file);
+      const data = JSON.parse(fs.readFileSync(filePath));
+
+      if (data?.stripe?.customer_id === customerId) {
+
+        data.stripe.status = "inactive";
+
+        fs.writeFileSync(
+          filePath,
+          JSON.stringify(data, null, 2)
+        );
+
+        console.log("🔒 Studio deaktiviert:", file);
+        return;
+
+      }
+
+    }
+
+  } catch (err) {
+
+    console.error("❌ Deactivate Studio Fehler:", err.message);
+
+  }
+
+}
+
+
+
+// =======================================================
+// 🔔 STRIPE WEBHOOK
+// =======================================================
+
+app.post("/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  (req, res) => {
+
+    const sig = req.headers["stripe-signature"];
+
+    let event;
+
+    try {
+
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+
+    } catch (err) {
+
+      console.error("⚠️ Stripe Webhook Fehler:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+
+    }
+
+    console.log("📦 Stripe Event:", event.type);
+
+    // =======================================================
+    // ✅ Neue Subscription erstellt
+    // =======================================================
+
+    if (event.type === "checkout.session.completed") {
+
+      const session = event.data.object;
+
+      const email = session.customer_email;
+      const customerId = session.customer;
+      const subscriptionId = session.subscription;
+
+      console.log("💰 Neue Subscription:", email);
+      console.log("Stripe Customer:", customerId);
+      console.log("Stripe Subscription:", subscriptionId);
+
+      try {
+        createStudioFromStripe(email, customerId, subscriptionId);
+      } catch (err) {
+        console.error("❌ Studio Erstellung fehlgeschlagen:", err.message);
+      }
+
+    }
+
+    // =======================================================
+    // ❌ Abo wurde beendet
+    // =======================================================
+
+    if (event.type === "customer.subscription.deleted") {
+
+      const subscription = event.data.object;
+      const customerId = subscription.customer;
+
+      console.log("❌ Subscription beendet:", customerId);
+
+      try {
+        deactivateStudioByCustomer(customerId);
+      } catch (err) {
+        console.error("❌ Studio Deaktivierung fehlgeschlagen:", err.message);
+      }
+
+    }
+
+    res.json({ received: true });
+
+});
+
+
+
 // --- PDF-Download für eine Buchung (nutzt pdf.js v4) ---
 app.get("/api/bookings/:id/pdf", authMiddleware, async (req, res) => {
   try {
@@ -514,6 +2930,40 @@ app.get("/api/bookings/:id/pdf", authMiddleware, async (req, res) => {
     res.status(500).send("Fehler bei PDF-Erstellung.");
   }
 });
+
+
+app.get("/api/bookings/:id/ics", authMiddleware, async (req, res) => {
+  try {
+    const booking = getAllBookings().find(
+      (b) => b.id === req.params.id
+    );
+
+    if (!booking) {
+      return res.status(404).send("Buchung nicht gefunden.");
+    }
+
+    let employeeName = "Beliebig";
+    if (booking.employeeId) {
+      const emp = getEmployee(booking.employeeId);
+      if (emp && emp.name) employeeName = emp.name;
+    }
+
+    const result = await createAppointmentPDF({
+      ...booking,
+      employee: employeeName,
+    });
+
+    if (!result || !result.icsUrl) {
+      return res.status(500).send("Fehler bei ICS-Erstellung.");
+    }
+
+    res.redirect(result.icsUrl);
+  } catch (err) {
+    console.error("❌ /api/bookings/:id/ics:", err);
+    res.status(500).send("Fehler beim Laden der ICS Datei.");
+  }
+});
+
 
 // =======================================================
 // 🌐 PUBLIC / WIDGET – Termin anlegen (MIT PDF + ICS)
@@ -559,11 +3009,29 @@ app.post("/api/bookings", async (req, res) => {
       source: "public",
     };
 
+    // 💾 Booking speichern
     insertBooking(booking);
 
+    // 🔥 STOP-SYSTEM (sehr wichtig)
+    if (booking.phone) {
+      completedBookings.add(booking.phone);
+
+      setTimeout(() => {
+        completedBookings.delete(booking.phone);
+      }, 24 * 60 * 60 * 1000);
+    }
+
+    // 📲 WhatsApp Bestätigung + Reminder
     await sendWhatsAppBookingConfirmation(booking);
     scheduleWhatsAppReminders(booking);
 
+    // ⭐ Google Review Reminder planen
+    const cfg = loadTenantConfig(tenantId);
+    const reviewUrl = cfg?.branding?.contact?.googleReviewUrl;
+
+    if (reviewUrl) {
+      scheduleReviewReminder(booking, reviewUrl);
+    }
 
     let employeeName = "Beliebig";
     if (empId) {
@@ -610,6 +3078,7 @@ app.post("/api/bookings", async (req, res) => {
       pdfUrl: pdfResult?.pdfUrl || null,
       icsUrl: pdfResult?.icsUrl || null,
     });
+
   } catch (err) {
     console.error("❌ /api/bookings [POST]:", err.message);
     res.status(500).json({
@@ -618,6 +3087,30 @@ app.post("/api/bookings", async (req, res) => {
     });
   }
 });
+
+
+// =======================================================
+// 🎁 LOYALTY BONUSKARTE
+// =======================================================
+
+app.get("/api/loyalty/:phone", (req, res) => {
+
+  const phone = req.params.phone;
+
+  const dataPath = path.join(dataDir, "loyalty_cards.json");
+
+  if (!fs.existsSync(dataPath)) {
+    return res.json({ visits: 0 });
+  }
+
+  const cards = JSON.parse(fs.readFileSync(dataPath));
+
+  const card = cards.find(c => c.phone === phone);
+
+  res.json(card || { visits: 0 });
+
+});
+
 
 // =======================================================
 // 📅 BUCHUNGEN API
@@ -631,33 +3124,130 @@ app.get("/api/bookings", authMiddleware, (_req, res) => {
   }
 });
 
-// =======================================================
-// 📆 BUCHUNG VERSCHIEBEN – Mitarbeiter bleibt erhalten
-// =======================================================
-app.post("/api/bookings/:id/move", authMiddleware, (req, res) => {
-  const { date, time } = req.body || {};
-  if (!date || !time)
-    return res.status(400).json({ success: false, error: "Missing date/time" });
+app.post("/api/bookings/:id/move", authMiddleware, async (req, res) => {
+  try {
+    const { date, time } = req.body || {};
 
-  const iso = toISO(date, time);
+    if (!date || !time) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing date/time"
+      });
+    }
 
-  // Buchung laden
-  const all = getAllBookings();
-  const booking = all.find(b => b.id === req.params.id);
+    const all = getAllBookings();
+    const booking = all.find(b => b.id === req.params.id);
 
-  if (!booking)
-    return res.status(404).json({ success: false, error: "Booking not found" });
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        error: "Booking not found"
+      });
+    }
 
-  // Mitarbeiter bleibt gleich
-  const empId = booking.employeeId || null;
+    const iso = toISO(String(date), String(time));
+    const empId = booking.employeeId || null;
 
-  const ok = updateBooking(req.params.id, iso, empId);
+    const newStart = new Date(iso).getTime();
+    const duration = Number(booking.duration || 60);
 
-  if (!ok)
-    return res.status(500).json({ success: false, error: "Update failed" });
+    let buffer = 15;
 
-  log(`📆 Termin verschoben: ${req.params.id} → ${iso} (Mitarbeiter: ${empId})`);
-  res.json({ success: true, newDateTime: iso });
+    if (empId) {
+      const emp = getEmployee(empId);
+
+      if (emp && emp.buffer != null) {
+        const n = Number(emp.buffer);
+        if (Number.isFinite(n)) {
+          buffer = n;
+        }
+      }
+    }
+
+    const newEnd = newStart + duration * 60000;
+
+    const hasConflict = all
+      .filter(b => b.id !== req.params.id)
+      .filter(b => (b.employeeId || null) === empId)
+      .some(b => {
+        const start = new Date(b.dateTime).getTime();
+        const end =
+          start + (Number(b.duration || 60) + buffer) * 60000;
+
+        return !(newEnd <= start || newStart >= end);
+      });
+
+    if (hasConflict) {
+      return res.status(409).json({
+        success: false,
+        error: "CONFLICT",
+        message: "Dieser Zeitraum ist bereits belegt."
+      });
+    }
+
+    const ok = updateBooking(req.params.id, iso, empId);
+
+    if (!ok) {
+      return res.status(500).json({
+        success: false,
+        error: "Update failed"
+      });
+    }
+
+    // ============================
+    // WhatsApp Info bei Verschiebung
+    // ============================
+    try {
+      const phone = String(booking.phone || "").trim();
+
+      if (phone) {
+        const moveDate = new Date(iso);
+
+        const formattedDate = moveDate.toLocaleDateString("de-DE", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        });
+
+        const formattedTime = moveDate.toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+        const customerName = booking.name || "dein Termin";
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: `whatsapp:${phone}`,
+          body:
+            `Hallo ${customerName} 👋\n\n` +
+            `dein Termin wurde verschoben:\n\n` +
+            `📅 ${formattedDate}\n` +
+            `🕐 ${formattedTime} Uhr\n\n` +
+            `Falls dir der Termin nicht passt, melde dich bitte kurz.`
+        });
+      }
+    } catch (waErr) {
+      console.warn("⚠️ WhatsApp Move Info fehlgeschlagen:", waErr.message);
+    }
+
+    log(
+      `📆 Termin verschoben: ${req.params.id} → ${iso} (Mitarbeiter: ${empId})`
+    );
+
+    return res.json({
+      success: true,
+      newDateTime: iso
+    });
+
+  } catch (err) {
+    console.error("❌ Move Error:", err.message);
+
+    return res.status(500).json({
+      success: false,
+      error: "Serverfehler"
+    });
+  }
 });
 
 function toISO(dateInput, timeInput) {
@@ -770,9 +3360,7 @@ app.post("/api/admin/bookings", authMiddleware, async (req, res) => {
     insertBooking(booking);
     log(`🆕 Admin-Termin angelegt: ${booking.name} (${booking.service})`);
 
-    // Optional: Reminder/Bestätigung nur wenn du willst
-    // scheduleWhatsAppReminders(booking);
-    // await sendWhatsAppBookingConfirmation(booking);
+    const hasPhone = !!String(booking.phone || "").trim();
 
     // PDF/ICS + Mail ans Studio (gleiches Verhalten wie Public)
     let pdfResult = null;
@@ -787,6 +3375,35 @@ app.post("/api/admin/bookings", authMiddleware, async (req, res) => {
         ...booking,
         employee: employeeName,
       });
+
+      if (hasPhone) {
+        try {
+          await sendWhatsAppBookingConfirmation(booking);
+          scheduleWhatsAppReminders(booking);
+
+          const waExtras = [];
+
+          if (pdfResult?.pdfUrl) {
+            waExtras.push(`PDF:\n${BASE}${pdfResult.pdfUrl}`);
+          }
+
+          if (pdfResult?.icsUrl) {
+            waExtras.push(`Kalender:\n${BASE}${pdfResult.icsUrl}`);
+          }
+
+          if (waExtras.length) {
+            await sendWhatsAppReminder(
+              booking.phone,
+              `Deine Termin-Unterlagen:\n\n${waExtras.join("\n\n")}`
+            );
+          }
+        } catch (waErr) {
+          console.warn(
+            "⚠️ Admin WhatsApp Bestätigung/Reminder fehlgeschlagen:",
+            waErr.message
+          );
+        }
+      }
 
       const attachments = [];
 
@@ -840,6 +3457,7 @@ app.post("/api/admin/bookings", authMiddleware, async (req, res) => {
 // =======================================================
 
 app.post("/api/slots", (req, res) => {
+  console.log("SLOTS REQUEST BODY:", req.body);
   try {
     const { employeeId, serviceName, date, tenant } = req.body || {};
 
@@ -1511,7 +4129,7 @@ app.use(
   })
 );
 
-app.use(express.json());
+
 
 // statische HTML Dateien aus /public ausliefern
 app.use(express.static("public"));
@@ -1596,6 +4214,107 @@ app.post("/api/aura/marketing/approve", authMiddleware, (req, res) => {
 app.use("/api/aura", auraRoutes);
 app.use("/api/calendar", calendarRoutes);
 
+// =======================================================
+// 🤖 SERVICE MATCHING API (KI Service Finder)
+// =======================================================
+app.use("/api/service-match", serviceMatchRoute);
+
+
+// BEAUTY CHAT AI
+app.use("/api/chat", beautyChatRoute);
+app.use("/api/ai-booking", aiBookingRoute);
+
+// ======================================
+// AURA DAILY MONITOR
+// ======================================
+
+app.get("/api/aura/monitor", async (req, res) => {
+
+  const result = await runAuraDailyMonitor({
+    tenant: TENANT_DEFAULT
+  });
+
+  res.json(result);
+
+});
+
+
+// -------------------------------------------------------
+// AURA BUSINESS OPTIMIZER
+// -------------------------------------------------------
+
+app.get("/api/aura/optimize", async (req, res) => {
+
+  const result = await runAuraBusinessOptimizer({
+    tenant: TENANT_DEFAULT
+  });
+
+  res.json(result);
+
+});
+
+
+// -------------------------------------------------------
+// AURA CAMPAIGN EXECUTOR
+// -------------------------------------------------------
+
+app.all("/api/aura/execute", async (req, res) => {
+
+  try {
+
+    const { action } = req.body;
+
+    const result = await executeAuraCampaign({
+      tenant: TENANT_DEFAULT,
+      action
+    });
+
+    res.json(result);
+
+  } catch (err) {
+
+    console.error("❌ AURA execute error:", err.message);
+
+    res.status(500).json({
+      success: false
+    });
+
+  }
+
+});
+
+
+// -------------------------------------------------------
+// AURA RECOMMENDATIONS
+// -------------------------------------------------------
+
+app.get("/api/aura/recommendations", async (req, res) => {
+
+  try {
+
+    const recommendations = await generateAuraRecommendations({
+      tenant: TENANT_DEFAULT,
+      limit: 5
+    });
+
+    res.json({
+      success: true,
+      recommendations
+    });
+
+  } catch (err) {
+
+    console.error("❌ AURA recommendations error:", err.message);
+
+    res.status(500).json({
+      success: false,
+      error: "recommendations_failed"
+    });
+
+  }
+
+});
+
 
 // =======================================================
 // ▶️ LISTEN
@@ -1622,7 +4341,7 @@ app.listen(PORT, "0.0.0.0", () => {
   );
   console.log("=====================================");
 
- // =======================================================
+// =======================================================
 // PHASE 2 – Initial Mirror (SQLite → Supabase)
 // einmalig, asynchron, best-effort
 // =======================================================
@@ -1633,20 +4352,41 @@ setTimeout(() => {
     mirrorEmployeesToSupabase(studioId);
     mirrorEmployeeWorkingHoursToSupabase(studioId);
 
+    console.log("🔄 Initial Employee Mirror gestartet");
+
   } catch (err) {
     console.warn("⚠️ Initial mirror failed:", err.message);
   }
 }, 2000);
 
-  // =====================================================
-  // WhatsApp Bot
-  // =====================================================
-  if (String(process.env.ENABLE_WHATSAPP).toLowerCase() === "true") {
-    try {
-      console.log("📱 Starte WhatsApp Bot …");
-      startWhatsAppBot();
-    } catch (err) {
-      log("❌ WhatsApp Bot Fehler: " + err);
-    }
+// =======================================================
+// WhatsApp System
+// =======================================================
+// Der alte whatsapp-web.js Bot wurde entfernt.
+// GlowSuite nutzt ausschließlich Twilio WhatsApp API.
+// Antworten und Reminder laufen über:
+// sendWhatsAppReminder()
+// sendWhatsAppBookingConfirmation()
+
+console.log("📲 WhatsApp System: Twilio API aktiv (kein QR Bot)");
+
+// =======================================================
+// 🔁 AUTO REBOOKING CHECK (täglich)
+// =======================================================
+
+setInterval(() => {
+
+  try {
+
+    runRebookingCheck();
+
+    console.log("🔁 Rebooking Check ausgeführt");
+
+  } catch (err) {
+
+    console.error("❌ Rebooking Fehler:", err.message);
+
   }
+
+}, 1000 * 60 * 60 * 24);
 });
