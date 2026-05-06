@@ -8,6 +8,8 @@ export default function handler(req, res) {
     const filePath = path.join(
       process.cwd(),
       "data",
+      "public",
+      "data",
       "beauty_lounge.json"
     );
 
