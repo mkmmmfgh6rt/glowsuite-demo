@@ -7,11 +7,12 @@ export default function handler(req, res) {
 
     const filePath = path.join(
       process.cwd(),
-      "data",
       "public",
       "data",
       "beauty_lounge.json"
     );
+
+    console.log("FILE PATH:", filePath);
 
     const rawData = fs.readFileSync(filePath, "utf8");
 
@@ -30,5 +31,7 @@ export default function handler(req, res) {
       success: false,
       error: error.message
     });
+
   }
+
 }
