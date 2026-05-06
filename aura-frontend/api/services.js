@@ -7,10 +7,7 @@ export default function handler(req, res) {
 
     const filePath = path.join(
       process.cwd(),
-      "..",
-      "Datein",
-      "config",
-      "kunden",
+      "data",
       "beauty_lounge.json"
     );
 
@@ -31,7 +28,5 @@ export default function handler(req, res) {
       success: false,
       error: error.message
     });
-
   }
-
 }
