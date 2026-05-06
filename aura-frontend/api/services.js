@@ -1,26 +1,11 @@
-import fs from "fs";
-import path from "path";
+import beautyData from "../public/data/beauty_lounge.json";
 
 export default function handler(req, res) {
-
   try {
-
-    const filePath = path.join(
-      process.cwd(),
-      "public",
-      "data",
-      "beauty_lounge.json"
-    );
-
-    console.log("FILE PATH:", filePath);
-
-    const rawData = fs.readFileSync(filePath, "utf8");
-
-    const json = JSON.parse(rawData);
 
     return res.status(200).json({
       success: true,
-      services: json.services || []
+      services: beautyData.services || []
     });
 
   } catch (error) {
@@ -33,5 +18,4 @@ export default function handler(req, res) {
     });
 
   }
-
 }
