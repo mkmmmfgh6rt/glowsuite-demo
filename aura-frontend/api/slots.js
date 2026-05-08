@@ -1,5 +1,6 @@
 import beautyData from "../public/data/beauty_lounge.json";
-import { calculateSlotsForEmployee } from "../../core/availabilityEngine.js";
+
+// import { calculateSlotsForEmployee } from "../core/availabilityEngine.js";
 
 const employees = [
   {
@@ -34,6 +35,33 @@ const employees = [
     color: "#8FB8DE"
   }
 ];
+
+function generateMockSlots(date) {
+
+  return [
+    {
+      time: "10:00",
+      date,
+      signature: "slot_1000"
+    },
+    {
+      time: "12:00",
+      date,
+      signature: "slot_1200"
+    },
+    {
+      time: "14:00",
+      date,
+      signature: "slot_1400"
+    },
+    {
+      time: "16:00",
+      date,
+      signature: "slot_1600"
+    }
+  ];
+
+}
 
 export default async function handler(req, res) {
 
@@ -93,13 +121,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🔥 Echte Slot-Berechnung
-    const slots = calculateSlotsForEmployee({
-      emp: employee,
-      serviceDuration: service.duration,
-      date,
-      tenant: "beauty_lounge"
-    });
+    // 🔥 TEMP STABILIZATION
+    const slots = generateMockSlots(date);
 
     console.log("SLOTS:", slots);
 
