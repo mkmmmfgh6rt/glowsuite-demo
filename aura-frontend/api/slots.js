@@ -1,5 +1,5 @@
 import beautyData from "../public/data/beauty_lounge.json";
-import { calculateSlotsForEmployee } from "../core/availabilityEngine.js";
+import { calculateSlotsForEmployee } from "../../core/availabilityEngine.js";
 
 const employees = [
   {
