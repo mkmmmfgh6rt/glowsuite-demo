@@ -1,3 +1,40 @@
+import beautyData from "../public/data/beauty_lounge.json";
+import { calculateSlotsForEmployee } from "../core/availabilityEngine.js";
+
+const employees = [
+  {
+    id: "anna",
+    name: "Anna",
+    role: "Kosmetikerin",
+
+    work_start: "09:00",
+    work_end: "18:00",
+
+    days: "Mo-Fr",
+
+    buffer: 15,
+    active: 1,
+
+    color: "#F4B6C2"
+  },
+
+  {
+    id: "markus",
+    name: "Markus",
+    role: "Studioleitung",
+
+    work_start: "09:00",
+    work_end: "18:00",
+
+    days: "Mo-Fr",
+
+    buffer: 15,
+    active: 1,
+
+    color: "#8FB8DE"
+  }
+];
+
 export default async function handler(req, res) {
 
   console.log("METHOD:", req.method);
@@ -12,36 +49,63 @@ export default async function handler(req, res) {
 
   try {
 
-    const { date, employeeId, serviceId } = req.body || {};
+    const {
+      date,
+      employeeId,
+      serviceId
+    } = req.body || {};
 
     console.log("DATE:", date);
     console.log("EMPLOYEE:", employeeId);
     console.log("SERVICE:", serviceId);
 
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing date"
+      });
+    }
+
+    // 🔥 Service suchen
+    const service = beautyData.services.find(
+      (s) =>
+        s.name.toLowerCase() ===
+        String(serviceId || "").toLowerCase()
+    );
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: "Service not found"
+      });
+    }
+
+    // 🔥 Mitarbeiter bestimmen
+    const employee =
+      employeeId === "auto"
+        ? employees[0]
+        : employees.find((e) => e.id === employeeId);
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        error: "Employee not found"
+      });
+    }
+
+    // 🔥 Echte Slot-Berechnung
+    const slots = calculateSlotsForEmployee({
+      emp: employee,
+      serviceDuration: service.duration,
+      date,
+      tenant: "beauty_lounge"
+    });
+
+    console.log("SLOTS:", slots);
+
     return res.status(200).json({
       success: true,
-      slots: [
-        {
-          time: "10:00",
-          date,
-          signature: "slot_1000"
-        },
-        {
-          time: "12:00",
-          date,
-          signature: "slot_1200"
-        },
-        {
-          time: "14:00",
-          date,
-          signature: "slot_1400"
-        },
-        {
-          time: "16:00",
-          date,
-          signature: "slot_1600"
-        }
-      ]
+      slots
     });
 
   } catch (error) {

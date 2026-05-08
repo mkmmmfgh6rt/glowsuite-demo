@@ -9,13 +9,32 @@ export default function handler(req, res) {
           id: "anna",
           name: "Anna",
           role: "Kosmetikerin",
-          active: true
+          active: 1,
+
+          work_start: "09:00",
+          work_end: "18:00",
+
+          days: "Mo-Fr",
+
+          buffer: 15,
+
+          color: "#F4B6C2"
         },
+
         {
           id: "markus",
           name: "Markus",
           role: "Studioleitung",
-          active: true
+          active: 1,
+
+          work_start: "09:00",
+          work_end: "18:00",
+
+          days: "Mo-Fr",
+
+          buffer: 15,
+
+          color: "#8FB8DE"
         }
       ]
     });
