@@ -1,69 +1,133 @@
-import employees from "../data/employees.js";
-import services from "../data/services.js";
+import beautyData from "../public/data/beauty_lounge.json";
 
 import {
-  calculateSlotsForEmployee,
+  calculateSlotsForEmployee
 } from "../core/availabilityEngine.js";
 
+const employees = [
+  {
+    id: "anna",
+    name: "Anna",
+    role: "Kosmetikerin",
+
+    work_start: "09:00",
+    work_end: "18:00",
+
+    days: "Mo-Fr",
+
+    buffer: 15,
+    active: 1,
+
+    color: "#F4B6C2"
+  },
+
+  {
+    id: "markus",
+    name: "Markus",
+    role: "Studioleitung",
+
+    work_start: "09:00",
+    work_end: "18:00",
+
+    days: "Mo-Fr",
+
+    buffer: 15,
+    active: 1,
+
+    color: "#8FB8DE"
+  }
+];
+
 export default async function handler(req, res) {
+
+  console.log("🔥 SLOTS API START");
+
+  if (req.method !== "POST") {
+
+    return res.status(405).json({
+      success: false,
+      error: "Method not allowed"
+    });
+
+  }
 
   try {
 
     const {
-      employeeId,
-      serviceId,
       date,
-      tenant = "beauty_lounge"
-    } = req.query;
+      employeeId,
+      serviceId
+    } = req.body || {};
 
-    if (!employeeId || !serviceId || !date) {
+    console.log("DATE:", date);
+    console.log("EMPLOYEE:", employeeId);
+    console.log("SERVICE:", serviceId);
+
+    if (!date) {
+
       return res.status(400).json({
         success: false,
-        error: "Missing parameters"
+        error: "Missing date"
       });
+
     }
 
-    const employee = employees.find(
-      e => String(e.id) === String(employeeId)
-    );
+    // 🔥 SERVICE SUCHEN
 
-    if (!employee) {
-      return res.status(404).json({
-        success: false,
-        error: "Employee not found"
-      });
-    }
-
-    const service = services.find(
-      s => String(s.id) === String(serviceId)
+    const service = beautyData.services.find(
+      (s) =>
+        s.name.toLowerCase() ===
+        String(serviceId || "").toLowerCase()
     );
 
     if (!service) {
+
       return res.status(404).json({
         success: false,
         error: "Service not found"
       });
+
     }
 
+    // 🔥 MITARBEITER SUCHEN
+
+    const employee =
+      employeeId === "auto"
+        ? employees[0]
+        : employees.find((e) => e.id === employeeId);
+
+    if (!employee) {
+
+      return res.status(404).json({
+        success: false,
+        error: "Employee not found"
+      });
+
+    }
+
+    // 🔥 ECHTE SLOT ENGINE
+
     const slots = calculateSlotsForEmployee({
-      emp: employee,
-      serviceDuration: service.duration,
-      date,
-      tenant
+      employee,
+      service,
+      date
     });
+
+    console.log("✅ GENERATED SLOTS:", slots);
 
     return res.status(200).json({
       success: true,
       slots
     });
 
-  } catch (err) {
+  } catch (error) {
 
-    console.error("❌ SLOTS API ERROR:", err);
+    console.error("❌ SLOTS API ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      error: err.message
+      error: error.message,
+      stack: error.stack
     });
 
   }
