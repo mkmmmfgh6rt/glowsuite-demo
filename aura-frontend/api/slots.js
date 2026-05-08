@@ -1,8 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-
-
 const filePath = path.join(
   process.cwd(),
   "public",
@@ -19,66 +17,58 @@ const employees = [
     id: "anna",
     name: "Anna",
     role: "Kosmetikerin",
-
     work_start: "09:00",
     work_end: "18:00",
-
     days: "Mo-Fr",
-
     buffer: 15,
     active: 1,
-
     color: "#F4B6C2"
   },
-
   {
     id: "markus",
     name: "Markus",
     role: "Studioleitung",
-
     work_start: "09:00",
     work_end: "18:00",
-
     days: "Mo-Fr",
-
     buffer: 15,
     active: 1,
-
     color: "#8FB8DE"
   }
 ];
 
-function generateMockSlots(date) {
-
+function generateMockSlots(date, employeeId) {
   return [
     {
       time: "10:00",
       date,
+      employeeId,
       signature: "slot_1000"
     },
     {
       time: "12:00",
       date,
+      employeeId,
       signature: "slot_1200"
     },
     {
       time: "14:00",
       date,
+      employeeId,
       signature: "slot_1400"
     },
     {
       time: "16:00",
       date,
+      employeeId,
       signature: "slot_1600"
     }
   ];
-
 }
 
 export default async function handler(req, res) {
 
-  console.log("METHOD:", req.method);
-  console.log("BODY:", req.body);
+  console.log("🔥 /api/slots called");
 
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -89,12 +79,12 @@ export default async function handler(req, res) {
 
   try {
 
-    const {
-      date,
-      employeeId,
-      serviceId,
-      serviceName
-    } = req.body || {};
+    const body = req.body || {};
+
+    const date = body.date;
+    const employeeId = body.employeeId || "anna";
+    const serviceId = body.serviceId || "";
+    const serviceName = body.serviceName || "";
 
     console.log("DATE:", date);
     console.log("EMPLOYEE:", employeeId);
@@ -108,14 +98,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🔥 Service suchen
+    // 🔥 Service prüfen
     const incomingService =
-      serviceId || serviceName || "";
+      String(serviceId || serviceName).toLowerCase();
 
     const service = beautyData.services.find(
       (s) =>
-        s.name.toLowerCase() ===
-        String(incomingService).toLowerCase()
+        s.name.toLowerCase() === incomingService
     );
 
     if (!service) {
@@ -131,11 +120,10 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🔥 Mitarbeiter bestimmen
-    const employee =
-      employeeId === "auto" || !employeeId
-        ? employees[0]
-        : employees.find((e) => e.id === employeeId);
+    // 🔥 Mitarbeiter prüfen
+    const employee = employees.find(
+      (e) => e.id === employeeId
+    );
 
     if (!employee) {
       return res.status(404).json({
@@ -144,10 +132,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🔥 TEMP STABILIZATION
-    const slots = generateMockSlots(date);
+    // 🔥 TEMP MOCK SLOTS
+    const slots = generateMockSlots(
+      date,
+      employee.id
+    );
 
-    console.log("SLOTS:", slots);
+    console.log("✅ SLOTS:", slots);
 
     return res.status(200).json({
       success: true,
@@ -156,11 +147,11 @@ export default async function handler(req, res) {
 
   } catch (error) {
 
-    console.error("SLOTS API ERROR:", error);
+    console.error("❌ SLOTS API ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message || "Internal server error"
     });
 
   }
