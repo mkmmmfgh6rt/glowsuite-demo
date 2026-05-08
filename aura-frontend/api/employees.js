@@ -6,9 +6,15 @@ export default function handler(req, res) {
       success: true,
       data: [
         {
-          id: "any",
-          name: "Beliebig",
-          role: "Studio Team",
+          id: "anna",
+          name: "Anna",
+          role: "Kosmetikerin",
+          active: true
+        },
+        {
+          id: "markus",
+          name: "Markus",
+          role: "Studioleitung",
           active: true
         }
       ]
