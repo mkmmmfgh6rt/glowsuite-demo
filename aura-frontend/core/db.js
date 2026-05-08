@@ -3,7 +3,7 @@
 // Super-Stable | DSGVO Ready | Krank/Urlaub Erweiterung
 // =======================================================
 
-import { recordAuraActionFeedback } from "./auraActionFeedbackService.js";
+// import { recordAuraActionFeedback } from "./auraActionFeedbackService.js";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
@@ -1191,8 +1191,11 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
 
     const impactRevenue = afterRev - beforeRev;
     const impactBookings = afterCount - beforeCount;
+
     const roiScore =
-      beforeRev > 0 ? Number((impactRevenue / beforeRev).toFixed(3)) : null;
+      beforeRev > 0
+        ? Number((impactRevenue / beforeRev).toFixed(3))
+        : null;
 
     // ===================================================
     // 3️⃣ ROI in Marketing Tabelle speichern
@@ -1220,7 +1223,10 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
 
     // ===================================================
     // 4️⃣ 🔥 AUTOMATISCHES LEARNING FEEDBACK
+    // TEMP DISABLED → verursacht ESM/CommonJS Crash
     // ===================================================
+
+    /*
     recordAuraActionFeedback({
       action_log_id: id,
       success: roiScore !== null ? roiScore > 0 : false,
@@ -1238,15 +1244,18 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
       impact_revenue: impactRevenue,
       impact_bookings: impactBookings
     });
+    */
 
     return true;
 
   } catch (err) {
+
     console.error("❌ updateAuraMarketingStatus:", err.message);
+
     return false;
+
   }
 }
-
 
 
 // =======================================================
