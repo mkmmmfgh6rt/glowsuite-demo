@@ -1084,11 +1084,13 @@ export function buildTrendForecast(history = [], horizonDays = 7) {
   return forecast;
 }
 
-import { computeForecastConfidence } from "./auraForecastConfidenceService.js";
-import { detectWeeklySeasonality, applySeasonality } from "./auraSeasonalityService.js";
-import { detectForecastDropTrigger } from "./auraForecastTriggerService.js";
+// import { computeForecastConfidence } from "./auraForecastConfidenceService.js";
+// import { detectWeeklySeasonality, applySeasonality } from "./auraSeasonalityService.js";
+// import { detectForecastDropTrigger } from "./auraForecastTriggerService.js";
 
+/*
 export function buildForecastV2(history = [], horizonDays = 7) {
+
   const baseForecast = buildTrendForecast(history, horizonDays);
 
   const seasonality = detectWeeklySeasonality(history);
@@ -1103,15 +1105,15 @@ export function buildForecastV2(history = [], horizonDays = 7) {
   });
 
   return {
-    model: "trend-linear-v2",
     baseForecast,
     adjustedForecast,
-    seasonality,
     confidence,
     reliability,
-    trigger,
+    trigger
   };
+
 }
+*/
 
 
 export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) {
