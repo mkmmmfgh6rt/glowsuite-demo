@@ -80,12 +80,14 @@ export default async function handler(req, res) {
     const {
       date,
       employeeId,
-      serviceId
+      serviceId,
+      serviceName
     } = req.body || {};
 
     console.log("DATE:", date);
     console.log("EMPLOYEE:", employeeId);
-    console.log("SERVICE:", serviceId);
+    console.log("SERVICE ID:", serviceId);
+    console.log("SERVICE NAME:", serviceName);
 
     if (!date) {
       return res.status(400).json({
@@ -95,13 +97,21 @@ export default async function handler(req, res) {
     }
 
     // 🔥 Service suchen
+    const incomingService =
+      serviceId || serviceName || "";
+
     const service = beautyData.services.find(
       (s) =>
         s.name.toLowerCase() ===
-        String(serviceId || "").toLowerCase()
+        String(incomingService).toLowerCase()
     );
 
     if (!service) {
+
+      console.log("AVAILABLE SERVICES:",
+        beautyData.services.map(s => s.name)
+      );
+
       return res.status(404).json({
         success: false,
         error: "Service not found"
@@ -110,7 +120,7 @@ export default async function handler(req, res) {
 
     // 🔥 Mitarbeiter bestimmen
     const employee =
-      employeeId === "auto"
+      employeeId === "auto" || !employeeId
         ? employees[0]
         : employees.find((e) => e.id === employeeId);
 
