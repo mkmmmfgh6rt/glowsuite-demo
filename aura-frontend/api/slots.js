@@ -1,6 +1,18 @@
-import beautyData from "../public/data/beauty_lounge.json";
+import fs from "fs";
+import path from "path";
 
 // import { calculateSlotsForEmployee } from "../core/availabilityEngine.js";
+
+const filePath = path.join(
+  process.cwd(),
+  "public",
+  "data",
+  "beauty_lounge.json"
+);
+
+const beautyData = JSON.parse(
+  fs.readFileSync(filePath, "utf8")
+);
 
 const employees = [
   {
@@ -108,8 +120,9 @@ export default async function handler(req, res) {
 
     if (!service) {
 
-      console.log("AVAILABLE SERVICES:",
-        beautyData.services.map(s => s.name)
+      console.log(
+        "AVAILABLE SERVICES:",
+        beautyData.services.map((s) => s.name)
       );
 
       return res.status(404).json({
