@@ -1,18 +1,7 @@
-import fs from "fs";
-import path from "path";
-
-const jsonPath = path.join(
-  process.cwd(),
-  "public",
-  "data",
-  "beauty_lounge.json"
-);
-
-const beautyData = JSON.parse(
-  fs.readFileSync(jsonPath, "utf8")
-);
+import beautyData from "../public/data/beauty_lounge.json" assert { type: "json" };
 
 export default function handler(req, res) {
+
   try {
 
     return res.status(200).json({
@@ -30,4 +19,5 @@ export default function handler(req, res) {
     });
 
   }
+
 }
