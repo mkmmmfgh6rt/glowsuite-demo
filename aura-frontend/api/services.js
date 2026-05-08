@@ -1,4 +1,16 @@
-import beautyData from "../public/data/beauty_lounge.json";
+import fs from "fs";
+import path from "path";
+
+const jsonPath = path.join(
+  process.cwd(),
+  "public",
+  "data",
+  "beauty_lounge.json"
+);
+
+const beautyData = JSON.parse(
+  fs.readFileSync(jsonPath, "utf8")
+);
 
 export default function handler(req, res) {
   try {
