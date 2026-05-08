@@ -1,3 +1,5 @@
+throw new Error("TEST_NEW_SLOTS_FILE");
+
 import fs from "fs";
 import path from "path";
 
