@@ -4,13 +4,7 @@
 // =======================================================
 
 import crypto from "crypto";
-
-// 🔥 TEMP STABILIZATION
-// db.js disabled to stop ESM/CommonJS crash
-
-function getAllBookings() {
-  return [];
-}
+import { getAllBookings } from "./db.js";
 
 /**
  * Prüft, ob ein Mitarbeiter an einem Datum grundsätzlich verfügbar ist
