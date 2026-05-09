@@ -3,7 +3,7 @@
 // Super-Stable | DSGVO Ready | Krank/Urlaub Erweiterung
 // =======================================================
 
-import Database from "better-sqlite3";
+// import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
@@ -21,9 +21,14 @@ if (!fs.existsSync(dbPath)) {
 }
 
 // --- Verbindung ---
-const db = new Database(dbPath, { verbose: null });
-db.pragma("journal_mode = WAL");
-db.pragma("synchronous = NORMAL");
+const db = {
+  prepare: () => ({
+    all: () => [],
+    get: () => null,
+    run: () => ({ changes: 0 })
+  }),
+  pragma: () => {}
+};
 
 // =======================================================
 // 📅 BOOKINGS + employeeId
