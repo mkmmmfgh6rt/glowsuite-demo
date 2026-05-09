@@ -52,14 +52,19 @@ export default async function handler(req, res) {
     // JSON laden
     // =====================================================
 
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
     const filePath = path.join(
-      process.cwd(),
+      __dirname,
+      "..",
       "public",
       "data",
       "beauty_lounge.json"
     );
 
     console.log("📂 JSON PATH:", filePath);
+    console.log("📂 EXISTS:", fs.existsSync(filePath));
 
     const jsonData = fs.readFileSync(filePath, "utf8");
 
