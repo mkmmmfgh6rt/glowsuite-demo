@@ -46,6 +46,10 @@ export default async function handler(req, res) {
 
   try {
 
+    // =====================================================
+    // JSON laden
+    // =====================================================
+
     const filePath = path.join(
       process.cwd(),
       "public",
@@ -53,9 +57,15 @@ export default async function handler(req, res) {
       "beauty_lounge.json"
     );
 
+    console.log("📂 JSON PATH:", filePath);
+
     const jsonData = fs.readFileSync(filePath, "utf8");
 
     const beautyData = JSON.parse(jsonData);
+
+    // =====================================================
+    // BODY
+    // =====================================================
 
     const {
       date,
@@ -63,9 +73,13 @@ export default async function handler(req, res) {
       serviceId
     } = req.body || {};
 
-    console.log("DATE:", date);
-    console.log("EMPLOYEE:", employeeId);
-    console.log("SERVICE:", serviceId);
+    console.log("📅 DATE:", date);
+    console.log("👤 EMPLOYEE:", employeeId);
+    console.log("💅 SERVICE:", serviceId);
+
+    // =====================================================
+    // VALIDATION
+    // =====================================================
 
     if (!date) {
 
@@ -76,11 +90,26 @@ export default async function handler(req, res) {
 
     }
 
+    if (!serviceId) {
+
+      return res.status(400).json({
+        success: false,
+        error: "Missing serviceId"
+      });
+
+    }
+
+    // =====================================================
+    // SERVICE FINDEN
+    // =====================================================
+
     const service = beautyData.services.find(
       (s) =>
         s.name.toLowerCase() ===
         String(serviceId || "").toLowerCase()
     );
+
+    console.log("🧾 FOUND SERVICE:", service);
 
     if (!service) {
 
@@ -91,10 +120,16 @@ export default async function handler(req, res) {
 
     }
 
+    // =====================================================
+    // EMPLOYEE FINDEN
+    // =====================================================
+
     const employee =
       employeeId === "auto"
         ? employees[0]
         : employees.find((e) => e.id === employeeId);
+
+    console.log("👨‍💼 FOUND EMPLOYEE:", employee);
 
     if (!employee) {
 
@@ -105,13 +140,22 @@ export default async function handler(req, res) {
 
     }
 
+    // =====================================================
+    // SLOTS GENERIEREN
+    // =====================================================
+
     const slots = calculateSlotsForEmployee({
-      employee,
-      service,
-      date
+      emp: employee,
+      serviceDuration: service.duration,
+      date,
+      tenant: "beauty_lounge"
     });
 
     console.log("✅ GENERATED SLOTS:", slots);
+
+    // =====================================================
+    // RESPONSE
+    // =====================================================
 
     return res.status(200).json({
       success: true,
