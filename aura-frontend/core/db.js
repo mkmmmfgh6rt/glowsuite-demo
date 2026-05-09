@@ -1083,23 +1083,48 @@ export function buildTrendForecast(history = [], horizonDays = 7) {
   return forecast;
 }
 
-import { computeForecastConfidence } from "./auraForecastConfidenceService.js";
-import { detectWeeklySeasonality, applySeasonality } from "./auraSeasonalityService.js";
-import { detectForecastDropTrigger } from "./auraForecastTriggerService.js";
+// import { computeForecastConfidence } from "./auraForecastConfidenceService.js";
+// import { detectWeeklySeasonality, applySeasonality } from "./auraSeasonalityService.js";
+// import { detectForecastDropTrigger } from "./auraForecastTriggerService.js";
 
+// =======================================================
+// 🚫 buildForecastV2 TEMPORÄR DEAKTIVIERT
+// Grund:
+// Vercel Import-Kette crasht aktuell über
+// Forecast / Seasonality / Trigger Services.
+//
+// Slots-API braucht dieses System NICHT.
+// Wird später sauber modularisiert.
+// =======================================================
+
+/*
 export function buildForecastV2(history = [], horizonDays = 7) {
-  const baseForecast = buildTrendForecast(history, horizonDays);
 
-  const seasonality = detectWeeklySeasonality(history);
-  const adjustedForecast = applySeasonality(baseForecast, seasonality);
-
-  const { confidence, reliability } = computeForecastConfidence(history);
-
-  const trigger = detectForecastDropTrigger({
+  const baseForecast = buildTrendForecast(
     history,
-    adjustedForecast,
+    horizonDays
+  );
+
+  const seasonality =
+    detectWeeklySeasonality(history);
+
+  const adjustedForecast =
+    applySeasonality(
+      baseForecast,
+      seasonality
+    );
+
+  const {
     confidence,
-  });
+    reliability
+  } = computeForecastConfidence(history);
+
+  const trigger =
+    detectForecastDropTrigger({
+      history,
+      adjustedForecast,
+      confidence,
+    });
 
   return {
     model: "trend-linear-v2",
@@ -1110,7 +1135,9 @@ export function buildForecastV2(history = [], horizonDays = 7) {
     reliability,
     trigger,
   };
+
 }
+*/
 
 
 export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) {
