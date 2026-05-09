@@ -634,7 +634,7 @@ export function getDb() {
 }
 
 
-/*
+
 // =======================================================
 // ⚡ AURA ACTION LOGS – FINAL VERSION
 // Einheitliches Logging-System
@@ -1399,5 +1399,5 @@ export function expireOldGeneratedMarketingActions({
     return { expiredCount: 0 };
   }
 }
-*/
+
 
