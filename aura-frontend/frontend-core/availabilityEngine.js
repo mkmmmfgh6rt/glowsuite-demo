@@ -4,7 +4,9 @@
 // =======================================================
 
 import crypto from "crypto";
-import { getAllBookings } from "./db.js";
+function getAllBookings() {
+  return [];
+}
 
 /**
  * Prüft, ob ein Mitarbeiter an einem Datum grundsätzlich verfügbar ist
