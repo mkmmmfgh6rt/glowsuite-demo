@@ -1097,50 +1097,31 @@ export function buildTrendForecast(history = [], horizonDays = 7) {
 // Wird später sauber modularisiert.
 // =======================================================
 
-/*
-export function buildForecastV2(history = [], horizonDays = 7) {
 
-  const baseForecast = buildTrendForecast(
-    history,
-    horizonDays
-  );
+export function buildForecastV2() {
 
-  const seasonality =
-    detectWeeklySeasonality(history);
-
-  const adjustedForecast =
-    applySeasonality(
-      baseForecast,
-      seasonality
-    );
-
-  const {
-    confidence,
-    reliability
-  } = computeForecastConfidence(history);
-
-  const trigger =
-    detectForecastDropTrigger({
-      history,
-      adjustedForecast,
-      confidence,
-    });
+  console.warn("⚠️ buildForecastV2 deaktiviert");
 
   return {
-    model: "trend-linear-v2",
-    baseForecast,
-    adjustedForecast,
-    seasonality,
-    confidence,
-    reliability,
-    trigger,
+    model: "disabled",
+    baseForecast: [],
+    adjustedForecast: [],
+    seasonality: null,
+    confidence: 0,
+    reliability: 0,
+    trigger: null,
   };
 
 }
 
 
 
-export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) {
+export function updateAuraMarketingStatus({
+  id,
+  tenant,
+  status,
+  notes = null
+}) {
 
   try {
 
@@ -1153,24 +1134,35 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
              notes = ?
        WHERE id = ?
          AND tenant = ?
-    `).run(status, notes, id, tenant);
+    `).run(
+      status,
+      notes,
+      id,
+      tenant
+    );
 
     if (info.changes === 0) {
 
-      console.warn("⚠️ Kein Marketing-Datensatz gefunden:", {
-        id,
-        tenant
-      });
+      console.warn(
+        "⚠️ Kein Marketing-Datensatz gefunden:",
+        {
+          id,
+          tenant
+        }
+      );
 
       return false;
 
     }
 
-    logAction("✅ AURA Marketing Status update", {
-      id,
-      tenant,
-      status
-    });
+    logAction(
+      "✅ AURA Marketing Status update",
+      {
+        id,
+        tenant,
+        status
+      }
+    );
 
     // ===================================================
     // 2️⃣ ROI nur berechnen wenn executed
@@ -1184,13 +1176,17 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
       FROM aura_marketing_actions
       WHERE id = ?
         AND tenant = ?
-    `).get(id, tenant);
+    `).get(
+      id,
+      tenant
+    );
 
     if (!record?.created_at) {
 
-      console.warn("⚠️ created_at fehlt – ROI nicht berechnet:", {
-        id
-      });
+      console.warn(
+        "⚠️ created_at fehlt – ROI nicht berechnet:",
+        { id }
+      );
 
       return true;
 
@@ -1234,19 +1230,34 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
       afterEnd.toISOString()
     );
 
-    const beforeRev = Number(before?.revenue || 0);
-    const afterRev = Number(after?.revenue || 0);
+    const beforeRev = Number(
+      before?.revenue || 0
+    );
 
-    const beforeCount = Number(before?.bookings || 0);
-    const afterCount = Number(after?.bookings || 0);
+    const afterRev = Number(
+      after?.revenue || 0
+    );
 
-    const impactRevenue = afterRev - beforeRev;
-    const impactBookings = afterCount - beforeCount;
+    const beforeCount = Number(
+      before?.bookings || 0
+    );
+
+    const afterCount = Number(
+      after?.bookings || 0
+    );
+
+    const impactRevenue =
+      afterRev - beforeRev;
+
+    const impactBookings =
+      afterCount - beforeCount;
 
     const roiScore =
       beforeRev > 0
         ? Number(
-            (impactRevenue / beforeRev).toFixed(3)
+            (
+              impactRevenue / beforeRev
+            ).toFixed(3)
           )
         : null;
 
@@ -1268,44 +1279,23 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
       tenant
     );
 
-    console.log("📊 ROI berechnet:", {
-      impactRevenue,
-      impactBookings,
-      roiScore
-    });
+    console.log(
+      "📊 ROI berechnet:",
+      {
+        impactRevenue,
+        impactBookings,
+        roiScore
+      }
+    );
 
     // ===================================================
     // 4️⃣ FEEDBACK SYSTEM TEMPORÄR DEAKTIVIERT
-    // Kreisimport Fix für Vercel
+    // Fix für Vercel / Circle Import
     // ===================================================
 
-    /*
-    recordAuraActionFeedback({
-      action_log_id: id,
-      success: roiScore !== null
-        ? roiScore > 0
-        : false,
-
-      impact:
-        roiScore !== null
-          ? roiScore > 2
-            ? "high"
-            : roiScore > 1
-              ? "medium"
-              : "low"
-          : "unknown",
-
-      notes: "auto-roi-evaluation",
-
-      tenant,
-
-      roi: roiScore,
-
-      impact_revenue: impactRevenue,
-
-      impact_bookings: impactBookings
-    });
-    
+    console.warn(
+      "⚠️ recordAuraActionFeedback deaktiviert"
+    );
 
     return true;
 
@@ -1321,7 +1311,6 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
   }
 
 }
-
 
 
 // =======================================================
