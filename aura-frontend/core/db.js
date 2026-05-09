@@ -3,7 +3,6 @@
 // Super-Stable | DSGVO Ready | Krank/Urlaub Erweiterung
 // =======================================================
 
-import { recordAuraActionFeedback } from "./auraActionFeedbackService.js";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
@@ -1115,6 +1114,7 @@ export function buildForecastV2(history = [], horizonDays = 7) {
 
 
 export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) {
+
   try {
 
     // ===================================================
@@ -1129,11 +1129,21 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
     `).run(status, notes, id, tenant);
 
     if (info.changes === 0) {
-      console.warn("⚠️ Kein Marketing-Datensatz gefunden:", { id, tenant });
+
+      console.warn("⚠️ Kein Marketing-Datensatz gefunden:", {
+        id,
+        tenant
+      });
+
       return false;
+
     }
 
-    logAction("✅ AURA Marketing Status update", { id, tenant, status });
+    logAction("✅ AURA Marketing Status update", {
+      id,
+      tenant,
+      status
+    });
 
     // ===================================================
     // 2️⃣ ROI nur berechnen wenn executed
@@ -1150,16 +1160,29 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
     `).get(id, tenant);
 
     if (!record?.created_at) {
-      console.warn("⚠️ created_at fehlt – ROI nicht berechnet:", { id });
+
+      console.warn("⚠️ created_at fehlt – ROI nicht berechnet:", {
+        id
+      });
+
       return true;
+
     }
 
     const created = new Date(record.created_at);
-    const beforeStart = new Date(created.getTime() - 7 * 86400000);
-    const afterEnd = new Date(created.getTime() + 7 * 86400000);
+
+    const beforeStart = new Date(
+      created.getTime() - 7 * 86400000
+    );
+
+    const afterEnd = new Date(
+      created.getTime() + 7 * 86400000
+    );
 
     const before = db.prepare(`
-      SELECT SUM(price) as revenue, COUNT(*) as bookings
+      SELECT
+        SUM(price) as revenue,
+        COUNT(*) as bookings
       FROM bookings
       WHERE tenant = ?
         AND dateTime >= ?
@@ -1171,7 +1194,9 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
     );
 
     const after = db.prepare(`
-      SELECT SUM(price) as revenue, COUNT(*) as bookings
+      SELECT
+        SUM(price) as revenue,
+        COUNT(*) as bookings
       FROM bookings
       WHERE tenant = ?
         AND dateTime >= ?
@@ -1184,16 +1209,22 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
 
     const beforeRev = Number(before?.revenue || 0);
     const afterRev = Number(after?.revenue || 0);
+
     const beforeCount = Number(before?.bookings || 0);
     const afterCount = Number(after?.bookings || 0);
 
     const impactRevenue = afterRev - beforeRev;
     const impactBookings = afterCount - beforeCount;
+
     const roiScore =
-      beforeRev > 0 ? Number((impactRevenue / beforeRev).toFixed(3)) : null;
+      beforeRev > 0
+        ? Number(
+            (impactRevenue / beforeRev).toFixed(3)
+          )
+        : null;
 
     // ===================================================
-    // 3️⃣ ROI in Marketing Tabelle speichern
+    // 3️⃣ ROI speichern
     // ===================================================
     db.prepare(`
       UPDATE aura_marketing_actions
@@ -1217,11 +1248,17 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
     });
 
     // ===================================================
-    // 4️⃣ 🔥 AUTOMATISCHES LEARNING FEEDBACK
+    // 4️⃣ FEEDBACK SYSTEM TEMPORÄR DEAKTIVIERT
+    // Kreisimport Fix für Vercel
     // ===================================================
+
+    /*
     recordAuraActionFeedback({
       action_log_id: id,
-      success: roiScore !== null ? roiScore > 0 : false,
+      success: roiScore !== null
+        ? roiScore > 0
+        : false,
+
       impact:
         roiScore !== null
           ? roiScore > 2
@@ -1230,19 +1267,32 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
               ? "medium"
               : "low"
           : "unknown",
+
       notes: "auto-roi-evaluation",
+
       tenant,
+
       roi: roiScore,
+
       impact_revenue: impactRevenue,
+
       impact_bookings: impactBookings
     });
+    */
 
     return true;
 
   } catch (err) {
-    console.error("❌ updateAuraMarketingStatus:", err.message);
+
+    console.error(
+      "❌ updateAuraMarketingStatus:",
+      err.message
+    );
+
     return false;
+
   }
+
 }
 
 
