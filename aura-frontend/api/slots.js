@@ -1,4 +1,4 @@
-import beautyData from "../public/data/beauty_lounge.json";
+import beautyData from "../public/data/beauty_lounge.json" assert { type: "json" };
 
 import {
   calculateSlotsForEmployee
