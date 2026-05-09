@@ -3,7 +3,7 @@ import path from "path";
 
 import {
   calculateSlotsForEmployee
-} from "../core/availabilityEngine.js";
+} from "../frontend-core/availabilityEngine.js";
 
 const employees = [
   {
