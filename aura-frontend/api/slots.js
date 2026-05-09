@@ -52,6 +52,7 @@ export default async function handler(req, res) {
 
     const filePath = path.join(
       process.cwd(),
+      "aura-frontend",
       "public",
       "data",
       "beauty_lounge.json"
