@@ -1,4 +1,5 @@
-import beautyData from "../public/data/beauty_lounge.json" assert { type: "json" };
+import fs from "fs";
+import path from "path";
 
 import {
   calculateSlotsForEmployee
@@ -9,15 +10,11 @@ const employees = [
     id: "anna",
     name: "Anna",
     role: "Kosmetikerin",
-
     work_start: "09:00",
     work_end: "18:00",
-
     days: "Mo-Fr",
-
     buffer: 15,
     active: 1,
-
     color: "#F4B6C2"
   },
 
@@ -25,15 +22,11 @@ const employees = [
     id: "markus",
     name: "Markus",
     role: "Studioleitung",
-
     work_start: "09:00",
     work_end: "18:00",
-
     days: "Mo-Fr",
-
     buffer: 15,
     active: 1,
-
     color: "#8FB8DE"
   }
 ];
@@ -52,6 +45,17 @@ export default async function handler(req, res) {
   }
 
   try {
+
+    const filePath = path.join(
+      process.cwd(),
+      "public",
+      "data",
+      "beauty_lounge.json"
+    );
+
+    const jsonData = fs.readFileSync(filePath, "utf8");
+
+    const beautyData = JSON.parse(jsonData);
 
     const {
       date,
@@ -72,8 +76,6 @@ export default async function handler(req, res) {
 
     }
 
-    // 🔥 SERVICE SUCHEN
-
     const service = beautyData.services.find(
       (s) =>
         s.name.toLowerCase() ===
@@ -89,8 +91,6 @@ export default async function handler(req, res) {
 
     }
 
-    // 🔥 MITARBEITER SUCHEN
-
     const employee =
       employeeId === "auto"
         ? employees[0]
@@ -104,8 +104,6 @@ export default async function handler(req, res) {
       });
 
     }
-
-    // 🔥 ECHTE SLOT ENGINE
 
     const slots = calculateSlotsForEmployee({
       employee,
