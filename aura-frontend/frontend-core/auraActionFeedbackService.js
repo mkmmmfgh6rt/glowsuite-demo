@@ -3,9 +3,14 @@
 // =======================================================
 
 import { randomUUID } from "crypto";
-import Database from "better-sqlite3";
 
-const db = new Database("aura.db");
+const db = {
+  prepare: () => ({
+    all: () => [],
+    get: () => null,
+    run: () => ({ changes: 0 })
+  })
+};
 
 /**
  * WRITE – Feedback speichern
