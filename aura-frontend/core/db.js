@@ -634,7 +634,7 @@ export function getDb() {
 }
 
 
-
+/*
 // =======================================================
 // ⚡ AURA ACTION LOGS – FINAL VERSION
 // Einheitliches Logging-System
@@ -1137,7 +1137,7 @@ export function buildForecastV2(history = [], horizonDays = 7) {
   };
 
 }
-*/
+
 
 
 export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) {
@@ -1305,7 +1305,7 @@ export function updateAuraMarketingStatus({ id, tenant, status, notes = null }) 
 
       impact_bookings: impactBookings
     });
-    */
+    
 
     return true;
 
@@ -1410,5 +1410,5 @@ export function expireOldGeneratedMarketingActions({
     return { expiredCount: 0 };
   }
 }
-
+*/
 
