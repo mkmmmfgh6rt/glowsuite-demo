@@ -3,7 +3,9 @@
 // =======================================================
 
 import { randomUUID } from "crypto";
-import { getDb } from "./db.js";
+import Database from "better-sqlite3";
+
+const db = new Database("aura.db");
 
 /**
  * WRITE – Feedback speichern
@@ -19,7 +21,7 @@ export function recordAuraActionFeedback({
     throw new Error("action_log_id oder success fehlt");
   }
 
-  const db = getDb();
+  
 
   db.prepare(`
     INSERT INTO action_feedback (
@@ -42,7 +44,7 @@ export function recordAuraActionFeedback({
  * READ – Feedback abrufen (für Learning)
  */
 export function getAuraActionFeedback({ tenant = null } = {}) {
-  const db = getDb();
+  
 
   const rows = db.prepare(`
     SELECT *
