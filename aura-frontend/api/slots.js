@@ -1,7 +1,4 @@
-import fs from "fs";
-import path from "path";
-
-console.log("📂 CWD:", process.cwd());
+import beautyData from "../public/data/beauty_lounge.json" assert { type: "json" };
 
 import {
   calculateSlotsForEmployee
@@ -47,28 +44,6 @@ export default async function handler(req, res) {
   }
 
   try {
-
-    // =====================================================
-    // JSON laden
-    // =====================================================
-
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-
-    const filePath = path.join(
-      __dirname,
-      "..",
-      "public",
-      "data",
-      "beauty_lounge.json"
-    );
-
-    console.log("📂 JSON PATH:", filePath);
-    console.log("📂 EXISTS:", fs.existsSync(filePath));
-
-    const jsonData = fs.readFileSync(filePath, "utf8");
-
-    const beautyData = JSON.parse(jsonData);
 
     // =====================================================
     // BODY
