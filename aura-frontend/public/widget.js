@@ -1531,7 +1531,7 @@ async function createBooking() {
     return;
   }
 
-  // ❌ STOP: KEIN MITARBEITER → ABORT (kein UI hier!)
+  // ❌ STOP: KEIN MITARBEITER → ABORT
   if (!chosenEmployee) {
     console.warn("❌ BLOCK: NO EMPLOYEE → FLOW FEHLER");
     return;
@@ -1586,6 +1586,8 @@ async function createBooking() {
 
     const j = await r.json();
 
+    console.log("BOOKING RESPONSE:", j);
+
     // 🔥 SLOT KONFLIKT
     if (!j.success) {
 
@@ -1615,20 +1617,74 @@ async function createBooking() {
     // ✅ ERFOLG
     window.bookingActive = false;
 
-    const pdfUrl = j.pdfUrl || j.booking?.pdfUrl || null;
-    const icsUrl = j.icsUrl || j.booking?.icsUrl || null;
+    // =====================================================
+    // PDF + ICS DATEN HOLEN
+    // =====================================================
+
+    const pdfData =
+      j.pdfBase64 ||
+      j.booking?.pdfBase64 ||
+      j.pdfUrl ||
+      j.booking?.pdfUrl ||
+      null;
+
+    const icsData =
+      j.icsBase64 ||
+      j.booking?.icsBase64 ||
+      j.icsUrl ||
+      j.booking?.icsUrl ||
+      null;
 
     let extra = "";
 
-    if (pdfUrl) {
-      extra += `<br><a href="${pdfUrl}" target="_blank">📄 Bestätigung als PDF herunterladen</a>`;
+    // =====================================================
+    // PDF LINK
+    // =====================================================
+
+    if (pdfData) {
+
+      const pdfHref = pdfData.startsWith("data:")
+        ? pdfData
+        : `data:application/pdf;base64,${pdfData}`;
+
+      extra += `
+        <br><br>
+        <a
+          href="${pdfHref}"
+          download="terminbestaetigung.pdf"
+          target="_blank"
+          class="download-link"
+        >
+          📄 PDF herunterladen
+        </a>
+      `;
     }
 
-    if (icsUrl) {
-      extra += `<br><a href="${icsUrl}" target="_blank">📅 Termin in Kalender speichern</a>`;
+    // =====================================================
+    // ICS LINK
+    // =====================================================
+
+    if (icsData) {
+
+      const icsHref = icsData.startsWith("data:")
+        ? icsData
+        : `data:text/calendar;base64,${icsData}`;
+
+      extra += `
+        <br>
+        <a
+          href="${icsHref}"
+          download="termin.ics"
+          class="download-link"
+        >
+          📅 Kalender speichern
+        </a>
+      `;
     }
 
-    const lastServiceForRepeat = chosenService ? { ...chosenService } : null;
+    const lastServiceForRepeat = chosenService
+      ? { ...chosenService }
+      : null;
 
     $msg(
       `${goldIcon(ICONS.info)}✅ Dein Termin wurde erfolgreich eingetragen!<br>` +
