@@ -1,3 +1,5 @@
+import { createAppointmentPDF } from "../frontend-core/pdf.js";
+
 export default async function handler(req, res) {
 
   console.log("BOOKING METHOD:", req.method);
@@ -12,11 +14,53 @@ export default async function handler(req, res) {
 
   try {
 
+    const {
+      name,
+      email,
+      phone,
+      service,
+      employee,
+      dateTime,
+      duration,
+      price
+    } = req.body;
+
     const bookingId = `booking_${Date.now()}`;
+
+    // =====================================================
+    // BOOKING OBJECT
+    // =====================================================
+
+    const booking = {
+      id: bookingId,
+      name: name || "",
+      email: email || "",
+      phone: phone || "",
+      service: service || "",
+      employee: employee || "Mitarbeiter",
+      dateTime,
+      duration: duration || 60,
+      price: price || 0,
+      tenant: "beauty_lounge"
+    };
+
+    // =====================================================
+    // PDF + ICS GENERIEREN
+    // =====================================================
+
+    const files = await createAppointmentPDF(booking);
+
+    console.log("📄 PDF RESULT:", files);
+
+    // =====================================================
+    // RESPONSE
+    // =====================================================
 
     return res.status(200).json({
       success: true,
       bookingId,
+      pdfUrl: files?.pdfUrl || null,
+      icsUrl: files?.icsUrl || null,
       message: "Booking created successfully"
     });
 
@@ -26,7 +70,8 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
+      stack: error.stack
     });
 
   }
