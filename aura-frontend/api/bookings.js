@@ -1,13 +1,17 @@
+import { createAppointmentPDF } from "../frontend-core/pdf.js";
+
 export default async function handler(req, res) {
 
   console.log("BOOKING METHOD:", req.method);
   console.log("BOOKING BODY:", req.body);
 
   if (req.method !== "POST") {
+
     return res.status(405).json({
       success: false,
       error: "Method not allowed"
     });
+
   }
 
   try {
@@ -45,6 +49,14 @@ export default async function handler(req, res) {
     console.log("✅ BOOKING CREATED:", booking);
 
     // =====================================================
+    // PDF TEST
+    // =====================================================
+
+    const files = await createAppointmentPDF(booking);
+
+    console.log("📄 PDF RESULT:", files);
+
+    // =====================================================
     // RESPONSE
     // =====================================================
 
@@ -52,6 +64,8 @@ export default async function handler(req, res) {
       success: true,
       bookingId,
       booking,
+      pdfUrl: files?.pdfUrl || null,
+      icsUrl: files?.icsUrl || null,
       message: "Booking created successfully"
     });
 
