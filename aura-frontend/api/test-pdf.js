@@ -6,7 +6,11 @@ export default async function handler(req, res) {
 
     const result = await createAppointmentPDF({
       name: "Markus",
-      service: "Wimpernlifting"
+      service: "Wimpernlifting",
+      employee: "Anna",
+      dateTime: "2026-05-10T14:00:00",
+      duration: 60,
+      price: 89
     });
 
     return res.status(200).json({
