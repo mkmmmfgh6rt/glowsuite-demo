@@ -1,5 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { createEvent } from "ics";
+import fs from "fs";
+import path from "path";
 
 export async function createAppointmentPDF(booking) {
 
@@ -63,8 +65,6 @@ export async function createAppointmentPDF(booking) {
 
     const pdfBytes = await pdfDoc.save();
 
-    const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
-
     // =====================================================
     // ICS ERSTELLEN
     // =====================================================
@@ -101,9 +101,38 @@ export async function createAppointmentPDF(booking) {
 
     });
 
-    const icsBase64 = Buffer.from(icsEvent).toString("base64");
+    // =====================================================
+    // DATEINAMEN
+    // =====================================================
 
-    console.log("✅ PDF + ICS CREATED");
+    const fileId = `booking_${Date.now()}`;
+
+    const pdfFileName = `${fileId}.pdf`;
+    const icsFileName = `${fileId}.ics`;
+
+    // =====================================================
+    // SPEICHERPFAD
+    // =====================================================
+
+    const outputDir = path.join(process.cwd(), "public", "generated");
+
+    // Ordner erstellen falls nicht vorhanden
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const pdfPath = path.join(outputDir, pdfFileName);
+    const icsPath = path.join(outputDir, icsFileName);
+
+    // =====================================================
+    // DATEIEN SPEICHERN
+    // =====================================================
+
+    fs.writeFileSync(pdfPath, pdfBytes);
+    fs.writeFileSync(icsPath, icsEvent);
+
+    console.log("✅ PDF gespeichert:", pdfPath);
+    console.log("✅ ICS gespeichert:", icsPath);
 
     // =====================================================
     // RETURN
@@ -112,11 +141,9 @@ export async function createAppointmentPDF(booking) {
     return {
       success: true,
 
-      pdfUrl:
-        `data:application/pdf;base64,${pdfBase64}`,
+      pdfUrl: `/generated/${pdfFileName}`,
 
-      icsUrl:
-        `data:text/calendar;base64,${icsBase64}`
+      icsUrl: `/generated/${icsFileName}`
     };
 
   } catch (error) {
