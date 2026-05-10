@@ -1,8 +1,13 @@
-import beautyData from "../public/data/beauty_lounge.json"
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import {
   calculateSlotsForEmployee
 } from "../frontend-core/availabilityEngine.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const employees = [
   {
@@ -46,18 +51,38 @@ export default async function handler(req, res) {
   try {
 
     // =====================================================
+    // JSON LADEN
+    // =====================================================
+
+    const filePath = path.join(
+      __dirname,
+      "..",
+      "public",
+      "data",
+      "beauty_lounge.json"
+    );
+
+    console.log("📂 JSON PATH:", filePath);
+    console.log("📂 EXISTS:", fs.existsSync(filePath));
+
+    const jsonData = fs.readFileSync(filePath, "utf8");
+
+    const beautyData = JSON.parse(jsonData);
+
+    // =====================================================
     // BODY
     // =====================================================
 
     const {
       date,
       employeeId,
-      serviceId
+      serviceId,
+      serviceName
     } = req.body || {};
 
     console.log("📅 DATE:", date);
     console.log("👤 EMPLOYEE:", employeeId);
-    console.log("💅 SERVICE:", serviceId);
+    console.log("💅 SERVICE:", serviceId || serviceName);
 
     // =====================================================
     // VALIDATION
@@ -72,11 +97,13 @@ export default async function handler(req, res) {
 
     }
 
-    if (!serviceId) {
+    const finalServiceName = serviceId || serviceName;
+
+    if (!finalServiceName) {
 
       return res.status(400).json({
         success: false,
-        error: "Missing serviceId"
+        error: "Missing service"
       });
 
     }
@@ -88,7 +115,7 @@ export default async function handler(req, res) {
     const service = beautyData.services.find(
       (s) =>
         s.name.toLowerCase() ===
-        String(serviceId || "").toLowerCase()
+        String(finalServiceName).toLowerCase()
     );
 
     console.log("🧾 FOUND SERVICE:", service);
@@ -107,7 +134,7 @@ export default async function handler(req, res) {
     // =====================================================
 
     const employee =
-      employeeId === "auto"
+      employeeId === "auto" || !employeeId
         ? employees[0]
         : employees.find((e) => e.id === employeeId);
 
