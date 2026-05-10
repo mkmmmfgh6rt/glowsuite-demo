@@ -43,7 +43,7 @@ export async function createAppointmentPDF(booking) {
     });
 
     // Titel
-    page.drawText("GlowSuite AI Terminbestätigung", {
+    page.drawText("GlowSuite AI Terminbestaetigung", {
       x: 50,
       y: 350,
       size: 22,
@@ -95,7 +95,7 @@ export async function createAppointmentPDF(booking) {
       font
     });
 
-    page.drawText(`Preis: ${booking.price || 0} €`, {
+    page.drawText(`Preis: ${booking.price || 0} EUR`, {
       x: 50,
       y: 115,
       size: 14,
@@ -103,7 +103,7 @@ export async function createAppointmentPDF(booking) {
     });
 
     page.drawText(
-      "Vielen Dank für deine Buchung 💎",
+      "Vielen Dank für deine Buchung ",
       {
         x: 50,
         y: 60,
