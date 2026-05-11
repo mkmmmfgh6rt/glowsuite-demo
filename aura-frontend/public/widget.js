@@ -1586,7 +1586,40 @@ async function createBooking() {
 
     const j = await r.json();
 
+    // =====================================================
+    // 🔥 DEBUG LOGS
+    // =====================================================
+
     console.log("BOOKING RESPONSE:", j);
+
+    console.log(
+      "BOOKING RESPONSE FULL:",
+      JSON.stringify(j, null, 2)
+    );
+
+    console.log("PDF CHECK:", {
+      pdfUrl: j.pdfUrl,
+      icsUrl: j.icsUrl,
+
+      pdfBase64: j.pdfBase64
+        ? "PDF BASE64 VORHANDEN"
+        : "PDF BASE64 FEHLT",
+
+      icsBase64: j.icsBase64
+        ? "ICS BASE64 VORHANDEN"
+        : "ICS BASE64 FEHLT",
+
+      bookingPdfUrl: j.booking?.pdfUrl,
+      bookingIcsUrl: j.booking?.icsUrl,
+
+      bookingPdfBase64: j.booking?.pdfBase64
+        ? "BOOKING PDF BASE64 VORHANDEN"
+        : "BOOKING PDF BASE64 FEHLT",
+
+      bookingIcsBase64: j.booking?.icsBase64
+        ? "BOOKING ICS BASE64 VORHANDEN"
+        : "BOOKING ICS BASE64 FEHLT"
+    });
 
     // 🔥 SLOT KONFLIKT
     if (!j.success) {

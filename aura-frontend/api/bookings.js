@@ -57,15 +57,40 @@ export default async function handler(req, res) {
     console.log("📄 PDF RESULT:", files);
 
     // =====================================================
+    // 🔥 BASE64 FIX
+    // =====================================================
+
+    const pdfBase64 = files?.pdfBase64 || null;
+    const icsBase64 = files?.icsBase64 || null;
+
+    console.log("🔥 PDF BASE64:", pdfBase64 ? "VORHANDEN" : "FEHLT");
+    console.log("🔥 ICS BASE64:", icsBase64 ? "VORHANDEN" : "FEHLT");
+
+    // =====================================================
     // RESPONSE
     // =====================================================
 
     return res.status(200).json({
       success: true,
+
       bookingId,
-      booking,
+
+      booking: {
+        ...booking,
+
+        pdfBase64,
+        icsBase64,
+
+        pdfUrl: files?.pdfUrl || null,
+        icsUrl: files?.icsUrl || null
+      },
+
+      pdfBase64,
+      icsBase64,
+
       pdfUrl: files?.pdfUrl || null,
       icsUrl: files?.icsUrl || null,
+
       message: "Booking created successfully"
     });
 
