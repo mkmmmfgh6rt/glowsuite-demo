@@ -22,10 +22,22 @@ export default async function handler(req, res) {
       phone,
       service,
       employee,
-      dateTime,
+      date,
+      time,
       duration,
       price
     } = req.body;
+
+    // =====================================================
+    // 🔥 DATETIME FIX
+    // =====================================================
+
+    const dateTime =
+      date && time
+        ? `${date}T${time}:00`
+        : null;
+
+    console.log("🔥 GENERATED DATETIME:", dateTime);
 
     const bookingId = `booking_${Date.now()}`;
 
