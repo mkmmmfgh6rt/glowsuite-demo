@@ -1586,10 +1586,6 @@ async function createBooking() {
 
     const j = await r.json();
 
-    // =====================================================
-    // 🔥 DEBUG LOGS
-    // =====================================================
-
     console.log("BOOKING RESPONSE:", j);
 
     console.log(
@@ -1668,6 +1664,11 @@ async function createBooking() {
       j.booking?.icsUrl ||
       null;
 
+    const bookingId =
+      j.booking?.id ||
+      j.id ||
+      null;
+
     let extra = "";
 
     // =====================================================
@@ -1715,6 +1716,74 @@ async function createBooking() {
       `;
     }
 
+    // =====================================================
+    // STORNIER BUTTON
+    // =====================================================
+
+    if (bookingId) {
+
+      extra += `
+        <br><br>
+
+        <button
+          class="pill alt"
+          onclick="
+            (async () => {
+
+              const ok = confirm('Termin wirklich stornieren?');
+
+              if (!ok) return;
+
+              try {
+
+                const r = await fetch('/api/bookings/${bookingId}', {
+                  method: 'DELETE'
+                });
+
+                const j = await r.json();
+
+                if (j.success) {
+
+                  alert('Termin erfolgreich storniert');
+
+                  location.reload();
+
+                } else {
+
+                  alert('Stornierung fehlgeschlagen');
+
+                }
+
+              } catch(e) {
+
+                console.error(e);
+                alert('Technischer Fehler');
+
+              }
+
+            })()
+          "
+        >
+          ❌ Termin stornieren
+        </button>
+      `;
+    }
+
+    // =====================================================
+    // RELOAD BUTTON
+    // =====================================================
+
+    extra += `
+      <br><br>
+
+      <button
+        class="pill"
+        onclick="location.reload()"
+      >
+        ✨ Neuen Termin buchen
+      </button>
+    `;
+
     const lastServiceForRepeat = chosenService
       ? { ...chosenService }
       : null;
@@ -1741,7 +1810,6 @@ async function createBooking() {
 
   resetBookingState();
 }
-
 
 function showSoftClose(lastService = null) {
 
