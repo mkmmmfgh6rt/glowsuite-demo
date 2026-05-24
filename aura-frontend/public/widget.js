@@ -252,7 +252,7 @@ function detectCategory(text) {
 // =======================================================
 // AI TEXT PARSER
 // =======================================================
-function parseBookingIntent(text){
+function parseBookingIntent(text) {
 
   const t = text.toLowerCase();
 
@@ -563,7 +563,7 @@ function replyOpeningHours() {
   if (typeof oh === "object") {
     $msg(
       `${goldIcon(ICONS.calendar)}Unsere Öffnungszeiten:<br>` +
-        `<b>${oh.start}:00 – ${oh.end}:00 Uhr</b>`,
+      `<b>${oh.start}:00 – ${oh.end}:00 Uhr</b>`,
     );
   } else {
     $msg(`${goldIcon(ICONS.calendar)}Unsere Öffnungszeiten:<br><b>${oh}</b>`);
@@ -581,9 +581,9 @@ function replyAddress() {
   if (typeof a === "object") {
     $msg(
       `${goldIcon(ICONS.address)}Unsere Adresse:<br>` +
-        `<b>${a.street || ""}</b><br>` +
-        `${a.postalCode || ""} ${a.city || ""}<br>` +
-        `${a.country || ""}`,
+      `<b>${a.street || ""}</b><br>` +
+      `${a.postalCode || ""} ${a.city || ""}<br>` +
+      `${a.country || ""}`,
     );
   } else {
     $msg(`${goldIcon(ICONS.address)}Unsere Adresse:<br><b>${a}</b>`);
@@ -593,7 +593,7 @@ function replyAddress() {
 function replyPriceList() {
   $msg(
     `${goldIcon(ICONS.price)}Unsere aktuelle Preisliste:<br>` +
-      `<a href="/preisliste/current" target="_blank">Jetzt Preisliste öffnen</a>`,
+    `<a href="/preisliste/current" target="_blank">Jetzt Preisliste öffnen</a>`,
   );
 }
 
@@ -894,7 +894,7 @@ function showPopularServices() {
   const row = document.createElement("div");
   row.className = "row";
 
-  services.slice(0,4).forEach((s) => {
+  services.slice(0, 4).forEach((s) => {
 
     const b = document.createElement("button");
     b.className = "pill";
@@ -1204,7 +1204,7 @@ function showServiceSuggestions(q) {
 
     b.onclick = () => {
       window.lastUserActivity = Date.now();
-      
+
       chosenService = s;
 
       // ✅ Auswahl anzeigen
@@ -1259,7 +1259,7 @@ function showDateChoice() {
 
   input.onchange = () => {
     window.lastUserActivity = Date.now();
-    
+
     chosenDate = input.value;
 
     $msg(
@@ -1677,21 +1677,24 @@ async function createBooking() {
 
     if (pdfData) {
 
-      const pdfHref = pdfData.startsWith("data:")
-        ? pdfData
-        : `data:application/pdf;base64,${pdfData}`;
+      const pdfHref =
+        pdfData.startsWith("/pdf/")
+          ? pdfData
+          : pdfData.startsWith("data:")
+            ? pdfData
+            : `data:application/pdf;base64,${pdfData}`;
 
       extra += `
-        <br><br>
-        <a
-          href="${pdfHref}"
-          download="terminbestaetigung.pdf"
-          target="_blank"
-          class="download-link"
-        >
-          📄 PDF herunterladen
-        </a>
-      `;
+    <br><br>
+    <a
+      href="${pdfHref}"
+      download="terminbestaetigung.pdf"
+      target="_blank"
+      class="download-link"
+    >
+      📄 PDF herunterladen
+    </a>
+  `;
     }
 
     // =====================================================
@@ -1937,9 +1940,9 @@ async function handleUserInput() {
   const intent = parseBookingIntent(text);
 
   // 🔥 SAFETY FIX – IMMER setzen
-if (intent && (intent.service || intent.category)) {
-  window.pendingIntent = intent;
-}
+  if (intent && (intent.service || intent.category)) {
+    window.pendingIntent = intent;
+  }
 
   // ---------------------------------------------
   // NEXT FREE SLOT FRAGE
@@ -1971,102 +1974,198 @@ if (intent && (intent.service || intent.category)) {
     }
   }
 
-// ---------------------------------------------
-// AI BOOKING START (FIXED FINAL - STABLE)
-// ---------------------------------------------
-if ((!window.bookingActive || window.pendingIntent) && intent && (intent.service || intent.category)) {
+  // ---------------------------------------------
+  // AI BOOKING START (FIXED FINAL - STABLE)
+  // ---------------------------------------------
+  if ((!window.bookingActive || window.pendingIntent) && intent && (intent.service || intent.category)) {
 
-  if (!userData.phone) {
-    resetBookingState();
-  }
+    if (!userData.phone) {
+      resetBookingState();
+    }
 
-  window.bookingActive = true;
+    window.bookingActive = true;
 
-  if (!userData.phone) {
-    bookingPhase = "phone";
-    showPhoneStep();
-    window.pendingIntent = intent;
-    return;
-  }
+    if (!userData.phone) {
+      bookingPhase = "phone";
+      showPhoneStep();
+      window.pendingIntent = intent;
+      return;
+    }
 
-  const savedIntent = window.pendingIntent || intent;
-  window.pendingIntent = null;
-  console.log("INTENT DEBUG:", savedIntent);
+    const savedIntent = window.pendingIntent || intent;
+    window.pendingIntent = null;
+    console.log("INTENT DEBUG:", savedIntent);
 
-  // -------------------------
-  // 🔥 DATEN DIREKT SETZEN
-  // -------------------------
+    // -------------------------
+    // 🔥 DATEN DIREKT SETZEN
+    // -------------------------
 
-  if (savedIntent.employee && !chosenEmployee) {
-    chosenEmployee = savedIntent.employee;
-    $msg(`<span class="tag">${goldIcon(ICONS.employee)}${savedIntent.employee.name}</span>`);
-  }
+    if (savedIntent.employee && !chosenEmployee) {
+      chosenEmployee = savedIntent.employee;
+      $msg(`<span class="tag">${goldIcon(ICONS.employee)}${savedIntent.employee.name}</span>`);
+    }
 
-  if (savedIntent.category && !chosenCategory) {
-    chosenCategory = savedIntent.category;
-    $msg(`<span class="tag">${goldIcon(ICONS.service)}${savedIntent.category}</span>`);
-  }
+    if (savedIntent.category && !chosenCategory) {
+      chosenCategory = savedIntent.category;
+      $msg(`<span class="tag">${goldIcon(ICONS.service)}${savedIntent.category}</span>`);
+    }
 
-  // 👉 Kategorie ohne Service → Auswahl
-  if (!savedIntent.service && savedIntent.category && !chosenService) {
+    // 👉 Kategorie ohne Service → Auswahl
+    if (!savedIntent.service && savedIntent.category && !chosenService) {
 
-    const servicesInCategory = services.filter(
-      s => s.category === savedIntent.category
-    );
+      const servicesInCategory = services.filter(
+        s => s.category === savedIntent.category
+      );
 
-    if (servicesInCategory.length) {
+      if (servicesInCategory.length) {
 
-      if (savedIntent.date && savedIntent.time) {
+        if (savedIntent.date && savedIntent.time) {
 
-        chosenService = servicesInCategory[0];
+          chosenService = servicesInCategory[0];
 
-        $msg(`<span class="tag">${goldIcon(ICONS.service)}${chosenService.name}</span>`);
+          $msg(`<span class="tag">${goldIcon(ICONS.service)}${chosenService.name}</span>`);
 
-        console.log("🔥 AUTO SERVICE (CATEGORY COMPLETE)");
+          console.log("🔥 AUTO SERVICE (CATEGORY COMPLETE)");
 
-      } else {
+        } else {
 
-        if (savedIntent.employee && !chosenEmployee) {
-          chosenEmployee = savedIntent.employee;
-          $msg(`<span class="tag">${goldIcon(ICONS.employee)}${savedIntent.employee.name}</span>`);
+          if (savedIntent.employee && !chosenEmployee) {
+            chosenEmployee = savedIntent.employee;
+            $msg(`<span class="tag">${goldIcon(ICONS.employee)}${savedIntent.employee.name}</span>`);
+          }
+
+          if (savedIntent.date && !chosenDate) {
+            chosenDate = savedIntent.date;
+            $msg(`<span class="tag">${goldIcon(ICONS.calendar)}${formatDateDE(chosenDate)}</span>`);
+          }
+
+          if (savedIntent.time && !chosenTime) {
+            chosenTime = savedIntent.time;
+            $msg(`<span class="tag">${goldIcon(ICONS.time)}${savedIntent.time}</span>`);
+          }
+
+          showServicesByCategory(savedIntent.category);
+          return;
         }
-
-        if (savedIntent.date && !chosenDate) {
-          chosenDate = savedIntent.date;
-          $msg(`<span class="tag">${goldIcon(ICONS.calendar)}${formatDateDE(chosenDate)}</span>`);
-        }
-
-        if (savedIntent.time && !chosenTime) {
-          chosenTime = savedIntent.time;
-          $msg(`<span class="tag">${goldIcon(ICONS.time)}${savedIntent.time}</span>`);
-        }
-
-        showServicesByCategory(savedIntent.category);
-        return;
       }
     }
-  }
 
-  // -------------------------
-  // 🔥🔥🔥 FINAL FIX (Service Flow korrekt)
-  // -------------------------
-  if (savedIntent.service && !chosenService) {
+    // -------------------------
+    // 🔥🔥🔥 FINAL FIX (Service Flow korrekt)
+    // -------------------------
+    if (savedIntent.service && !chosenService) {
 
-    chosenService = savedIntent.service;
+      chosenService = savedIntent.service;
 
-    $msg(`<span class="tag">${goldIcon(ICONS.service)}${savedIntent.service.name}</span>`);
+      $msg(`<span class="tag">${goldIcon(ICONS.service)}${savedIntent.service.name}</span>`);
 
-    // 🔥 ERST UPSELL → DANN FLOW
-    suggestUpsell(chosenService, () => {
+      // 🔥 ERST UPSELL → DANN FLOW
+      suggestUpsell(chosenService, () => {
 
-      // 👉 Mitarbeiter IMMER zuerst
+        // 👉 Mitarbeiter IMMER zuerst
+        if (!chosenEmployee) {
+          console.log("🔥 SERVICE → MITARBEITER STEP");
+          showEmployeeChoice();
+          return;
+        }
+
+        // 👉 danach normal weiter
+        if (!chosenDate) {
+          showDateChoice();
+          return;
+        }
+
+        if (!chosenTime) {
+          showTimeChoice();
+          return;
+        }
+
+      });
+
+      return; // ❗ GANZ WICHTIG
+    }
+
+    // -------------------------
+    // 🔥 GLOBAL FIX (Backup)
+    // -------------------------
+    if (chosenService && !chosenEmployee) {
+      console.log("EMPLOYEE STATE:", chosenEmployee);
+      showEmployeeChoice();
+      return;
+    }
+
+    // -------------------------
+    // DATUM / ZEIT
+    // -------------------------
+
+    if (savedIntent.date && !chosenDate) {
+      chosenDate = savedIntent.date;
+      $msg(`<span class="tag">${goldIcon(ICONS.calendar)}${formatDateDE(chosenDate)}</span>`);
+    }
+
+    if (savedIntent.time && !chosenTime) {
+      chosenTime = savedIntent.time;
+      $msg(`<span class="tag">${goldIcon(ICONS.time)}${savedIntent.time}</span>`);
+    }
+
+    // -------------------------
+    // 🔥 FLOW ENTSCHEIDUNG
+    // -------------------------
+
+    if (chosenService && chosenDate && chosenTime && chosenEmployee) {
+      showTimeChoice();
+      return;
+    }
+
+    if (chosenService && chosenDate && !chosenTime) {
+
       if (!chosenEmployee) {
-        console.log("🔥 SERVICE → MITARBEITER STEP");
         showEmployeeChoice();
         return;
       }
 
-      // 👉 danach normal weiter
+      showTimeChoice();
+      return;
+    }
+
+    if (chosenService && !chosenDate) {
+
+      if (!chosenEmployee) {
+        showEmployeeChoice();
+        return;
+      }
+
+      showDateChoice();
+      return;
+    }
+
+    return;
+  }
+
+  // =====================================================
+  // BOOKING FLOW AKTIV (FIXED FINAL CLEAN)
+  // =====================================================
+
+  if (window.bookingActive && !window.pendingIntent && bookingPhase !== "userdata") {
+
+    const intent = parseBookingIntent(text);
+
+    // 👉 MITARBEITER
+    if (!chosenEmployee && intent.employee) {
+      chosenEmployee = intent.employee;
+
+      $msg(`<span class="tag">${goldIcon(ICONS.employee)}${intent.employee.name}</span>`);
+
+      if (!chosenCategory) {
+        showCategoryChoice();
+        return;
+      }
+
+      if (!chosenService) {
+        showServicesByCategory(chosenCategory);
+        return;
+      }
+
       if (!chosenDate) {
         showDateChoice();
         return;
@@ -2077,89 +2176,95 @@ if ((!window.bookingActive || window.pendingIntent) && intent && (intent.service
         return;
       }
 
-    });
-
-    return; // ❗ GANZ WICHTIG
-  }
-
-  // -------------------------
-  // 🔥 GLOBAL FIX (Backup)
-  // -------------------------
-  if (chosenService && !chosenEmployee) {
-    console.log("EMPLOYEE STATE:", chosenEmployee);
-    showEmployeeChoice();
-    return;
-  }
-
-  // -------------------------
-  // DATUM / ZEIT
-  // -------------------------
-
-  if (savedIntent.date && !chosenDate) {
-    chosenDate = savedIntent.date;
-    $msg(`<span class="tag">${goldIcon(ICONS.calendar)}${formatDateDE(chosenDate)}</span>`);
-  }
-
-  if (savedIntent.time && !chosenTime) {
-    chosenTime = savedIntent.time;
-    $msg(`<span class="tag">${goldIcon(ICONS.time)}${savedIntent.time}</span>`);
-  }
-
-  // -------------------------
-  // 🔥 FLOW ENTSCHEIDUNG
-  // -------------------------
-
-  if (chosenService && chosenDate && chosenTime && chosenEmployee) {
-    showTimeChoice();
-    return;
-  }
-
-  if (chosenService && chosenDate && !chosenTime) {
-
-    if (!chosenEmployee) {
-      showEmployeeChoice();
+      showTimeChoice();
       return;
     }
 
-    showTimeChoice();
-    return;
-  }
+    // 👉 KATEGORIE
+    if (!chosenCategory && intent.category) {
+      chosenCategory = intent.category;
 
-  if (chosenService && !chosenDate) {
+      $msg(`<span class="tag">${goldIcon(ICONS.service)}${intent.category}</span>`);
 
-    if (!chosenEmployee) {
-      showEmployeeChoice();
+      showServicesByCategory(intent.category);
       return;
     }
 
-    showDateChoice();
-    return;
-  }
+    // =====================================================
+    // 🔥 SERVICE FLOW (Upsell NUR HIER!)
+    // =====================================================
+    if (!chosenService && intent.service) {
 
-  return;
-}
+      chosenService = intent.service;
 
-// =====================================================
-// BOOKING FLOW AKTIV (FIXED FINAL CLEAN)
-// =====================================================
+      $msg(`<span class="tag">${goldIcon(ICONS.service)}${intent.service.name}</span>`);
 
-if (window.bookingActive && !window.pendingIntent && bookingPhase !== "userdata") {
+      console.log("🔥 SERVICE SELECTED");
 
-  const intent = parseBookingIntent(text);
+      // 👉 Upsell EINMALIG
+      suggestUpsell(intent.service, () => {
 
-  // 👉 MITARBEITER
-  if (!chosenEmployee && intent.employee) {
-    chosenEmployee = intent.employee;
+        if (!chosenEmployee) {
+          showEmployeeChoice();
+          return;
+        }
 
-    $msg(`<span class="tag">${goldIcon(ICONS.employee)}${intent.employee.name}</span>`);
+        if (!chosenDate) {
+          showDateChoice();
+          return;
+        }
 
-    if (!chosenCategory) {
-      showCategoryChoice();
+        if (!chosenTime) {
+          showTimeChoice();
+          return;
+        }
+
+        showTimeChoice();
+      });
+
       return;
     }
 
-    if (!chosenService) {
-      showServicesByCategory(chosenCategory);
+    // 👉 DATUM
+    if (intent.date) {
+
+      const todayISO = new Date().toISOString().split("T")[0];
+      const isDefaultToday = chosenDate === todayISO;
+
+      if (!chosenDate || isDefaultToday) {
+        chosenDate = intent.date;
+
+        $msg(`<span class="tag">${goldIcon(ICONS.calendar)}${formatDateDE(chosenDate)}</span>`);
+      }
+    }
+
+    // 👉 ZEIT
+    if (intent.time && !chosenTime) {
+      chosenTime = intent.time;
+
+      $msg(`<span class="tag">${goldIcon(ICONS.time)}${intent.time}</span>`);
+    }
+
+    // =====================================================
+    // 🔥 FINAL FLOW (OHNE zweiten Upsell!)
+    // =====================================================
+
+    if (chosenService && chosenDate && chosenTime) {
+
+      // 👉 Mitarbeiter fehlt → zuerst
+      if (!chosenEmployee) {
+        showEmployeeChoice();
+        return;
+      }
+
+      // 👉 DIREKT weiter – KEIN Upsell mehr
+      showTimeChoice();
+      return;
+    }
+
+    // 👉 Fallbacks
+    if (chosenDate && !chosenTime) {
+      showTimeChoice();
       return;
     }
 
@@ -2168,110 +2273,8 @@ if (window.bookingActive && !window.pendingIntent && bookingPhase !== "userdata"
       return;
     }
 
-    if (!chosenTime) {
-      showTimeChoice();
-      return;
-    }
-
-    showTimeChoice();
     return;
   }
-
-  // 👉 KATEGORIE
-  if (!chosenCategory && intent.category) {
-    chosenCategory = intent.category;
-
-    $msg(`<span class="tag">${goldIcon(ICONS.service)}${intent.category}</span>`);
-
-    showServicesByCategory(intent.category);
-    return;
-  }
-
-  // =====================================================
-  // 🔥 SERVICE FLOW (Upsell NUR HIER!)
-  // =====================================================
-  if (!chosenService && intent.service) {
-
-    chosenService = intent.service;
-
-    $msg(`<span class="tag">${goldIcon(ICONS.service)}${intent.service.name}</span>`);
-
-    console.log("🔥 SERVICE SELECTED");
-
-    // 👉 Upsell EINMALIG
-    suggestUpsell(intent.service, () => {
-
-      if (!chosenEmployee) {
-        showEmployeeChoice();
-        return;
-      }
-
-      if (!chosenDate) {
-        showDateChoice();
-        return;
-      }
-
-      if (!chosenTime) {
-        showTimeChoice();
-        return;
-      }
-
-      showTimeChoice();
-    });
-
-    return;
-  }
-
-  // 👉 DATUM
-  if (intent.date) {
-
-    const todayISO = new Date().toISOString().split("T")[0];
-    const isDefaultToday = chosenDate === todayISO;
-
-    if (!chosenDate || isDefaultToday) {
-      chosenDate = intent.date;
-
-      $msg(`<span class="tag">${goldIcon(ICONS.calendar)}${formatDateDE(chosenDate)}</span>`);
-    }
-  }
-
-  // 👉 ZEIT
-  if (intent.time && !chosenTime) {
-    chosenTime = intent.time;
-
-    $msg(`<span class="tag">${goldIcon(ICONS.time)}${intent.time}</span>`);
-  }
-
-  // =====================================================
-  // 🔥 FINAL FLOW (OHNE zweiten Upsell!)
-  // =====================================================
-
-  if (chosenService && chosenDate && chosenTime) {
-
-    // 👉 Mitarbeiter fehlt → zuerst
-    if (!chosenEmployee) {
-      showEmployeeChoice();
-      return;
-    }
-
-    // 👉 DIREKT weiter – KEIN Upsell mehr
-    showTimeChoice();
-    return;
-  }
-
-  // 👉 Fallbacks
-  if (chosenDate && !chosenTime) {
-    showTimeChoice();
-    return;
-  }
-
-  if (!chosenDate) {
-    showDateChoice();
-    return;
-  }
-
-  return;
-}
 
   // =====================================================
   // KEYWORDS
