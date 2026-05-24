@@ -5,7 +5,6 @@
 import fs from "fs";
 import path from "path";
 import PDFDocument from "pdfkit";
-import { loadTenantConfig } from "./utils.js";
 import QRCode from "qrcode";
 
 /* ===============================
@@ -95,7 +94,10 @@ export async function createAppointmentPDF(booking) {
 
     const tenant = appointment.studios.slug;
 
-    const { branding } = loadTenantConfig(tenant);
+    const branding = {
+      brandName: "GlowSuite AI",
+      logo: "/assets/logo.png"
+    };
 
     // ===============================
     // PATHS
