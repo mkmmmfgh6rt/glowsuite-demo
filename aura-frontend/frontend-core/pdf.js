@@ -1,475 +1,607 @@
+// =======================================================
+// 📄 pdf.js v5.5 – STABLE LAYOUT FIX
+// =======================================================
+
 import fs from "fs";
 import path from "path";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { createEvent } from "ics";
+import PDFDocument from "pdfkit";
+import { loadTenantConfig } from "./utils.js";
 import QRCode from "qrcode";
 
-const PAGE_W = 595;
-const PAGE_H = 842;
+/* ===============================
+   📅 ICS GENERATOR
+=============================== */
+function createICS(appointment) {
 
-const C = {
-  bg: rgb(0.071, 0.051, 0.043),
-  card: rgb(0.110, 0.090, 0.078),
-  gold: rgb(0.831, 0.690, 0.482),
-  goldDark: rgb(0.722, 0.565, 0.353),
-  goldLine: rgb(0.545, 0.400, 0.227),
-  text: rgb(0.961, 0.937, 0.902),
-  muted: rgb(0.650, 0.545, 0.420),
-  footer: rgb(0.455, 0.412, 0.369),
-  white: rgb(1, 1, 1),
-};
+  const icsDir = path.join(process.cwd(), "public", "ics");
 
-function fmtDate(d) {
-  return d.toLocaleDateString("de-DE");
+  if (!fs.existsSync(icsDir)) {
+    fs.mkdirSync(icsDir, { recursive: true });
+  }
+
+  const start = new Date(appointment.start_time);
+  const end = new Date(appointment.end_time);
+
+  const fmt = (d) =>
+    d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+  const tenant = appointment.studios?.slug || "studio";
+
+  const fileName = `${tenant}_${appointment.id}.ics`;
+
+  const filePath = path.join(icsDir, fileName);
+
+  const icsContent = `
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Beauty Agent AURA//DE
+BEGIN:VEVENT
+UID:${appointment.id}
+DTSTAMP:${fmt(new Date())}
+DTSTART:${fmt(start)}
+DTEND:${fmt(end)}
+SUMMARY:Termin
+DESCRIPTION:${appointment.notes || ""}
+LOCATION:${tenant}
+END:VEVENT
+END:VCALENDAR`.trim();
+
+  fs.writeFileSync(filePath, icsContent, "utf8");
+
+  return `/ics/${fileName}`;
 }
 
-function fmtTime(d) {
-  return d.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function roundedRectPath(x, y, w, h, r) {
-  return `
-    M ${x + r} ${y}
-    L ${x + w - r} ${y}
-    Q ${x + w} ${y} ${x + w} ${y + r}
-    L ${x + w} ${y + h - r}
-    Q ${x + w} ${y + h} ${x + w - r} ${y + h}
-    L ${x + r} ${y + h}
-    Q ${x} ${y + h} ${x} ${y + h - r}
-    L ${x} ${y + r}
-    Q ${x} ${y} ${x + r} ${y}
-    Z
-  `;
-}
-
-function safeText(value, fallback = "-") {
-  return String(value || fallback);
-}
-
-function findLogoPath() {
-  const possible = [
-    path.join(process.cwd(), "public", "img", "logo-glowsuite.png"),
-    path.join(process.cwd(), "public", "assets", "logo-glowsuite.png"),
-    path.join(process.cwd(), "public", "assets", "glowsuite-logo.png"),
-    path.join(process.cwd(), "public", "logo-glowsuite.png"),
-  ];
-
-  return possible.find((p) => fs.existsSync(p)) || null;
-}
-
-async function createICSBase64(booking, start, end) {
-  const icsEvent = await new Promise((resolve, reject) => {
-    createEvent(
-      {
-        title: `GlowSuite Termin - ${booking.service || "Termin"}`,
-        description: `Termin bei ${booking.employee || "GlowSuite AI"}`,
-        start: [
-          start.getFullYear(),
-          start.getMonth() + 1,
-          start.getDate(),
-          start.getHours(),
-          start.getMinutes(),
-        ],
-        duration: {
-          minutes: Number(booking.duration || 60),
-        },
-        status: "CONFIRMED",
-        busyStatus: "BUSY",
-        organizer: {
-          name: "GlowSuite AI",
-          email: "info@glowsuite-ai.de",
-        },
-      },
-      (error, value) => {
-        if (error) reject(error);
-        else resolve(value);
-      }
-    );
-  });
-
-  return Buffer.from(icsEvent).toString("base64");
-}
-
+/* ===============================
+   📄 PDF GENERATOR
+=============================== */
 export async function createAppointmentPDF(booking) {
-  console.log("📄 LUXURY PDF START");
-  console.log("📄 BOOKING:", booking);
 
   try {
-    if (!booking || !booking.dateTime) {
+
+    if (!booking || !booking.id || !booking.dateTime) {
       throw new Error("Ungültige Buchungsdaten für PDF");
     }
 
+    // ===============================
+    // SQLITE → APPOINTMENT MAPPING
+    // ===============================
+
     const start = new Date(booking.dateTime);
+
     const end = new Date(
       start.getTime() + Number(booking.duration || 60) * 60000
     );
 
-    const pdfDoc = await PDFDocument.create();
+    const appointment = {
+      id: booking.id,
+      start_time: start.toISOString(),
+      end_time: end.toISOString(),
+      phone: booking.phone || "-",
+      duration_minutes: booking.duration || 60,
+      price: booking.price || 0,
+      notes: booking.service || "",
+      employees: {
+        name: booking.employee || "Beliebig",
+      },
+      studios: {
+        slug:
+          booking.tenant ||
+          process.env.TENANT_DEFAULT ||
+          "studio",
 
-    const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+        name: booking.tenant || "Studio",
+      },
+    };
 
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const tenant = appointment.studios.slug;
 
-    // =====================================================
-    // BACKGROUND
-    // =====================================================
+    const { branding } = loadTenantConfig(tenant);
 
-    page.drawRectangle({
-      x: 0,
-      y: 0,
-      width: PAGE_W,
-      height: PAGE_H,
-      color: C.bg,
-    });
+    // ===============================
+    // PATHS
+    // ===============================
 
-    page.drawEllipse({
-      x: PAGE_W / 2,
-      y: 750,
-      xScale: 220,
-      yScale: 220,
-      color: C.gold,
-      opacity: 0.08,
-    });
+    const pdfDir = path.join(process.cwd(), "public", "pdf");
 
-    page.drawSvgPath(roundedRectPath(40, 200, PAGE_W - 80, 520, 40), {
-      color: rgb(0.639, 0.478, 0.278),
-      opacity: 0.06,
-    });
-
-    page.drawEllipse({
-      x: PAGE_W / 2,
-      y: 90,
-      xScale: 260,
-      yScale: 260,
-      color: C.gold,
-      opacity: 0.03,
-    });
-
-    // =====================================================
-    // LOGO
-    // =====================================================
-
-    const logoPath = findLogoPath();
-
-    if (logoPath) {
-      try {
-        const logoBytes = fs.readFileSync(logoPath);
-        const logo = await pdfDoc.embedPng(logoBytes);
-
-        const logoSize = 72;
-
-        page.drawImage(logo, {
-          x: PAGE_W / 2 - logoSize / 2,
-          y: 748,
-          width: logoSize,
-          height: logoSize,
-        });
-      } catch (err) {
-        console.warn("Logo konnte nicht geladen werden:", err.message);
-      }
+    if (!fs.existsSync(pdfDir)) {
+      fs.mkdirSync(pdfDir, { recursive: true });
     }
+
+    const fileName = `${tenant}_${appointment.id}_termin.pdf`;
+
+    const pdfPath = path.join(pdfDir, fileName);
+
+    // ===============================
+    // PDF BUILD
+    // ===============================
+
+    const doc = new PDFDocument({
+      margin: 60,
+      size: "A4",
+      info: {
+        Title: "Terminbestätigung",
+        Author: branding.brandName
+      },
+    });
+
+    const stream = fs.createWriteStream(pdfPath);
+
+    doc.pipe(stream);
+
+    // =====================================================
+    // PREMIUM BACKGROUND
+    // =====================================================
+
+    // Base Background
+    doc
+      .rect(0, 0, doc.page.width, doc.page.height)
+      .fill("#120d0b");
+
+    // Soft Luxury Glow Top
+    doc
+      .save()
+      .opacity(0.08)
+      .circle(doc.page.width / 2, 120, 220)
+      .fill("#d4b07b")
+      .restore();
+
+    // Warm Middle Gradient Feel
+    doc
+      .save()
+      .opacity(0.06)
+      .roundedRect(
+        40,
+        160,
+        doc.page.width - 80,
+        520,
+        40
+      )
+      .fill("#a37a47")
+      .restore();
+
+    // Bottom Ambient Glow
+    doc
+      .save()
+      .opacity(0.03)
+      .circle(doc.page.width / 2, 760, 260)
+      .fill("#d4b07b")
+      .restore();
+
+    doc.fillColor("#f5efe6");
 
     // =====================================================
     // HEADER
     // =====================================================
 
-    page.drawText("GlowSuite AI", {
-      x: 0,
-      y: 700,
-      size: 24,
-      font,
-      color: C.gold,
-      maxWidth: PAGE_W,
-      lineHeight: 28,
-    });
+    if (branding.logo) {
 
-    const titleWidth = font.widthOfTextAtSize("GlowSuite AI", 24);
-    page.drawText("GlowSuite AI", {
-      x: PAGE_W / 2 - titleWidth / 2,
-      y: 700,
-      size: 24,
-      font,
-      color: C.gold,
-    });
+      try {
 
-    const sub = "Premium Terminbestätigung";
-    const subWidth = font.widthOfTextAtSize(sub, 11);
+        const logoPath = path.join(
+          process.cwd(),
+          "public",
+          branding.logo
+        );
 
-    page.drawText(sub, {
-      x: PAGE_W / 2 - subWidth / 2,
-      y: 664,
-      size: 11,
-      font,
-      color: C.text,
-    });
+        if (fs.existsSync(logoPath)) {
 
-    page.drawLine({
-      start: { x: PAGE_W / 2 - 135, y: 638 },
-      end: { x: PAGE_W / 2 + 130, y: 638 },
-      thickness: 1,
-      color: C.goldLine,
-    });
+          const logoSize = 72;
+
+          doc.image(
+            logoPath,
+            (doc.page.width / 2) - (logoSize / 2),
+            34,
+            {
+              width: logoSize
+            }
+          );
+
+        }
+
+      } catch (err) {
+
+        console.warn("Logo konnte nicht geladen werden");
+
+      }
+
+    }
+
+    // =====================================================
+    // TITLE
+    // =====================================================
+
+    doc
+      .fontSize(24)
+      .fillColor("#d4b07b")
+      .text(
+        branding.brandName || "GlowSuite AI",
+        26,
+        128,
+        {
+          align: "center",
+          characterSpacing: 0.5
+        }
+      );
+
+    doc
+      .fontSize(11)
+      .fillColor("#f5efe6")
+      .text(
+        "Premium Terminbestätigung",
+        20,
+        172,
+        {
+          align: "center",
+        }
+      );
 
     // =====================================================
     // MAIN CARD
     // =====================================================
 
     const cardX = 84;
-    const cardY = 315;
-    const cardW = PAGE_W - 164;
-    const cardH = 305;
+    const cardY = 222;
+    const cardWidth = doc.page.width - 164;
+    const cardHeight = 305;
+    const cardCenter = cardX + (cardWidth / 2);
 
-    page.drawSvgPath(roundedRectPath(cardX, cardY, cardW, cardH, 18), {
-      color: C.card,
-      borderColor: C.goldLine,
-      borderWidth: 1,
-    });
+    // =====================================================
+    // GOLD LINE
+    // =====================================================
+
+    doc
+      .strokeColor("#b8905a")
+      .lineWidth(1)
+      .moveTo(cardCenter - 145, 202)
+      .lineTo(cardCenter + 120, 202)
+      .stroke();
+
+    doc
+      .roundedRect(
+        cardX,
+        cardY,
+        cardWidth,
+        cardHeight,
+        18
+      )
+      .fillAndStroke("#1c1714", "#8f6a3c");
+
+    // =====================================================
+    // CONTENT
+    // =====================================================
 
     const leftX = 112;
     const rightX = 350;
 
-    page.drawText("DEIN TERMIN", {
-      x: leftX,
-      y: cardY + cardH - 38,
-      size: 10,
-      font,
-      color: C.muted,
-    });
+    const labelColor = "#b8905a";
+    const textColor = "#f5efe6";
 
-    page.drawText(safeText(booking.service), {
-      x: leftX,
-      y: cardY + cardH - 76,
-      size: 24,
-      font,
-      color: C.text,
-      maxWidth: cardW - 60,
-    });
+    // TITLE
 
-    // Mitarbeiter
-    page.drawText("Mitarbeiter", {
-      x: leftX,
-      y: cardY + 172,
-      size: 10,
-      font,
-      color: C.goldDark,
-    });
+    doc
+      .fontSize(10)
+      .fillColor("#a58b6b")
+      .text(
+        "DEIN TERMIN",
+        leftX,
+        cardY + 28,
+        {
+          lineBreak: false
+        }
+      );
 
-    page.drawText(safeText(booking.employee, "Beliebig"), {
-      x: leftX,
-      y: cardY + 150,
-      size: 14,
-      font,
-      color: C.text,
-    });
+    doc
+      .fontSize(24)
+      .fillColor(textColor)
+      .text(
+        appointment.notes || "-",
+        leftX,
+        cardY + 60,
+        {
+          lineBreak: false
+        }
+      );
 
-    // Telefon
-    page.drawText("Telefon", {
-      x: rightX,
-      y: cardY + 172,
-      size: 10,
-      font,
-      color: C.goldDark,
-    });
+    // ROW 1
 
-    page.drawText(safeText(booking.phone), {
-      x: rightX,
-      y: cardY + 150,
-      size: 14,
-      font,
-      color: C.text,
-    });
+    const row1Y = cardY + 128;
 
-    // Datum
-    page.drawText("Datum", {
-      x: leftX,
-      y: cardY + 122,
-      size: 10,
-      font,
-      color: C.goldDark,
-    });
+    doc
+      .fontSize(10)
+      .fillColor(labelColor)
+      .text(
+        "Mitarbeiter",
+        leftX,
+        row1Y,
+        {
+          lineBreak: false
+        }
+      );
 
-    page.drawText(fmtDate(start), {
-      x: leftX,
-      y: cardY + 98,
-      size: 16,
-      font,
-      color: C.text,
-    });
+    doc
+      .fontSize(14)
+      .fillColor(textColor)
+      .text(
+        appointment.employees.name,
+        leftX,
+        row1Y + 18,
+        {
+          lineBreak: false
+        }
+      );
 
-    // Uhrzeit
-    page.drawText("Uhrzeit", {
-      x: rightX,
-      y: cardY + 122,
-      size: 10,
-      font,
-      color: C.goldDark,
-    });
+    doc
+      .fontSize(10)
+      .fillColor(labelColor)
+      .text(
+        "Telefon",
+        rightX,
+        row1Y,
+        {
+          lineBreak: false
+        }
+      );
 
-    page.drawText(`${fmtTime(start)} – ${fmtTime(end)}`, {
-      x: rightX,
-      y: cardY + 98,
-      size: 16,
-      font,
-      color: C.text,
-    });
+    doc
+      .fontSize(14)
+      .fillColor(textColor)
+      .text(
+        appointment.phone,
+        rightX,
+        row1Y + 18,
+        {
+          lineBreak: false
+        }
+      );
 
-    // Preis
-    page.drawText("Preis", {
-      x: leftX,
-      y: cardY + 50,
-      size: 10,
-      font,
-      color: C.goldDark,
-    });
+    // ROW 2
 
-    page.drawText(`${Number(booking.price || 0).toFixed(2)} €`, {
-      x: leftX,
-      y: cardY + 26,
-      size: 18,
-      font,
-      color: C.text,
-    });
+    const row2Y = cardY + 175;
+
+    doc
+      .fontSize(10)
+      .fillColor(labelColor)
+      .text(
+        "Datum",
+        leftX,
+        row2Y,
+        {
+          lineBreak: false
+        }
+      );
+
+    doc
+      .fontSize(16)
+      .fillColor(textColor)
+      .text(
+        start.toLocaleDateString("de-DE"),
+        leftX,
+        row2Y + 18,
+        {
+          lineBreak: false
+        }
+      );
+
+    doc
+      .fontSize(10)
+      .fillColor(labelColor)
+      .text(
+        "Uhrzeit",
+        rightX,
+        row2Y,
+        {
+          lineBreak: false
+        }
+      );
+
+    doc
+      .fontSize(16)
+      .fillColor(textColor)
+      .text(
+        `${start.toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })} – ${end.toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+        rightX,
+        row2Y + 18,
+        {
+          lineBreak: false
+        }
+      );
+
+    // PRICE
+
+    const priceX = leftX;
+    const priceY = cardY + 185;
+
+    doc
+      .fontSize(10)
+      .fillColor(labelColor)
+      .text(
+        "Preis",
+        priceX,
+        priceY + 62,
+        {
+          lineBreak: false
+        }
+      );
+
+    doc
+      .fontSize(18)
+      .fillColor(textColor)
+      .text(
+        `${Number(appointment.price).toFixed(2)} €`,
+        priceX,
+        priceY + 80,
+        {
+          lineBreak: false
+        }
+      );
 
     // =====================================================
     // MESSAGE
     // =====================================================
 
-    const msg = "Wir freuen uns auf Ihren Besuch";
-    const msgWidth = font.widthOfTextAtSize(msg, 12);
-
-    page.drawText(msg, {
-      x: PAGE_W / 2 - msgWidth / 2,
-      y: 282,
-      size: 12,
-      font,
-      color: C.text,
-    });
+    doc
+      .fontSize(12)
+      .fillColor("#f5efe6")
+      .text(
+        "Wir freuen uns auf Ihren Besuch",
+        58,
+        538,
+        {
+          align: "center",
+        }
+      );
 
     // =====================================================
-    // QR CARD
+    // QR SECTION
     // =====================================================
-
-    const qrCardW = 270;
-    const qrCardH = 190;
-    const qrCardX = PAGE_W / 2 - qrCardW / 2;
-    const qrCardY = 78;
-
-    page.drawSvgPath(roundedRectPath(qrCardX, qrCardY, qrCardW, qrCardH, 16), {
-      color: C.card,
-      borderColor: C.goldLine,
-      borderWidth: 1,
-    });
-
-    const qrTitle = "Kalender speichern";
-    const qrTitleWidth = font.widthOfTextAtSize(qrTitle, 11);
-
-    page.drawText(qrTitle, {
-      x: PAGE_W / 2 - qrTitleWidth / 2,
-      y: qrCardY + qrCardH - 30,
-      size: 11,
-      font,
-      color: C.gold,
-    });
-
-    const googleLink =
-      "https://calendar.google.com/calendar/render?action=TEMPLATE" +
-      `&text=Termin` +
-      `&dates=${start.toISOString().replace(/[-:]/g, "").split(".")[0]}Z/` +
-      `${end.toISOString().replace(/[-:]/g, "").split(".")[0]}Z`;
 
     try {
-      const qrDataUrl = await QRCode.toDataURL(googleLink, {
-        margin: 1,
-        width: 180,
-      });
 
-      const qrBase64 = qrDataUrl.replace(/^data:image\/png;base64,/, "");
-      const qrBytes = Buffer.from(qrBase64, "base64");
-      const qrImage = await pdfDoc.embedPng(qrBytes);
+      const calendarUrl = `/ics/${appointment.id}.ics`;
+
+      const qrData = await QRCode.toDataURL(calendarUrl);
+
+      const qrBase64 = qrData.replace(
+        /^data:image\/png;base64,/,
+        ""
+      );
+
+      const qrBuffer = Buffer.from(qrBase64, "base64");
+
+      const qrCardWidth = 270;
+      const qrCardHeight = 200;
+
+      const qrCardX = cardCenter - (qrCardWidth / 2) - 8;
+
+      const qrCardY = 560;
+
+      doc
+        .roundedRect(
+          qrCardX,
+          qrCardY,
+          qrCardWidth,
+          qrCardHeight,
+          16
+        )
+        .fillAndStroke("#1c1714", "#705433");
+
+      doc
+        .fontSize(11)
+        .fillColor("#d4b07b")
+        .text(
+          "Kalender speichern",
+          qrCardX + 10,
+          qrCardY + 18,
+          {
+            width: qrCardWidth - 20,
+            align: "center",
+          }
+        );
 
       const qrSize = 112;
 
-      page.drawRectangle({
-        x: PAGE_W / 2 - qrSize / 2 - 6,
-        y: qrCardY + 68,
-        width: qrSize + 12,
-        height: qrSize + 12,
-        color: C.white,
-      });
+      const qrX =
+        qrCardX + (qrCardWidth / 2) - (qrSize / 2);
 
-      page.drawImage(qrImage, {
-        x: PAGE_W / 2 - qrSize / 2,
-        y: qrCardY + 74,
-        width: qrSize,
-        height: qrSize,
-      });
+      doc.image(
+        qrBuffer,
+        qrX,
+        qrCardY + 42,
+        {
+          width: qrSize
+        }
+      );
 
-      const gText = "Google Kalender öffnen";
-      const gWidth = font.widthOfTextAtSize(gText, 7);
+      const googleLink =
+        "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+        `&text=Termin` +
+        `&dates=${start.toISOString().replace(/[-:]/g, "").split(".")[0]}Z/` +
+        `${end.toISOString().replace(/[-:]/g, "").split(".")[0]}Z`;
 
-      page.drawText(gText, {
-        x: PAGE_W / 2 - gWidth / 2,
-        y: qrCardY + 48,
-        size: 7,
-        font,
-        color: C.text,
-      });
+      doc
+        .fontSize(7)
+        .fillColor("#f5efe6")
+        .text(
+          "Google Kalender öffnen",
+          qrCardX + 10,
+          qrCardY + 168,
+          {
+            width: qrCardWidth - 20,
+            align: "center",
+            link: googleLink,
+            underline: true,
+          }
+        );
+
     } catch (err) {
-      console.warn("QR konnte nicht erstellt werden:", err.message);
+
+      console.warn("QR Code Fehler");
+
     }
 
-    const os = "Autonomous Salon OS";
-    const osWidth = font.widthOfTextAtSize(os, 10);
-
-    page.drawText(os, {
-      x: PAGE_W / 2 - osWidth / 2,
-      y: qrCardY + 28,
-      size: 10,
-      font,
-      color: C.goldDark,
-    });
-
-    const powered = "Powered by A.U.R.A";
-    const poweredWidth = font.widthOfTextAtSize(powered, 8);
-
-    page.drawText(powered, {
-      x: PAGE_W / 2 - poweredWidth / 2,
-      y: 42,
-      size: 8,
-      font,
-      color: C.footer,
-    });
-
     // =====================================================
-    // SAVE
+    // FOOTER
     // =====================================================
 
-    const pdfBytes = await pdfDoc.save();
+    doc
+      .fontSize(10)
+      .fillColor("#b8905a")
+      .text(
+        `Autonomous Salon OS`,
+        cardCenter - 148,
+        748,
+        {
+          width: 276,
+          align: "center",
+        }
+      );
 
-    const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
-    const icsBase64 = await createICSBase64(booking, start, end);
+    doc
+      .fontSize(8)
+      .fillColor("#74695e")
+      .text(
+        "Powered by A.U.R.A",
+        cardCenter - 148,
+        772,
+        {
+          width: 276,
+          align: "center",
+        }
+      );
 
-    console.log("✅ LUXURY PDF + ICS erfolgreich generiert");
+    // =====================================================
+    // FINALIZE
+    // =====================================================
 
-    return {
-      success: true,
+    doc.end();
 
-      pdfUrl: `data:application/pdf;base64,${pdfBase64}`,
-      icsUrl: `data:text/calendar;base64,${icsBase64}`,
+    return await new Promise((resolve, reject) => {
 
-      pdfBase64,
-      icsBase64,
-    };
-  } catch (error) {
-    console.error("❌ PDF ERROR:", error);
+      stream.on("finish", () => {
 
-    return {
-      success: false,
-      error: error.message,
-    };
+        resolve({
+          pdfUrl: `/pdf/${fileName}`,
+          icsUrl: createICS(appointment),
+        });
+
+      });
+
+      stream.on("error", reject);
+
+    });
+
+  } catch (err) {
+
+    console.error("❌ PDF Fehler:", err.message);
+
+    return null;
+
   }
+
 }
