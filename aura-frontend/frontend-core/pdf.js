@@ -12,7 +12,7 @@ import QRCode from "qrcode";
 =============================== */
 function createICS(appointment) {
 
-  const icsDir = path.join(process.cwd(), "public", "ics");
+  const icsDir = "/tmp";
 
   if (!fs.existsSync(icsDir)) {
     fs.mkdirSync(icsDir, { recursive: true });
@@ -103,7 +103,7 @@ export async function createAppointmentPDF(booking) {
     // PATHS
     // ===============================
 
-    const pdfDir = path.join(process.cwd(), "public", "pdf");
+    const pdfDir = "/tmp";
 
     if (!fs.existsSync(pdfDir)) {
       fs.mkdirSync(pdfDir, { recursive: true });
@@ -587,10 +587,40 @@ export async function createAppointmentPDF(booking) {
 
       stream.on("finish", () => {
 
-        resolve({
-          pdfUrl: `/pdf/${fileName}`,
-          icsUrl: createICS(appointment),
-        });
+        try {
+
+          const pdfBase64 = fs
+            .readFileSync(pdfPath)
+            .toString("base64");
+
+          const icsUrl = createICS(appointment);
+
+          const icsPath = path.join(
+            "/tmp",
+            path.basename(icsUrl)
+          );
+
+          const icsBase64 = fs
+            .readFileSync(icsPath)
+            .toString("base64");
+
+          resolve({
+            pdfBase64,
+            icsBase64,
+            pdfUrl: null,
+            icsUrl: null,
+          });
+
+        } catch (err) {
+
+          console.error(
+            "❌ BASE64 FEHLER:",
+            err.message
+          );
+
+          reject(err);
+
+        }
 
       });
 
