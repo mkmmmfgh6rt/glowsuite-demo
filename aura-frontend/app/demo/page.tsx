@@ -256,10 +256,225 @@ export default function DemoPage() {
             ))}
           </div>
         </section>
-        
-        <h1 style={{ color: "red", fontSize: 60 }}>TEST BLOCK SICHTBAR</h1>
 
-                {/* LIVE WHATSAPP AUTOMATION */}
+        {/* AURA DECISION CENTER */}
+
+        <section
+          style={{
+            marginBottom: 42,
+            padding: "34px 28px",
+            borderRadius: 30,
+            background:
+              "linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))",
+            border: "1px solid rgba(212,175,116,0.22)",
+            boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
+          }}
+        >
+          <div style={{ marginBottom: 24 }}>
+            <div
+              style={{
+                display: "inline-flex",
+                padding: "7px 12px",
+                borderRadius: 999,
+                background: "rgba(212,175,116,0.16)",
+                color: "#d4af74",
+                fontSize: 12,
+                fontWeight: 700,
+                marginBottom: 14,
+              }}
+            >
+              A.U.R.A Decision Center
+            </div>
+
+            <h2
+              style={{
+                margin: "0 0 12px",
+                fontSize: 34,
+                color: "#fff8ea",
+              }}
+            >
+              A.U.R.A analysiert dein Studio automatisch
+            </h2>
+
+            <p
+              style={{
+                color: "rgba(248,243,236,0.72)",
+                lineHeight: 1.6,
+                maxWidth: 760,
+              }}
+            >
+              GlowSuite erkennt Umsatzprobleme, freie Slots,
+              inaktive Kundinnen und erstellt automatisch
+              passende WhatsApp Kampagnen.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
+              gap: 18,
+            }}
+          >
+            {/* REVENUE ALERT */}
+
+            <div
+              style={{
+                padding: 24,
+                borderRadius: 24,
+                background: "#16110d",
+                border: "1px solid rgba(255,120,120,0.18)",
+              }}
+            >
+              <div
+                style={{
+                  color: "#ff9f9f",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  marginBottom: 14,
+                }}
+              >
+                Umsatz Analyse
+              </div>
+
+              <h3
+                style={{
+                  margin: "0 0 12px",
+                  fontSize: 24,
+                  color: "#fff8ea",
+                }}
+              >
+                Umsatzrückgang erkannt
+              </h3>
+
+              <p
+                style={{
+                  color: "rgba(248,243,236,0.72)",
+                  lineHeight: 1.6,
+                }}
+              >
+                Die Buchungen sind im Vergleich zur Vorwoche
+                um 18% gefallen.
+              </p>
+
+              <div
+                style={{
+                  marginTop: 18,
+                  padding: 14,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              >
+                <div style={{ color: "#d4af74", fontWeight: 700 }}>
+                  A.U.R.A Empfehlung
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 8,
+                    color: "#f5f5f5",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  → Rückholkampagne starten<br />
+                  → Stammkunden reaktivieren<br />
+                  → WhatsApp Broadcast senden
+                </div>
+              </div>
+            </div>
+
+            {/* CAMPAIGN GENERATED */}
+
+            <div
+              style={{
+                padding: 24,
+                borderRadius: 24,
+                background: "#16110d",
+                border: "1px solid rgba(212,175,116,0.22)",
+              }}
+            >
+              <div
+                style={{
+                  color: "#d4af74",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  marginBottom: 14,
+                }}
+              >
+                Kampagne generiert
+              </div>
+
+              <h3
+                style={{
+                  margin: "0 0 12px",
+                  fontSize: 24,
+                  color: "#fff8ea",
+                }}
+              >
+                „Wir vermissen dich 💛“
+              </h3>
+
+              <div
+                style={{
+                  background: "#0f0f0f",
+                  borderRadius: 18,
+                  padding: 16,
+                  color: "#f5f5f5",
+                  lineHeight: 1.7,
+                  fontSize: 15,
+                  marginTop: 18,
+                }}
+              >
+                Hi Lisa ✨<br /><br />
+
+                dein letzter Besuch ist schon etwas her.<br /><br />
+
+                Diese Woche haben wir noch freie Termine
+                für dich 💅<br /><br />
+
+                Jetzt Termin sichern.
+              </div>
+
+              <div
+                style={{
+                  marginTop: 16,
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 999,
+                    background: "rgba(212,175,116,0.14)",
+                    color: "#d4af74",
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  WhatsApp
+                </div>
+
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 999,
+                    background: "rgba(255,255,255,0.08)",
+                    color: "#fff8ea",
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  Auto-generiert
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        {/* LIVE WHATSAPP AUTOMATION */}
 
         <section
           style={{
