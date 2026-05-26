@@ -256,6 +256,8 @@ export default function DemoPage() {
             ))}
           </div>
         </section>
+        
+        <h1 style={{ color: "red", fontSize: 60 }}>TEST BLOCK SICHTBAR</h1>
 
                 {/* LIVE WHATSAPP AUTOMATION */}
 
