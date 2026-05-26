@@ -257,6 +257,193 @@ export default function DemoPage() {
           </div>
         </section>
 
+                {/* LIVE WHATSAPP AUTOMATION */}
+
+        <section
+          style={{
+            marginBottom: 42,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+            gap: 22,
+          }}
+        >
+          {/* REMINDER */}
+
+          <div
+            style={{
+              borderRadius: 28,
+              padding: 24,
+              background:
+                "linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))",
+              border: "1px solid rgba(212,175,116,0.22)",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                padding: "7px 12px",
+                borderRadius: 999,
+                background: "rgba(212,175,116,0.16)",
+                color: "#d4af74",
+                fontSize: 12,
+                fontWeight: 700,
+                marginBottom: 16,
+              }}
+            >
+              WhatsApp Reminder
+            </div>
+
+            <h3
+              style={{
+                margin: "0 0 12px",
+                fontSize: 28,
+                color: "#fff8ea",
+              }}
+            >
+              Automatische Termin-Erinnerungen
+            </h3>
+
+            <p
+              style={{
+                color: "rgba(248,243,236,0.72)",
+                lineHeight: 1.6,
+                marginBottom: 22,
+              }}
+            >
+              GlowSuite erinnert Kundinnen automatisch per WhatsApp —
+              24 Stunden und 2 Stunden vor dem Termin.
+            </p>
+
+            <div
+              style={{
+                background: "#0f0f0f",
+                borderRadius: 24,
+                padding: 18,
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "#7ef29a",
+                  marginBottom: 10,
+                  fontWeight: 700,
+                }}
+              >
+                GlowSuite AI ✨
+              </div>
+
+              <div
+                style={{
+                  background: "#1b1b1b",
+                  borderRadius: 18,
+                  padding: 16,
+                  color: "#f5f5f5",
+                  lineHeight: 1.6,
+                  fontSize: 15,
+                }}
+              >
+                Hi Lisa 😊<br /><br />
+
+                dein Termin morgen um 14:30 Uhr bei Beauty Lounge.<br /><br />
+
+                Bitte bestätige kurz deinen Termin:
+                <br /><br />
+
+                ✅ Bestätigen<br />
+                ❌ Absagen
+              </div>
+            </div>
+          </div>
+
+          {/* REVIEW BOOST */}
+
+          <div
+            style={{
+              borderRadius: 28,
+              padding: 24,
+              background:
+                "linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))",
+              border: "1px solid rgba(212,175,116,0.22)",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                padding: "7px 12px",
+                borderRadius: 999,
+                background: "rgba(212,175,116,0.16)",
+                color: "#d4af74",
+                fontSize: 12,
+                fontWeight: 700,
+                marginBottom: 16,
+              }}
+            >
+              Google Bewertungen
+            </div>
+
+            <h3
+              style={{
+                margin: "0 0 12px",
+                fontSize: 28,
+                color: "#fff8ea",
+              }}
+            >
+              Bewertungen automatisch steigern
+            </h3>
+
+            <p
+              style={{
+                color: "rgba(248,243,236,0.72)",
+                lineHeight: 1.6,
+                marginBottom: 22,
+              }}
+            >
+              Nach dem Termin fragt GlowSuite automatisch nach einer
+              Google Bewertung — ohne dass dein Team schreiben muss.
+            </p>
+
+            <div
+              style={{
+                background: "#0f0f0f",
+                borderRadius: 24,
+                padding: 18,
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "#7ef29a",
+                  marginBottom: 10,
+                  fontWeight: 700,
+                }}
+              >
+                GlowSuite AI ✨
+              </div>
+
+              <div
+                style={{
+                  background: "#1b1b1b",
+                  borderRadius: 18,
+                  padding: 16,
+                  color: "#f5f5f5",
+                  lineHeight: 1.6,
+                  fontSize: 15,
+                }}
+              >
+                Danke für deinen Besuch 💖<br /><br />
+
+                Wir hoffen du warst zufrieden.<br /><br />
+
+                ⭐ Jetzt Google Bewertung abgeben
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* BEFORE AFTER */}
         <section
           style={{
