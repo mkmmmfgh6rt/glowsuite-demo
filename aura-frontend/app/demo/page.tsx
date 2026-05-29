@@ -293,7 +293,7 @@ export default function DemoPage() {
                 color: "#fff8ea",
               }}
             >
-              A.U.R.A analysiert dein Studio automatisch
+              A.U.R.A erkennt Umsatzprobleme automatisch
             </h2>
 
             <p
@@ -303,9 +303,9 @@ export default function DemoPage() {
                 maxWidth: 760,
               }}
             >
-              GlowSuite erkennt Umsatzprobleme, freie Slots,
-              inaktive Kundinnen und erstellt automatisch
-              passende WhatsApp Kampagnen.
+              Während du arbeitest, analysiert A.U.R.A freie Termine,
+              Kundenverluste und Umsatzchancen in Echtzeit
+              — und schlägt automatisch passende Aktionen vor.
             </p>
           </div>
 
@@ -425,7 +425,7 @@ export default function DemoPage() {
                   color: "#fff8ea",
                 }}
               >
-                Umsatzrückgang erkannt
+                ⚠️ Diese Woche 18% weniger Buchungen
               </h3>
 
               <p
@@ -434,8 +434,8 @@ export default function DemoPage() {
                   lineHeight: 1.6,
                 }}
               >
-                Die Buchungen sind im Vergleich zur Vorwoche
-                um 18% gefallen.
+                A.U.R.A hat das Problem erkannt und empfiehlt automatisch eine Rückgewinnungskampagne für inaktive Kundinnen.
+              
               </p>
 
               <div
@@ -482,7 +482,7 @@ export default function DemoPage() {
                   marginBottom: 14,
                 }}
               >
-                Kampagne generiert
+                🤖 Automatisch von A.U.R.A erstellt
               </div>
 
               <h3
@@ -760,10 +760,11 @@ export default function DemoPage() {
             }}
           >
             <h3 style={{ color: "#f1b4a6", fontSize: 24 }}>Ohne GlowSuite</h3>
-            <p>❌ Kundenanfragen bleiben liegen</p>
+            <p>❌ Terminlücken bleiben unbesetzt</p>
             <p>❌ No-Shows kosten Umsatz</p>
+            <p>❌ Kunden kommen nicht zurück</p>
             <p>❌ Bewertungen werden vergessen</p>
-            <p>❌ Inaktive Kundinnen kommen nicht zurück</p>
+            <p>❌ Umsatzprobleme bleiben unentdeckt</p>
           </div>
 
           <div
@@ -775,10 +776,11 @@ export default function DemoPage() {
             }}
           >
             <h3 style={{ color: "#d4af74", fontSize: 24 }}>Mit GlowSuite</h3>
-            <p>✅ AI antwortet sofort</p>
             <p>✅ Termine werden automatisch gebucht</p>
-            <p>✅ WhatsApp Erinnerungen laufen selbstständig</p>
-            <p>✅ A.U.R.A erkennt Umsatz-Chancen</p>
+            <p>✅ WhatsApp Erinnerungen reduzieren No-Shows</p>
+            <p>✅ Kunden werden automatisch reaktiviert</p>
+            <p>✅ Bewertungen werden automatisch angefragt</p>
+            <p>✅ A.U.R.A erkennt Umsatzchancen frühzeitig</p>
           </div>
         </section>
 
