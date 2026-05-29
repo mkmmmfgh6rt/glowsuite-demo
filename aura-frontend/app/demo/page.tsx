@@ -316,6 +316,87 @@ export default function DemoPage() {
               gap: 18,
             }}
           >
+            {/* AUTOPILOT STATUS */}
+
+            <section
+              style={{
+                marginBottom: 42,
+                padding: "34px 28px",
+                borderRadius: 30,
+                background:
+                  "linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))",
+                border: "1px solid rgba(212,175,116,0.22)",
+                boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
+              }}
+            >
+              <div style={{ marginBottom: 24 }}>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    padding: "7px 12px",
+                    borderRadius: 999,
+                    background: "rgba(212,175,116,0.16)",
+                    color: "#d4af74",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    marginBottom: 14,
+                  }}
+                >
+                  Autopilot Status
+                </div>
+
+                <h2
+                  style={{
+                    margin: "0 0 12px",
+                    fontSize: 34,
+                    color: "#fff8ea",
+                  }}
+                >
+                  GlowSuite arbeitet automatisch im Hintergrund
+                </h2>
+
+                <p
+                  style={{
+                    color: "rgba(248,243,236,0.72)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Während du Kundinnen behandelst, übernimmt GlowSuite
+                  automatisch die wichtigsten Aufgaben.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+                  gap: 16,
+                }}
+              >
+                {[
+                  "WhatsApp Erinnerungen aktiv",
+                  "Google Bewertungen aktiv",
+                  "Kundenreaktivierung aktiv",
+                  "Umsatzanalyse aktiv",
+                  "Kampagnen Optimierung aktiv",
+                  "Freie Slots Überwachung aktiv",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    style={{
+                      padding: 18,
+                      borderRadius: 20,
+                      background: "#16110d",
+                      border: "1px solid rgba(212,175,116,0.22)",
+                      color: "#fff8ea",
+                      fontWeight: 600,
+                    }}
+                  >
+                    🟢 {item}
+                  </div>
+                ))}
+              </div>
+            </section>
             {/* REVENUE ALERT */}
 
             <div
