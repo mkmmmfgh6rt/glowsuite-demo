@@ -32,6 +32,7 @@ import {
   insertBooking,
   getAllBookings,
   deleteBooking,
+  getBookingByDate,
   updateBooking,
   exportByPhone,
   anonymizeByPhone,
@@ -47,7 +48,7 @@ import { createBooking } from "./core/booking.js";
 import { createAppointmentPDF } from "./core/pdf.js";
 import { authMiddleware } from "./core/auth.js";
 import { loadTenantConfig } from "./core/utils.js";
-import auraRoutes from "./aura/routes/auraRoutes.js"; 
+import auraRoutes from "./aura/routes/auraRoutes.js";
 import calendarRoutes from "./aura/routes/calendarRoutes.js";
 import { mirrorEmployeesToSupabase } from "./core/mirrorEmployees.js";
 import { mirrorSingleEmployeeToSupabase } from "./core/mirrorSingleEmployeeToSupabase.js";
@@ -138,9 +139,9 @@ app.post("/api/services", upload.single("image"), async (req, res) => {
       // 🔥 Neu: optionale Aliases pro Studio / Service
       aliases: aliases
         ? String(aliases)
-            .split(",")
-            .map(a => a.trim())
-            .filter(Boolean)
+          .split(",")
+          .map(a => a.trim())
+          .filter(Boolean)
         : [],
 
       image: imagePath
@@ -860,61 +861,61 @@ function parseBookingIntent(message, services, employees) {
   // =======================================================
   // 🔥 Kategorie erkennen (sauber: Kategorie ≠ Service)
   // =======================================================
-if (!result.service) {
-  const categories = [...new Set(
-    services.map(s => s.category).filter(Boolean)
-  )];
-
-
-  // ===================================================
-  // ✅ Nur echte Service Namen / Aliases direkt matchen
-  // ===================================================
-  for (const service of services) {
-    const serviceName = normalize(service.name);
-
-    if (msg.includes(serviceName)) {
-      result.service = service;
-      result.category = service.category; // 🔥 DAS IST DER FIX
-      break;
-    }
-
-    const aliases = Array.isArray(service.aliases)
-      ? service.aliases.map(a => normalize(a))
-      : [];
-
-    const aliasMatched = aliases.some(alias =>
-      msg.includes(alias)
-    );
-
-    if (aliasMatched) {
-      result.service = service;
-      result.category = service.category; // 🔥 AUCH HIER
-      break;
-    }
-  }
-
-  // ===================================================
-  // ✅ Nur Kategorie erkennen, NICHT Service erzwingen
-  // ===================================================
   if (!result.service) {
-    for (const category of categories) {
-      const cat = normalize(category);
+    const categories = [...new Set(
+      services.map(s => s.category).filter(Boolean)
+    )];
 
-      const matchesSynonym = false;
 
-      if (
-        msg.includes(cat) ||
-        msg.includes(cat.replace("ä", "a")) ||
-        msg.includes(cat.replace("ö", "o")) ||
-        msg.includes(cat.replace("ü", "u")) ||
-        matchesSynonym
-      ) {
-        result.category = category;
+    // ===================================================
+    // ✅ Nur echte Service Namen / Aliases direkt matchen
+    // ===================================================
+    for (const service of services) {
+      const serviceName = normalize(service.name);
+
+      if (msg.includes(serviceName)) {
+        result.service = service;
+        result.category = service.category; // 🔥 DAS IST DER FIX
+        break;
+      }
+
+      const aliases = Array.isArray(service.aliases)
+        ? service.aliases.map(a => normalize(a))
+        : [];
+
+      const aliasMatched = aliases.some(alias =>
+        msg.includes(alias)
+      );
+
+      if (aliasMatched) {
+        result.service = service;
+        result.category = service.category; // 🔥 AUCH HIER
         break;
       }
     }
+
+    // ===================================================
+    // ✅ Nur Kategorie erkennen, NICHT Service erzwingen
+    // ===================================================
+    if (!result.service) {
+      for (const category of categories) {
+        const cat = normalize(category);
+
+        const matchesSynonym = false;
+
+        if (
+          msg.includes(cat) ||
+          msg.includes(cat.replace("ä", "a")) ||
+          msg.includes(cat.replace("ö", "o")) ||
+          msg.includes(cat.replace("ü", "u")) ||
+          matchesSynonym
+        ) {
+          result.category = category;
+          break;
+        }
+      }
+    }
   }
-}
 
   // =======================================================
   // 🔥 Mitarbeiter erkennen
@@ -989,23 +990,23 @@ if (!result.service) {
     result.date = `${year}-${month}-${day}`;
   }
 
- 
+
   // =======================================================
   // 🔥 Uhrzeit erkennen (sauber, kein Datum-Bug)
   // =======================================================
   const timeMatch =
-  msg.match(/\b(\d{1,2}):(\d{2})\b/) ||
-  msg.match(/\b(\d{1,2})\s*uhr\b/i) ||
-  msg.match(/\b(\d{1,2})\b/);
+    msg.match(/\b(\d{1,2}):(\d{2})\b/) ||
+    msg.match(/\b(\d{1,2})\s*uhr\b/i) ||
+    msg.match(/\b(\d{1,2})\b/);
 
-if (timeMatch) {
-  const hour = String(timeMatch[1]).padStart(2, "0");
-  const minute = timeMatch[2]
-    ? String(timeMatch[2]).padStart(2, "0")
-    : "00";
+  if (timeMatch) {
+    const hour = String(timeMatch[1]).padStart(2, "0");
+    const minute = timeMatch[2]
+      ? String(timeMatch[2]).padStart(2, "0")
+      : "00";
 
-  result.time = `${hour}:${minute}`;
-}
+    result.time = `${hour}:${minute}`;
+  }
 
   return result;
 }
@@ -1052,6 +1053,86 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
       return res.sendStatus(200);
     }
 
+    // =======================================================
+    // 🚫 GLOBAL STORNO
+    // =======================================================
+
+    if (
+      message.includes("storno") ||
+      message.includes("absagen") ||
+      message.includes("termin absagen")
+    ) {
+
+      try {
+
+        const phone = from.replace("whatsapp:", "");
+
+        const upcoming = getAllBookings()
+          .filter(b =>
+            String(b.phone || "").replace(/\s+/g, "") ===
+            String(phone).replace(/\s+/g, "")
+          )
+          .filter(b => b.status !== "cancelled")
+          .filter(b => new Date(b.dateTime).getTime() > Date.now())
+          .sort((a, b) =>
+            new Date(a.dateTime) - new Date(b.dateTime)
+          );
+
+        const booking = upcoming[0];
+
+        if (!booking) {
+
+          await twilioClient.messages.create({
+            from: TWILIO_WHATSAPP_FROM,
+            to: from,
+            body:
+              "Ich konnte keinen aktiven Termin finden."
+          });
+
+          return res.sendStatus(200);
+        }
+
+        const ok = deleteBooking(booking.id);
+
+        if (!ok) {
+
+          await twilioClient.messages.create({
+            from: TWILIO_WHATSAPP_FROM,
+            to: from,
+            body:
+              "Der Termin konnte leider nicht storniert werden."
+          });
+
+          return res.sendStatus(200);
+        }
+
+        // 🔥 Cleanup
+        completedBookings.delete(phone);
+        abandonedWhatsappSessions.delete(from);
+        delete sessions[from];
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: from,
+          body:
+            "✅ Dein Termin wurde erfolgreich storniert.\n\n" +
+            "Der Platz wurde wieder freigegeben.\n\n" +
+            "Falls du einen neuen Termin möchtest:\n" +
+            "1️⃣ Termin buchen"
+        });
+
+        console.log("🚫 Termin storniert:", booking.id);
+
+        return res.sendStatus(200);
+
+      } catch (err) {
+
+        console.error("❌ STORNO FEHLER:", err.message);
+
+        return res.sendStatus(500);
+      }
+    }
+
     // 🔁 SESSION INIT
     if (!sessions[from]) {
       sessions[from] = { step: "menu" };
@@ -1059,20 +1140,20 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
 
     const session = sessions[from];
     let reply = "";
-  
+
     // =======================================================
     // 🔥 Abbruch-Tracking NUR starten (nicht resetten)
     // =======================================================
-  if (session.step !== "menu") {
-    abandonedWhatsappSessions.set(from, {
-      phone: from.replace("whatsapp:", ""),
-      step: session.step,
-      service: session.service || null,
-      date: session.selectedDate || null,
-      time: session.selectedSlot?.time || null,
-      lastActivity: Date.now()
-    });
-  }
+    if (session.step !== "menu") {
+      abandonedWhatsappSessions.set(from, {
+        phone: from.replace("whatsapp:", ""),
+        step: session.step,
+        service: session.service || null,
+        date: session.selectedDate || null,
+        time: session.selectedSlot?.time || null,
+        lastActivity: Date.now()
+      });
+    }
 
     // =======================================================
     // 🔥 MENU START / AI FLOW
@@ -1152,18 +1233,18 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
         // =======================================================
         if (upsell && !session.upsellDone) {
 
-        session.upsell = upsell;
-        session.step = "upsell_offer";
-        session.upsellDone = true;
+          session.upsell = upsell;
+          session.step = "upsell_offer";
+          session.upsellDone = true;
 
-      reply =
-        `✨ Empfehlung\n\n` +
-        `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-        `${upsell}\n\n` +
-        `👉 spart Zeit & sieht gepflegter aus\n\n` +
-        `Möchtest du das dazu?\n\n` +
-        `1️⃣ Ja hinzufügen\n` +
-        `2️⃣ Nein weiter`;
+          reply =
+            `✨ Empfehlung\n\n` +
+            `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+            `${upsell}\n\n` +
+            `👉 spart Zeit & sieht gepflegter aus\n\n` +
+            `Möchtest du das dazu?\n\n` +
+            `1️⃣ Ja hinzufügen\n` +
+            `2️⃣ Nein weiter`;
 
 
           await twilioClient.messages.create({
@@ -1255,59 +1336,59 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
         let matchedSlot = null;
 
         if (session.aiTime) {
-           // ✅ exakte Zeit
-           matchedSlot = slots.find(s => s.time === session.aiTime);
+          // ✅ exakte Zeit
+          matchedSlot = slots.find(s => s.time === session.aiTime);
 
-           // ✅ fallback → gleiche Stunde
-           if (!matchedSlot) {
+          // ✅ fallback → gleiche Stunde
+          if (!matchedSlot) {
             const hour = session.aiTime.split(":")[0].padStart(2, "0");
 
             matchedSlot = slots.find(s =>
-            s.time.startsWith(hour)
-          );
-        }
-     }
-       
-      if (matchedSlot) {
-        session.selectedSlot = matchedSlot;
-
-        const serviceKey = (session.service || "").toLowerCase().trim();
-        const cfg = loadTenantConfig(TENANT_DEFAULT);
-
-        let upsell = (cfg.upsells || {})[serviceKey];
-
-        if (!upsell && cfg.defaultUpsells) {
-          upsell = cfg.defaultUpsells[
-            Math.floor(Math.random() * cfg.defaultUpsells.length)
-          ];
+              s.time.startsWith(hour)
+            );
+          }
         }
 
-        if (upsell && !session.upsellDone) {
+        if (matchedSlot) {
+          session.selectedSlot = matchedSlot;
 
-          session.upsell = upsell;
-          session.upsellDone = true;
-          session.step = "upsell_offer";
+          const serviceKey = (session.service || "").toLowerCase().trim();
+          const cfg = loadTenantConfig(TENANT_DEFAULT);
 
-        reply =
-          `✨ Empfehlung\n\n` +
-          `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-          `${upsell}\n\n` +
-          `👉 spart Zeit & sieht gepflegter aus\n\n` +
-          `Möchtest du das dazu?\n\n` +
-          `1️⃣ Ja hinzufügen\n` +
-          `2️⃣ Nein weiter`;
+          let upsell = (cfg.upsells || {})[serviceKey];
 
-        } else {
+          if (!upsell && cfg.defaultUpsells) {
+            upsell = cfg.defaultUpsells[
+              Math.floor(Math.random() * cfg.defaultUpsells.length)
+            ];
+          }
 
-         session.step = "ask_name";
+          if (upsell && !session.upsellDone) {
 
-        reply =
-          `Perfekt 👌\n\n` +
-          `${session.service}\n` +
-          `${session.selectedDate} um ${matchedSlot.time}\n\n` +
-          `Wie heißt du?`;
-        }
-      
+            session.upsell = upsell;
+            session.upsellDone = true;
+            session.step = "upsell_offer";
+
+            reply =
+              `✨ Empfehlung\n\n` +
+              `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+              `${upsell}\n\n` +
+              `👉 spart Zeit & sieht gepflegter aus\n\n` +
+              `Möchtest du das dazu?\n\n` +
+              `1️⃣ Ja hinzufügen\n` +
+              `2️⃣ Nein weiter`;
+
+          } else {
+
+            session.step = "ask_name";
+
+            reply =
+              `Perfekt 👌\n\n` +
+              `${session.service}\n` +
+              `${session.selectedDate} um ${matchedSlot.time}\n\n` +
+              `Wie heißt du?`;
+          }
+
 
         } else {
           session.slots = slots.slice(0, 5);
@@ -1341,7 +1422,7 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
         "2️⃣ Preise\n" +
         "3️⃣ Öffnungszeiten";
 
-      
+
 
       // =======================================================
       // 🔥 NORMALER ZAHLEN FLOW (BLEIBT WIE ER IST)
@@ -1457,14 +1538,14 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
           session.upsellDone = true;
 
           reply =
-           `✨ Empfehlung\n\n` +
-           `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-           `${upsell}\n\n` +
-           `👉 spart Zeit & sieht gepflegter aus\n\n` +
-           `Möchtest du das dazu?\n\n` +
-           `1️⃣ Ja hinzufügen\n` +
-           `2️⃣ Nein weiter`;
-           
+            `✨ Empfehlung\n\n` +
+            `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+            `${upsell}\n\n` +
+            `👉 spart Zeit & sieht gepflegter aus\n\n` +
+            `Möchtest du das dazu?\n\n` +
+            `1️⃣ Ja hinzufügen\n` +
+            `2️⃣ Nein weiter`;
+
         } else {
           const employees = getAllEmployees(TENANT_DEFAULT) || [];
 
@@ -1487,7 +1568,7 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
         }
       }
     }
-           
+
     else if (session.step === "upsell_offer") {
       if (message === "1") {
         session.upsellSelected = session.upsell;
@@ -1498,179 +1579,179 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
       const employees = getAllEmployees(TENANT_DEFAULT) || [];
 
 
-     // =======================================================
-     // 🔥 AI FLOW: Mitarbeiter schon erkannt
-     // =======================================================
-  if (session.aiFlow && session.employee && session.selectedDate) {
+      // =======================================================
+      // 🔥 AI FLOW: Mitarbeiter schon erkannt
+      // =======================================================
+      if (session.aiFlow && session.employee && session.selectedDate) {
 
-    const slots = calculateSlotsForEmployee({
-      emp: session.employee,
-      serviceDuration: session.duration,
-      date: session.selectedDate,
-      tenant: TENANT_DEFAULT,
-    });
+        const slots = calculateSlotsForEmployee({
+          emp: session.employee,
+          serviceDuration: session.duration,
+          date: session.selectedDate,
+          tenant: TENANT_DEFAULT,
+        });
 
-    if (!slots.length) {
-      reply = "Leider sind an diesem Tag keine Termine frei.";
-      session.step = "menu";
+        if (!slots.length) {
+          reply = "Leider sind an diesem Tag keine Termine frei.";
+          session.step = "menu";
 
-    } else {
+        } else {
 
-      let matchedSlot = null;
+          let matchedSlot = null;
 
-      if (session.aiTime) {
-    
-           // ✅ exakte Zeit
-           matchedSlot = slots.find(s => s.time === session.aiTime);
+          if (session.aiTime) {
 
-           // ✅ fallback → gleiche Stunde
-           if (!matchedSlot) {
-            const hour = session.aiTime.split(":")[0].padStart(2, "0");
+            // ✅ exakte Zeit
+            matchedSlot = slots.find(s => s.time === session.aiTime);
 
-            matchedSlot = slots.find(s =>
-            s.time.startsWith(hour)
-          );
+            // ✅ fallback → gleiche Stunde
+            if (!matchedSlot) {
+              const hour = session.aiTime.split(":")[0].padStart(2, "0");
+
+              matchedSlot = slots.find(s =>
+                s.time.startsWith(hour)
+              );
+            }
+          }
+
+
+          if (matchedSlot) {
+            session.selectedSlot = matchedSlot;
+
+            const serviceKey = (session.service || "").toLowerCase().trim();
+            const cfg = loadTenantConfig(TENANT_DEFAULT);
+
+            let upsell = (cfg.upsells || {})[serviceKey];
+
+            if (!upsell && cfg.defaultUpsells) {
+              upsell = cfg.defaultUpsells[
+                Math.floor(Math.random() * cfg.defaultUpsells.length)
+              ];
+            }
+
+            console.log("🔥 SERVICE:", session.service);
+            console.log("🔥 UPSELL:", upsell);
+
+            if (upsell && !session.upsellDone) {
+
+              session.upsell = upsell;
+              session.upsellDone = true;
+              session.step = "upsell_offer";
+
+              reply =
+                `✨ Empfehlung\n\n` +
+                `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+                `${upsell}\n\n` +
+                `👉 spart Zeit & sieht gepflegter aus\n\n` +
+                `Möchtest du das dazu?\n\n` +
+                `1️⃣ Ja hinzufügen\n` +
+                `2️⃣ Nein weiter`;
+
+            } else {
+
+              session.step = "ask_name";
+
+              reply =
+                `Perfekt 👌\n\n` +
+                `${session.service}\n` +
+                `${session.selectedDate} um ${matchedSlot.time}\n\n` +
+                `Wie heißt du?`;
+            }
+
+          } else {
+
+            session.slots = slots.slice(0, 5);
+            session.step = "slot_pick";
+
+            const slotLines = session.slots
+              .map((s, i) => `${i + 1}️⃣ ${s.time}`)
+              .join("\n");
+
+            reply =
+              `Diese Uhrzeiten sind frei:\n\n${slotLines}`;
+          }
         }
-      }
-       
 
-    if (matchedSlot) {
-      session.selectedSlot = matchedSlot;
-
-      const serviceKey = (session.service || "").toLowerCase().trim();
-      const cfg = loadTenantConfig(TENANT_DEFAULT);
-
-      let upsell = (cfg.upsells || {})[serviceKey];
-
-      if (!upsell && cfg.defaultUpsells) {
-        upsell = cfg.defaultUpsells[
-         Math.floor(Math.random() * cfg.defaultUpsells.length)
-        ];
       }
 
-      console.log("🔥 SERVICE:", session.service);
-      console.log("🔥 UPSELL:", upsell);
+      // =======================================================
+      // 🔥 Mitarbeiter fehlt → normal fragen
+      // =======================================================
+      else if (!session.employee) {
 
-    if (upsell && !session.upsellDone) {
+        if (!employees.length) {
+          reply = "Aktuell sind keine Mitarbeiter verfügbar.";
+          session.step = "menu";
 
-       session.upsell = upsell;
-       session.upsellDone = true;
-       session.step = "upsell_offer";
+        } else {
 
-      reply =
-        `✨ Empfehlung\n\n` +
-        `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-        `${upsell}\n\n` +
-        `👉 spart Zeit & sieht gepflegter aus\n\n` +
-        `Möchtest du das dazu?\n\n` +
-        `1️⃣ Ja hinzufügen\n` +
-        `2️⃣ Nein weiter`;
+          session.employees = employees;
+          session.step = "employee_pick";
 
-      } else {
+          const employeeLines = employees
+            .map((e, i) => `${i + 1}️⃣ ${e.name}`)
+            .join("\n");
 
-        session.step = "ask_name";
+          reply =
+            `Super 👍 ${session.service}\n\n` +
+            `Welcher Mitarbeiter?\n\n` +
+            employeeLines;
+        }
 
-      reply =
-        `Perfekt 👌\n\n` +
-        `${session.service}\n` +
-        `${session.selectedDate} um ${matchedSlot.time}\n\n` +
-        `Wie heißt du?`;
       }
 
-      } else {
+      // =======================================================
+      // 🔥 Mitarbeiter da, aber Datum fehlt
+      // =======================================================
+      else {
 
-        session.slots = slots.slice(0, 5);
-        session.step = "slot_pick";
-
-        const slotLines = session.slots
-          .map((s, i) => `${i + 1}️⃣ ${s.time}`)
-          .join("\n");
+        session.step = "date_pick";
 
         reply =
-          `Diese Uhrzeiten sind frei:\n\n${slotLines}`;
+          "Bitte wähle ein Datum:\n\n" +
+          "1️⃣ Heute\n" +
+          "2️⃣ Morgen\n" +
+          "3️⃣ Übermorgen\n\n" +
+          "oder schreibe ein Datum:\n" +
+          "z.B. 15.03.2026";
       }
     }
-
-  }
-
-  // =======================================================
-  // 🔥 Mitarbeiter fehlt → normal fragen
-  // =======================================================
-  else if (!session.employee) {
-
-    if (!employees.length) {
-      reply = "Aktuell sind keine Mitarbeiter verfügbar.";
-      session.step = "menu";
-
-    } else {
-
-      session.employees = employees;
-      session.step = "employee_pick";
-
-      const employeeLines = employees
-        .map((e, i) => `${i + 1}️⃣ ${e.name}`)
-        .join("\n");
-
-      reply =
-        `Super 👍 ${session.service}\n\n` +
-        `Welcher Mitarbeiter?\n\n` +
-        employeeLines;
-    }
-
-  }
-
-  // =======================================================
-  // 🔥 Mitarbeiter da, aber Datum fehlt
-  // =======================================================
-  else {
-
-    session.step = "date_pick";
-
-    reply =
-      "Bitte wähle ein Datum:\n\n" +
-      "1️⃣ Heute\n" +
-      "2️⃣ Morgen\n" +
-      "3️⃣ Übermorgen\n\n" +
-      "oder schreibe ein Datum:\n" +
-      "z.B. 15.03.2026";
-  }
-}
 
 
     else if (session.step === "employee_pick") {
-     const employees = session.employees || [];
+      const employees = session.employees || [];
 
-     let emp = employees[Number(message) - 1];
+      let emp = employees[Number(message) - 1];
 
-  if (!emp) {
-    emp = employees.find(e =>
-      e.name.toLowerCase().includes(message)
-    );
-  }
+      if (!emp) {
+        emp = employees.find(e =>
+          e.name.toLowerCase().includes(message)
+        );
+      }
 
-  if (!emp) {
-    const employeeLines = employees
-      .map((e, i) => `${i + 1}️⃣ ${e.name}`)
-      .join("\n");
+      if (!emp) {
+        const employeeLines = employees
+          .map((e, i) => `${i + 1}️⃣ ${e.name}`)
+          .join("\n");
 
-    reply =
-      "Bitte wähle einen Mitarbeiter.\n\n" +
-      employeeLines;
-  } else {
-    session.employee = emp;
-    session.employee_id = emp.id;
+        reply =
+          "Bitte wähle einen Mitarbeiter.\n\n" +
+          employeeLines;
+      } else {
+        session.employee = emp;
+        session.employee_id = emp.id;
 
-    session.step = "date_pick";
+        session.step = "date_pick";
 
-    reply =
-      "Bitte wähle ein Datum:\n\n" +
-      "1️⃣ Heute\n" +
-      "2️⃣ Morgen\n" +
-      "3️⃣ Übermorgen\n\n" +
-      "oder schreibe ein Datum:\n" +
-      "z.B. 15.03.2026";
-  }
-}
+        reply =
+          "Bitte wähle ein Datum:\n\n" +
+          "1️⃣ Heute\n" +
+          "2️⃣ Morgen\n" +
+          "3️⃣ Übermorgen\n\n" +
+          "oder schreibe ein Datum:\n" +
+          "z.B. 15.03.2026";
+      }
+    }
 
     else if (session.step === "date_pick") {
       let dateStr = null;
@@ -1678,10 +1759,10 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
 
       let wishedTime = null;
 
-      const timeMatch = 
-      rawDateInput.match(/\b(\d{1,2}):(\d{2})\b/) ||
-      rawDateInput.match(/\b(\d{1,2})\s*uhr\b/i) ||
-       rawDateInput.match(/\b(\d{1,2})\b/);
+      const timeMatch =
+        rawDateInput.match(/\b(\d{1,2}):(\d{2})\b/) ||
+        rawDateInput.match(/\b(\d{1,2})\s*uhr\b/i) ||
+        rawDateInput.match(/\b(\d{1,2})\b/);
 
       if (timeMatch) {
         const hour = String(timeMatch[1]).padStart(2, "0");
@@ -1695,17 +1776,17 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
 
       if (message === "1" || message.includes("heute")) {
         dateStr = new Date().toISOString().slice(0, 10);
-      } 
+      }
       else if (message === "2" || message.includes("morgen")) {
         const d = new Date();
         d.setDate(d.getDate() + 1);
         dateStr = d.toISOString().slice(0, 10);
-      } 
+      }
       else if (message === "3" || message.includes("übermorgen")) {
         const d = new Date();
         d.setDate(d.getDate() + 2);
         dateStr = d.toISOString().slice(0, 10);
-      } 
+      }
       else {
         dateStr = parseGermanDate(rawDateInput);
       }
@@ -1736,45 +1817,45 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
               );
             }
 
-          if (matchedSlot) {
-            session.selectedSlot = matchedSlot;
+            if (matchedSlot) {
+              session.selectedSlot = matchedSlot;
 
-            const serviceKey = (session.service || "").toLowerCase().trim();
-            const cfg = loadTenantConfig(TENANT_DEFAULT);
+              const serviceKey = (session.service || "").toLowerCase().trim();
+              const cfg = loadTenantConfig(TENANT_DEFAULT);
 
-            let upsell = (cfg.upsells || {})[serviceKey];
+              let upsell = (cfg.upsells || {})[serviceKey];
 
-            if (!upsell && cfg.defaultUpsells) {
-              upsell = cfg.defaultUpsells[
-                Math.floor(Math.random() * cfg.defaultUpsells.length)
-              ];
-            }
+              if (!upsell && cfg.defaultUpsells) {
+                upsell = cfg.defaultUpsells[
+                  Math.floor(Math.random() * cfg.defaultUpsells.length)
+                ];
+              }
 
-            if (upsell && !session.upsellDone) {
+              if (upsell && !session.upsellDone) {
 
-              session.upsell = upsell;
-              session.upsellDone = true;
-              session.step = "upsell_offer";
+                session.upsell = upsell;
+                session.upsellDone = true;
+                session.step = "upsell_offer";
 
-            reply =
-              `✨ Empfehlung\n\n` +
-              `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-              `${upsell}\n\n` +
-              `👉 spart Zeit & sieht gepflegter aus\n\n` +
-              `Möchtest du das dazu?\n\n` +
-              `1️⃣ Ja hinzufügen\n` +
-              `2️⃣ Nein weiter`;
+                reply =
+                  `✨ Empfehlung\n\n` +
+                  `Viele Kundinnen kombinieren das direkt mit:\n\n` +
+                  `${upsell}\n\n` +
+                  `👉 spart Zeit & sieht gepflegter aus\n\n` +
+                  `Möchtest du das dazu?\n\n` +
+                  `1️⃣ Ja hinzufügen\n` +
+                  `2️⃣ Nein weiter`;
 
-            } else {
+              } else {
 
-             session.step = "ask_name";
+                session.step = "ask_name";
 
-            reply =
-              `Perfekt 👌\n\n` +
-              `${session.service}\n` +
-              `${dateStr} um ${matchedSlot.time}\n\n` +
-              `Wie heißt du?`;
-            }
+                reply =
+                  `Perfekt 👌\n\n` +
+                  `${session.service}\n` +
+                  `${dateStr} um ${matchedSlot.time}\n\n` +
+                  `Wie heißt du?`;
+              }
 
             } else {
               session.slots = slots.slice(0, 5);
@@ -1793,17 +1874,17 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
           }
         }
       }
-     }
+    }
 
     else if (session.step === "slot_pick") {
       let slot = null;
-       // 🔥 ALLE Slots neu berechnen (nicht nur Top 5)
-       const allSlots = calculateSlotsForEmployee({
-       emp: session.employee,
-       serviceDuration: session.duration,
-       date: session.selectedDate,
-       tenant: TENANT_DEFAULT,
-     });
+      // 🔥 ALLE Slots neu berechnen (nicht nur Top 5)
+      const allSlots = calculateSlotsForEmployee({
+        emp: session.employee,
+        serviceDuration: session.duration,
+        date: session.selectedDate,
+        tenant: TENANT_DEFAULT,
+      });
 
       let cleanMessage = message
         .toLowerCase()
@@ -1819,7 +1900,7 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
 
       // ✅ Exakte Uhrzeit (z.B. 09:00)
       if (!slot && cleanMessage.includes(":")) {
-         slot = allSlots.find(s => s.time === cleanMessage);
+        slot = allSlots.find(s => s.time === cleanMessage);
       }
 
       // ✅ Stunde (z.B. "9" → 09:00)
@@ -1828,8 +1909,8 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
         if (hourMatch) {
           const hour = hourMatch[0].padStart(2, "0");
           slot = allSlots.find(s => s.time.startsWith(hour));
-  
-  
+
+
         }
       }
 
@@ -1890,7 +1971,7 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
               reply = "Bitte wähle die Behandlung erneut.";
               session.step = "service";
             } else {
-              
+
               console.log("CREATE BOOKING PAYLOAD:", {
                 name: session.customerName,
                 phone,
@@ -1899,7 +1980,7 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
                 dateTime,
                 employee_id: session.employee_id,
               });
-                const booking = await createBooking({
+              const booking = await createBooking({
                 name: session.customerName,
                 phone,
                 service: matchedService.name,
@@ -1907,20 +1988,6 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
                 dateTime,
                 employee_id: session.employee_id,
               });
-              // 🔥 FIX: zusätzlich in lokale DB speicher
-              if (booking?.appointment) {
-                insertBooking({
-                  id: booking.appointment.id,
-                  name: booking.appointment.customer_name,
-                  phone: booking.appointment.customer_phone,
-                  service: matchedService.name,
-                  price: booking.appointment.price,
-                  duration: booking.appointment.duration_minutes,
-                  dateTime: booking.appointment.start_time,
-                  employeeId: booking.appointment.employee_id,
-                  tenant: TENANT_DEFAULT,
-                });
-              }
 
               console.log("BOOKING RESULT:", booking);
 
@@ -1970,7 +2037,7 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
 
                   session.step = "done";
                   setTimeout(() => {
-                  delete sessions[from];
+                    delete sessions[from];
                   }, 2000);
                 } else {
                   const pdfLink = `${BASE}/api/bookings/${bookingId}/pdf`;
@@ -1987,7 +2054,7 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
 
                   session.step = "done";
                   setTimeout(() => {
-                  delete sessions[from];
+                    delete sessions[from];
                   }, 2000);
                 }
               }
@@ -2301,11 +2368,10 @@ function bookingMailTemplate(booking) {
       <p style="margin: 0 0 10px;"><b>Uhrzeit:</b><br>${t}</p>
       <p style="margin: 0 0 10px;"><b>Dauer:</b><br>${booking.duration || 60} Minuten</p>
       <p style="margin: 0 0 10px;"><b>Preis:</b><br>${price} €</p>
-      ${
-        booking.employee
-          ? `<p style="margin: 0;"><b>Mitarbeiter/in:</b><br>${booking.employee}</p>`
-          : ""
-      }
+      ${booking.employee
+      ? `<p style="margin: 0;"><b>Mitarbeiter/in:</b><br>${booking.employee}</p>`
+      : ""
+    }
     </div>
 
     <div style="
@@ -2454,53 +2520,53 @@ app.post("/api/bookings/:id/cancel", authMiddleware, (req, res) => {
 // ADMIN – ALLE STUDIOS
 // =======================================================
 
-app.get("/api/admin/studios", authMiddleware, (req,res)=>{
+app.get("/api/admin/studios", authMiddleware, (req, res) => {
 
-try{
+  try {
 
-const files = fs.readdirSync(CONFIG_BASE);
+    const files = fs.readdirSync(CONFIG_BASE);
 
-const studios = [];
+    const studios = [];
 
-for(const file of files){
+    for (const file of files) {
 
-if(!file.endsWith(".json")) continue;
+      if (!file.endsWith(".json")) continue;
 
-const config = JSON.parse(
-fs.readFileSync(path.join(CONFIG_BASE,file),"utf8")
-);
+      const config = JSON.parse(
+        fs.readFileSync(path.join(CONFIG_BASE, file), "utf8")
+      );
 
-studios.push({
+      studios.push({
 
-tenant:file.replace(".json",""),
+        tenant: file.replace(".json", ""),
 
-name:config?.branding?.brandName || "Studio",
+        name: config?.branding?.brandName || "Studio",
 
-status:config?.stripe?.status || "inactive",
+        status: config?.stripe?.status || "inactive",
 
-// 🌍 neue Felder für Map / Analytics
-city:config?.location?.city || null,
+        // 🌍 neue Felder für Map / Analytics
+        city: config?.location?.city || null,
 
-country:config?.location?.country || null
+        country: config?.location?.country || null
 
-});
+      });
 
-}
+    }
 
-res.json({
-success:true,
-studios
-});
+    res.json({
+      success: true,
+      studios
+    });
 
-}catch(err){
+  } catch (err) {
 
-console.error(err);
+    console.error(err);
 
-res.status(500).json({
-success:false
-});
+    res.status(500).json({
+      success: false
+    });
 
-}
+  }
 
 });
 
@@ -2509,62 +2575,62 @@ success:false
 // 📊 SUPER ADMIN – ANALYTICS
 // =======================================================
 
-app.get("/api/admin/analytics", authMiddleware, (req,res)=>{
+app.get("/api/admin/analytics", authMiddleware, (req, res) => {
 
-try{
+  try {
 
-const files = fs.readdirSync(CONFIG_BASE);
+    const files = fs.readdirSync(CONFIG_BASE);
 
-let studios = 0;
-let activeStudios = 0;
-let inactiveStudios = 0;
+    let studios = 0;
+    let activeStudios = 0;
+    let inactiveStudios = 0;
 
-for(const file of files){
+    for (const file of files) {
 
-if(!file.endsWith(".json")) continue;
+      if (!file.endsWith(".json")) continue;
 
-studios++;
+      studios++;
 
-let config = {};
+      let config = {};
 
-try{
-config = JSON.parse(
-fs.readFileSync(path.join(CONFIG_BASE,file),"utf8")
-);
-}catch(e){
-console.warn("⚠️ Config Fehler:", file);
-continue;
-}
+      try {
+        config = JSON.parse(
+          fs.readFileSync(path.join(CONFIG_BASE, file), "utf8")
+        );
+      } catch (e) {
+        console.warn("⚠️ Config Fehler:", file);
+        continue;
+      }
 
-if(config?.stripe?.status === "active"){
-activeStudios++;
-}else{
-inactiveStudios++;
-}
+      if (config?.stripe?.status === "active") {
+        activeStudios++;
+      } else {
+        inactiveStudios++;
+      }
 
-}
+    }
 
-const bookings = getAllBookings() || [];
+    const bookings = getAllBookings() || [];
 
-res.json({
-success:true,
-stats:{
-studios,
-activeStudios,
-inactiveStudios,
-totalBookings:bookings.length
-}
-});
+    res.json({
+      success: true,
+      stats: {
+        studios,
+        activeStudios,
+        inactiveStudios,
+        totalBookings: bookings.length
+      }
+    });
 
-}catch(err){
+  } catch (err) {
 
-console.error("❌ Analytics Fehler:", err);
+    console.error("❌ Analytics Fehler:", err);
 
-res.status(500).json({
-success:false
-});
+    res.status(500).json({
+      success: false
+    });
 
-}
+  }
 
 });
 
@@ -2573,103 +2639,103 @@ success:false
 // STUDIO SIGNUP
 // =======================================================
 
-app.post("/api/studio/signup",(req,res)=>{
+app.post("/api/studio/signup", (req, res) => {
 
-try{
+  try {
 
-// 🔥 erweitert um city + country
-const {studio,email,city,country} = req.body;
+    // 🔥 erweitert um city + country
+    const { studio, email, city, country } = req.body;
 
-if(!studio){
-return res.status(400).json({
-success:false,
-message:"Studio Name fehlt"
-});
-}
+    if (!studio) {
+      return res.status(400).json({
+        success: false,
+        message: "Studio Name fehlt"
+      });
+    }
 
-const tenantId = studio
-.toLowerCase()
-.replace(/\s/g,"_");
+    const tenantId = studio
+      .toLowerCase()
+      .replace(/\s/g, "_");
 
-const filePath = path.join(CONFIG_BASE,`${tenantId}.json`);
+    const filePath = path.join(CONFIG_BASE, `${tenantId}.json`);
 
-if(fs.existsSync(filePath)){
-return res.json({
-success:false,
-message:"Studio existiert bereits"
-});
-}
+    if (fs.existsSync(filePath)) {
+      return res.json({
+        success: false,
+        message: "Studio existiert bereits"
+      });
+    }
 
-// 🔐 Login generieren
-const password = Math.random().toString(36).slice(-8);
+    // 🔐 Login generieren
+    const password = Math.random().toString(36).slice(-8);
 
-const config = {
+    const config = {
 
-branding:{
-brandName:studio
-},
+      branding: {
+        brandName: studio
+      },
 
-// 🌍 Standort (für SaaS Map / Analytics)
-location:{
-city: city || "unknown",
-country: country || "DE"
-},
+      // 🌍 Standort (für SaaS Map / Analytics)
+      location: {
+        city: city || "unknown",
+        country: country || "DE"
+      },
 
-// 📧 Studio Kontakt
-contact:{
-email: email || null
-},
+      // 📧 Studio Kontakt
+      contact: {
+        email: email || null
+      },
 
-// 🔐 Studio Login
-auth:{
-user:tenantId,
-password:password
-},
+      // 🔐 Studio Login
+      auth: {
+        user: tenantId,
+        password: password
+      },
 
-// 💳 Stripe Platzhalter (wird später gefüllt)
-stripe:{
-customer_id:null,
-subscription_id:null,
-status:"inactive"
-},
+      // 💳 Stripe Platzhalter (wird später gefüllt)
+      stripe: {
+        customer_id: null,
+        subscription_id: null,
+        status: "inactive"
+      },
 
-services:[
+      services: [
 
-{name:"Gesichtsbehandlung",duration:60,price:60},
-{name:"Wimpern",duration:45,price:50},
-{name:"Nägel",duration:60,price:55}
+        { name: "Gesichtsbehandlung", duration: 60, price: 60 },
+        { name: "Wimpern", duration: 45, price: 50 },
+        { name: "Nägel", duration: 60, price: 55 }
 
-]
+      ]
 
-};
+    };
 
-fs.writeFileSync(
-filePath,
-JSON.stringify(config,null,2)
-);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify(config, null, 2)
+    );
 
-res.json({
-success:true,
-message:"Studio erstellt",
-tenant:tenantId,
+    res.json({
+      success: true,
+      message: "Studio erstellt",
+      tenant: tenantId,
 
-// 🔐 Login Daten zurückgeben
-login:{
-user:tenantId,
-password:password
-}
+      // 🔐 Login Daten zurückgeben
+      login: {
+        user: tenantId,
+        password: password
+      }
 
-});
+    });
 
-}catch(err){
+  } catch (err) {
 
-console.error(err);
+    console.error(err);
 
-res.status(500).json({
-success:false
-});
+    res.status(500).json({
+      success: false
+    });
 
-}
+  }
 
 });
 
@@ -2895,7 +2961,7 @@ app.post("/api/stripe/webhook",
 
     res.json({ received: true });
 
-});
+  });
 
 
 
@@ -3250,6 +3316,52 @@ app.post("/api/bookings/:id/move", authMiddleware, async (req, res) => {
   }
 });
 
+
+// =======================================================
+// ❌ BOOKING STORNIEREN (SOFT CANCEL)
+// =======================================================
+app.delete("/api/bookings/:id", async (req, res) => {
+
+  try {
+
+    const id = req.params.id;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: "Booking ID fehlt"
+      });
+    }
+
+    console.log("🗑️ DELETE BOOKING:", id);
+
+    const success = deleteBooking(id);
+
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        error: "Termin nicht gefunden"
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Termin storniert"
+    });
+
+  } catch (err) {
+
+    console.error("❌ DELETE BOOKING ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      error: "Termin konnte nicht storniert werden"
+    });
+
+  }
+
+});
+
 function toISO(dateInput, timeInput) {
   try {
     if (dateInput.includes(".")) {
@@ -3501,22 +3613,22 @@ app.post("/api/slots", (req, res) => {
     }
 
     const rawSlots = calculateSlotsForEmployee({
-  emp: targetEmp,
-  serviceDuration: duration,
-  date: targetDate,
-  tenant: tenantId
-});
+      emp: targetEmp,
+      serviceDuration: duration,
+      date: targetDate,
+      tenant: tenantId
+    });
 
-const slots = rawSlots.map(s => ({
-  ...s,
-  employee: {
-    id: targetEmp.id,
-    name: targetEmp.name,
-    color: targetEmp.color || "#cfa86f"
-  }
-}));
+    const slots = rawSlots.map(s => ({
+      ...s,
+      employee: {
+        id: targetEmp.id,
+        name: targetEmp.name,
+        color: targetEmp.color || "#cfa86f"
+      }
+    }));
 
-res.json({ success: true, slots });
+    res.json({ success: true, slots });
 
 
   } catch (err) {
@@ -3971,22 +4083,22 @@ function normalizeEmployeePayload(b = {}, existing = {}) {
 
   const currentTenant = existing.tenant ?? TENANT_DEFAULT;
 
-return {
-  id: toStr(b.id ?? existing.id),
-  name: toStr(b.name) ?? existing.name,
-  role: toStr(b.role ?? existing.role),
-  email: toStr(b.email ?? existing.email),
-  phone: toStr(b.phone ?? existing.phone),
-  work_start: toStr(b.work_start ?? existing.work_start) || "09:00",
-  work_end: toStr(b.work_end ?? existing.work_end) || "18:00",
-  days: toStr(b.days ?? existing.days ?? "Mo,Di,Mi,Do,Fr"),
-  buffer: toInt(b.buffer ?? existing.buffer ?? 15, 15),
-  active: to01(b.active ?? existing.active ?? 1, 1),
-  sick_until: toDateStr(b.sick_until ?? existing.sick_until),
-  vacation_start: toDateStr(b.vacation_start ?? existing.vacation_start),
-  vacation_end: toDateStr(b.vacation_end ?? existing.vacation_end),
-  tenant: toStr(b.tenant ?? existing.tenant) || TENANT_DEFAULT,
-  color: toStr(b.color ?? existing.color),
+  return {
+    id: toStr(b.id ?? existing.id),
+    name: toStr(b.name) ?? existing.name,
+    role: toStr(b.role ?? existing.role),
+    email: toStr(b.email ?? existing.email),
+    phone: toStr(b.phone ?? existing.phone),
+    work_start: toStr(b.work_start ?? existing.work_start) || "09:00",
+    work_end: toStr(b.work_end ?? existing.work_end) || "18:00",
+    days: toStr(b.days ?? existing.days ?? "Mo,Di,Mi,Do,Fr"),
+    buffer: toInt(b.buffer ?? existing.buffer ?? 15, 15),
+    active: to01(b.active ?? existing.active ?? 1, 1),
+    sick_until: toDateStr(b.sick_until ?? existing.sick_until),
+    vacation_start: toDateStr(b.vacation_start ?? existing.vacation_start),
+    vacation_end: toDateStr(b.vacation_end ?? existing.vacation_end),
+    tenant: toStr(b.tenant ?? existing.tenant) || TENANT_DEFAULT,
+    color: toStr(b.color ?? existing.color),
   };
 }
 
@@ -4117,7 +4229,7 @@ const RAILWAY_URL =
 const BASE = process.env.BASE_URL || RAILWAY_URL || `http://localhost:${PORT}`;
 
 
-    
+
 // =======================================================
 // 🌍 CORS – WICHTIG (Frontend läuft auf :3000)
 // =======================================================
@@ -4335,58 +4447,57 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Tenant:       ${t}`);
   console.log(`🎨 Brand:        ${cfg.branding.brandName || "Beauty Lounge"}`);
   console.log(
-    `💅 Services:     ${
-      Array.isArray(cfg.services) ? cfg.services.length : 0
+    `💅 Services:     ${Array.isArray(cfg.services) ? cfg.services.length : 0
     } geladen`
   );
   console.log("=====================================");
 
-// =======================================================
-// PHASE 2 – Initial Mirror (SQLite → Supabase)
-// einmalig, asynchron, best-effort
-// =======================================================
-setTimeout(() => {
-  try {
-    const studioId = "f3bcd2bf-89c3-4891-b01c-ef1693df674c";
+  // =======================================================
+  // PHASE 2 – Initial Mirror (SQLite → Supabase)
+  // einmalig, asynchron, best-effort
+  // =======================================================
+  setTimeout(() => {
+    try {
+      const studioId = "f3bcd2bf-89c3-4891-b01c-ef1693df674c";
 
-    mirrorEmployeesToSupabase(studioId);
-    mirrorEmployeeWorkingHoursToSupabase(studioId);
+      mirrorEmployeesToSupabase(studioId);
+      mirrorEmployeeWorkingHoursToSupabase(studioId);
 
-    console.log("🔄 Initial Employee Mirror gestartet");
+      console.log("🔄 Initial Employee Mirror gestartet");
 
-  } catch (err) {
-    console.warn("⚠️ Initial mirror failed:", err.message);
-  }
-}, 2000);
+    } catch (err) {
+      console.warn("⚠️ Initial mirror failed:", err.message);
+    }
+  }, 2000);
 
-// =======================================================
-// WhatsApp System
-// =======================================================
-// Der alte whatsapp-web.js Bot wurde entfernt.
-// GlowSuite nutzt ausschließlich Twilio WhatsApp API.
-// Antworten und Reminder laufen über:
-// sendWhatsAppReminder()
-// sendWhatsAppBookingConfirmation()
+  // =======================================================
+  // WhatsApp System
+  // =======================================================
+  // Der alte whatsapp-web.js Bot wurde entfernt.
+  // GlowSuite nutzt ausschließlich Twilio WhatsApp API.
+  // Antworten und Reminder laufen über:
+  // sendWhatsAppReminder()
+  // sendWhatsAppBookingConfirmation()
 
-console.log("📲 WhatsApp System: Twilio API aktiv (kein QR Bot)");
+  console.log("📲 WhatsApp System: Twilio API aktiv (kein QR Bot)");
 
-// =======================================================
-// 🔁 AUTO REBOOKING CHECK (täglich)
-// =======================================================
+  // =======================================================
+  // 🔁 AUTO REBOOKING CHECK (täglich)
+  // =======================================================
 
-setInterval(() => {
+  setInterval(() => {
 
-  try {
+    try {
 
-    runRebookingCheck();
+      runRebookingCheck();
 
-    console.log("🔁 Rebooking Check ausgeführt");
+      console.log("🔁 Rebooking Check ausgeführt");
 
-  } catch (err) {
+    } catch (err) {
 
-    console.error("❌ Rebooking Fehler:", err.message);
+      console.error("❌ Rebooking Fehler:", err.message);
 
-  }
+    }
 
-}, 1000 * 60 * 60 * 24);
+  }, 1000 * 60 * 60 * 24);
 });

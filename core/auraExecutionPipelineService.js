@@ -1,6 +1,7 @@
 // =======================================================
 // 🚀 AURA Execution Pipeline – Phase 10.9 (INTELLIGENT CONTROL)
 // Gate + Confidence + Limits + Controlled Execution
+// Strategy-Type Ready
 // =======================================================
 
 import { v4 as uuidv4 } from "uuid";
@@ -94,10 +95,13 @@ export async function executeApprovedTriggers({ tenant, limit = 5 }) {
     try {
 
       // ===================================================
-      // 4️⃣ ACTION ID GENERIEREN
+      // 4️⃣ ACTION ID + STRATEGY TYPE
       // ===================================================
 
       const actionId = uuidv4();
+
+      const strategyType =
+        candidate.triggerType || "unknown_trigger";
 
       // ===================================================
       // 5️⃣ MARKETING ACTION SPEICHERN
@@ -106,7 +110,13 @@ export async function executeApprovedTriggers({ tenant, limit = 5 }) {
       const inserted = insertAuraMarketingAction({
         id: actionId,
         tenant,
-        headline: candidate.triggerType || "unknown_trigger",
+
+        // Saubere technische Kategorie fürs Learning
+        strategy_type: strategyType,
+
+        // Headline bleibt aktuell kompatibel
+        headline: strategyType,
+
         channels: [candidate.channel || "app"],
         offers: [],
         cta: "Jetzt Termin buchen",
@@ -130,7 +140,7 @@ export async function executeApprovedTriggers({ tenant, limit = 5 }) {
         context: {
           mode: "pipeline",
           customerKey: candidate.customerKey,
-          triggerType: candidate.triggerType,
+          triggerType: strategyType,
           confidence
         }
       });
@@ -151,6 +161,7 @@ export async function executeApprovedTriggers({ tenant, limit = 5 }) {
         customerKey: candidate.customerKey,
         status: "executed",
         actionId,
+        strategy_type: strategyType,
         confidence,
         executionResult
       });

@@ -551,9 +551,13 @@ router.get("/marketing", async (req, res) => {
     });
 
     // ✅ WICHTIG: EXAKT die marketing_id aus dem Output speichern
+    // ✅ strategy_type ebenfalls speichern
     insertAuraMarketingAction({
       id: marketing.marketing_id,
       tenant,
+
+      strategy_type: marketing.strategy_type,
+
       headline: marketing.headline,
       channels: marketing.channels || [],
       offers: marketing.offers || [],

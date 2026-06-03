@@ -87,7 +87,7 @@ async function loadBranding() {
     const r = await fetch("/api/branding");
     const j = await r.json();
     if (j?.branding) branding = { ...branding, ...j.branding };
-  } catch {}
+  } catch { }
   applyBrandingTheme(branding);
 }
 
@@ -499,8 +499,8 @@ async function loadAuraMarketingHistory() {
     const reasons = Array.isArray(last.reason)
       ? last.reason
       : last.reason
-      ? String(last.reason).split("·").map(x => x.trim()).filter(Boolean)
-      : [];
+        ? String(last.reason).split("·").map(x => x.trim()).filter(Boolean)
+        : [];
 
     const summary =
       reasons[0] || meta.short || "AURA hat eine sinnvolle Marketingmaßnahme erkannt.";
@@ -549,63 +549,58 @@ async function loadAuraMarketingHistory() {
         ${summary}
       </div>
 
-      ${
-        confidenceLabel
-          ? `<div class="small muted">
+      ${confidenceLabel
+        ? `<div class="small muted">
                Priorität: <strong>${confidenceLabel}</strong>
              </div>`
-          : ""
+        : ""
       }
 
       <div class="small muted">
         Status: <b>${statusLabel}</b>
       </div>
 
-      ${
-        last.status === "executed"
-          ? `
+      ${last.status === "executed"
+        ? `
             <div style="margin-top:6px;border-top:1px solid #eee;padding-top:8px;display:grid;gap:4px">
 
-              ${
-                Number(last.impact_revenue) > 0
-                  ? `
+              ${Number(last.impact_revenue) > 0
+          ? `
                     <div class="small">
                       Zusatzumsatz:
                       <b>${Number(last.impact_revenue).toFixed(2)} €</b>
                     </div>
                   `
-                  : `
+          : `
                     <div class="small muted">
                       Ergebnis wird analysiert …
                     </div>
                   `
-              }
+        }
 
-              ${
-                Number(last.impact_bookings) > 0
-                  ? `
+              ${Number(last.impact_bookings) > 0
+          ? `
                     <div class="small">
                       Zusätzliche Buchungen:
                       <b>${last.impact_bookings}</b>
                     </div>
                   `
-                  : ""
-              }
+          : ""
+        }
 
-              ${
-                last.roi_score !== null && Number(last.roi_score) > 0
-                  ? `
+              ${last.roi_score !== null && Number(last.roi_score) > 0
+          ? `
                     <div class="small">
                       Erfolgswert:
                       <b>${(Number(last.roi_score) * 100).toFixed(1)} %</b>
                     </div>
                   `
-                  : ""
-              }
+          : ""
+        }
 
             </div>
           `
-          : ""
+        : ""
       }
     `;
 
@@ -665,7 +660,7 @@ async function fetchDashboardSilent() {
     const j = await r.json();
     if (!j?.data) return;
     renderKPIs(j.data);
-  } catch {}
+  } catch { }
 }
 
 setInterval(fetchDashboardSilent, 60000);
@@ -714,8 +709,8 @@ function renderAuraMarketingBox(m) {
       ? m.confidence >= 0.8
         ? "hoch"
         : m.confidence >= 0.6
-        ? "mittel"
-        : "niedrig"
+          ? "mittel"
+          : "niedrig"
       : null;
 
   // -----------------------------------------------------
@@ -730,18 +725,16 @@ function renderAuraMarketingBox(m) {
           ${headline}
         </div>
 
-        ${
-          m.reason
-            ? `<div class="small muted" style="margin-top:4px">
+        ${m.reason
+      ? `<div class="small muted" style="margin-top:4px">
                 ${m.reason}
-                ${
-                  confidenceLabel
-                    ? ` · Priorität: ${confidenceLabel}`
-                    : ""
-                }
+                ${confidenceLabel
+        ? ` · Priorität: ${confidenceLabel}`
+        : ""
+      }
                </div>`
-            : ""
-        }
+      : ""
+    }
 
       </div>
     </div>
@@ -786,131 +779,131 @@ function renderAuraMarketingBox(m) {
   `;
 
 
-// ===================================================
-// 🔒 EXECUTE / IGNORE HANDLER
-// ===================================================
+  // ===================================================
+  // 🔒 EXECUTE / IGNORE HANDLER
+  // ===================================================
 
-card.querySelectorAll("button[data-status]").forEach((btn) => {
-  btn.addEventListener("click", async () => {
-    const status = btn.dataset.status;
-    const marketingId = m.id;
-    if (!marketingId) return;
+  card.querySelectorAll("button[data-status]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const status = btn.dataset.status;
+      const marketingId = m.id;
+      if (!marketingId) return;
 
-    btn.disabled = true;
-    const originalText = btn.textContent;
-    btn.textContent = "...";
-
-    try {
-      const res = await fetch("/api/aura/marketing/action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tenant: "beauty_lounge",
-          marketing_id: marketingId,
-          action: status,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Status Update Fehler");
-
-      if (status === "executed") {
-        card.style.opacity = "0.7";
-
-        const actionRow = card.querySelector("div[style*='display:flex'][style*='gap']");
-        if (actionRow) actionRow.remove();
-
-        const statusInfo = document.createElement("div");
-        statusInfo.className = "small muted";
-        statusInfo.style.marginTop = "6px";
-        statusInfo.innerHTML = "Empfehlung wurde umgesetzt.";
-
-        card.appendChild(statusInfo);
-      }
-
-      if (status === "ignored") {
-        card.style.opacity = "0.6";
-
-        const actionRow = card.querySelector("div[style*='display:flex'][style*='gap']");
-        if (actionRow) actionRow.remove();
-
-        const statusInfo = document.createElement("div");
-        statusInfo.className = "small muted";
-        statusInfo.style.marginTop = "6px";
-        statusInfo.innerHTML = "Empfehlung wurde zurückgestellt.";
-
-        card.appendChild(statusInfo);
-      }
-
-      setTimeout(async () => {
-        lastAuraActiveKey = null;
-        lastAuraHistoryKey = null;
-
-        await loadAuraMarketing();
-
-        setTimeout(() => {
-          loadAuraMarketingHistory();
-        }, 400);
-      }, 600);
-
-    } catch (err) {
-      console.error("❌ Marketing Action Fehler:", err);
-      btn.disabled = false;
-      btn.textContent = originalText;
-    }
-  });
-});
-
-
-// ===================================================
-// 🧠 EXPLAIN HANDLER
-// ===================================================
-
-const explainBtn = card.querySelector("[data-aura-explain-toggle]");
-const explainPanel = card.querySelector("[data-aura-explain-panel]");
-const explainList = card.querySelector("[data-aura-explain-list]");
-
-if (explainBtn && explainPanel && explainList) {
-  explainBtn.addEventListener("click", async () => {
-    const expanded = explainBtn.getAttribute("aria-expanded") === "true";
-    explainBtn.setAttribute("aria-expanded", String(!expanded));
-    explainPanel.setAttribute("aria-hidden", String(expanded));
-
-    if (!expanded) {
-      explainPanel.style.maxHeight = "160px";
-      explainPanel.style.opacity = "1";
-      explainList.innerHTML = "<li>Analyse wird geladen ...</li>";
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = "...";
 
       try {
-        const res = await fetch(`/api/aura/explain?tenant=beauty_lounge&period=today`);
-        if (!res.ok) throw new Error("Explain Request fehlgeschlagen");
+        const res = await fetch("/api/aura/marketing/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tenant: "beauty_lounge",
+            marketing_id: marketingId,
+            action: status,
+          }),
+        });
 
-        const json = await res.json();
+        if (!res.ok) throw new Error("Status Update Fehler");
 
-        const reasons =
-          Array.isArray(json?.reasons) && json.reasons.length
-            ? json.reasons
-            : m?.reason
-            ? [m.reason]
-            : [];
+        if (status === "executed") {
+          card.style.opacity = "0.7";
 
-        explainList.innerHTML = reasons.length
-          ? reasons.map((r) => `<li>${r}</li>`).join("")
-          : "<li>Keine weiteren Details verfügbar.</li>";
+          const actionRow = card.querySelector("div[style*='display:flex'][style*='gap']");
+          if (actionRow) actionRow.remove();
+
+          const statusInfo = document.createElement("div");
+          statusInfo.className = "small muted";
+          statusInfo.style.marginTop = "6px";
+          statusInfo.innerHTML = "Empfehlung wurde umgesetzt.";
+
+          card.appendChild(statusInfo);
+        }
+
+        if (status === "ignored") {
+          card.style.opacity = "0.6";
+
+          const actionRow = card.querySelector("div[style*='display:flex'][style*='gap']");
+          if (actionRow) actionRow.remove();
+
+          const statusInfo = document.createElement("div");
+          statusInfo.className = "small muted";
+          statusInfo.style.marginTop = "6px";
+          statusInfo.innerHTML = "Empfehlung wurde zurückgestellt.";
+
+          card.appendChild(statusInfo);
+        }
+
+        setTimeout(async () => {
+          lastAuraActiveKey = null;
+          lastAuraHistoryKey = null;
+
+          await loadAuraMarketing();
+
+          setTimeout(() => {
+            loadAuraMarketingHistory();
+          }, 400);
+        }, 600);
 
       } catch (err) {
-        console.error("❌ AURA Explain Fehler:", err);
-        explainList.innerHTML = "<li>Erklärung konnte nicht geladen werden.</li>";
+        console.error("❌ Marketing Action Fehler:", err);
+        btn.disabled = false;
+        btn.textContent = originalText;
       }
-
-    } else {
-      explainPanel.style.maxHeight = "0";
-      explainPanel.style.opacity = "0";
-    }
+    });
   });
-}
 
-box.appendChild(card);
-return card;
+
+  // ===================================================
+  // 🧠 EXPLAIN HANDLER
+  // ===================================================
+
+  const explainBtn = card.querySelector("[data-aura-explain-toggle]");
+  const explainPanel = card.querySelector("[data-aura-explain-panel]");
+  const explainList = card.querySelector("[data-aura-explain-list]");
+
+  if (explainBtn && explainPanel && explainList) {
+    explainBtn.addEventListener("click", async () => {
+      const expanded = explainBtn.getAttribute("aria-expanded") === "true";
+      explainBtn.setAttribute("aria-expanded", String(!expanded));
+      explainPanel.setAttribute("aria-hidden", String(expanded));
+
+      if (!expanded) {
+        explainPanel.style.maxHeight = "160px";
+        explainPanel.style.opacity = "1";
+        explainList.innerHTML = "<li>Analyse wird geladen ...</li>";
+
+        try {
+          const res = await fetch(`/api/aura/explain?tenant=beauty_lounge&period=today`);
+          if (!res.ok) throw new Error("Explain Request fehlgeschlagen");
+
+          const json = await res.json();
+
+          const reasons =
+            Array.isArray(json?.reasons) && json.reasons.length
+              ? json.reasons
+              : m?.reason
+                ? [m.reason]
+                : [];
+
+          explainList.innerHTML = reasons.length
+            ? reasons.map((r) => `<li>${r}</li>`).join("")
+            : "<li>Keine weiteren Details verfügbar.</li>";
+
+        } catch (err) {
+          console.error("❌ AURA Explain Fehler:", err);
+          explainList.innerHTML = "<li>Erklärung konnte nicht geladen werden.</li>";
+        }
+
+      } else {
+        explainPanel.style.maxHeight = "0";
+        explainPanel.style.opacity = "0";
+      }
+    });
+  }
+
+  box.appendChild(card);
+  return card;
 }
 
 
@@ -1145,7 +1138,7 @@ function createTopServicesChart(ctx, labels, values) {
   ];
 
   return new Chart(ctx, {
-  plugins: [doughnutCenterText],
+    plugins: [doughnutCenterText],
     type: "doughnut",
     data: {
       labels,
@@ -1405,8 +1398,8 @@ function initAuraUI() {
         <h3>✨ A.U.R.A – Empfohlene Fokusbereiche</h3>
         <ul class="small">
           ${json.focusAreas
-            .map((f) => `<li>${f.emoji} ${f.message}</li>`)
-            .join("")}
+          .map((f) => `<li>${f.emoji} ${f.message}</li>`)
+          .join("")}
         </ul>
       `;
 
@@ -1515,71 +1508,377 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // =======================================================
-// 📊 AURA Umsatzanalyse
+// 📊 AURA Umsatzanalyse + 🧠 Learning Dashboard
+// Phase 2
 // =======================================================
 
 async function loadAuraRevenueInsights() {
+  console.log("AURA REVENUE FUNKTION REGISTRIERT");
 
   const box = document.getElementById("auraRevenueBox");
-  if(!box) return;
+  if (!box) return;
 
-  try{
+  try {
 
-    const res = await fetch("/api/aura/analytics?tenant=beauty_lounge&period=30");
+    // ===================================================
+    // 📊 Umsatzdaten
+    // ===================================================
 
-    if(!res.ok) return;
+    const analyticsRes = await fetch(
+      "/api/aura/summary?tenant=beauty_lounge"
+    );
 
-    const data = await res.json();
+    if (!analyticsRes.ok) return;
 
-    const revenue = Number(data.revenue || 0);
-    const bookings = Number(data.bookings || 0);
-    const avg = bookings ? (revenue / bookings).toFixed(2) : 0;
+    const analytics = await analyticsRes.json();
+
+    const revenue =
+      Number(analytics?.studio?.revenue || 0);
+
+    const bookings =
+      Number(analytics?.studio?.count || 0);
+
+    const avg =
+      Number(analytics?.studio?.avg_booking_value || 0);
 
     let recommendation = "Auslastung stabil.";
 
-    if(bookings < 50){
-      recommendation = "Auslastung niedrig – Marketingaktion empfohlen.";
+    if (bookings < 50) {
+      recommendation =
+        "Auslastung niedrig – Marketingaktion empfohlen.";
     }
 
-    if(avg > 70){
-      recommendation = "Hoher Terminwert – Zusatzbehandlungen hervorheben.";
+    if (avg > 70) {
+      recommendation =
+        "Hoher Terminwert – Zusatzbehandlungen hervorheben.";
     }
+
+    // ===================================================
+    // 🧠 Learning Daten
+    // Phase 3 – Best Campaign Finder
+    // ===================================================
+
+    let bestStrategy = null;
+    let worstStrategy = null;
+    let allStrategies = [];
+
+    try {
+
+      const learningRes = await fetch(
+        "/api/aura/learning?tenant=beauty_lounge"
+      );
+
+      if (learningRes.ok) {
+
+        const learning = await learningRes.json();
+
+        if (
+          learning?.learned_actions &&
+          learning.learned_actions.length
+        ) {
+
+          allStrategies = learning.learned_actions
+            .filter(x => x.strategy_type !== "unknown");
+
+          if (allStrategies.length) {
+
+            bestStrategy = [...allStrategies]
+              .sort((a, b) => b.avg_roi - a.avg_roi)[0];
+
+            worstStrategy = [...allStrategies]
+              .sort((a, b) => a.avg_roi - b.avg_roi)[0];
+
+          }
+
+        }
+
+      }
+
+    } catch (err) {
+      console.warn("Learning Daten nicht verfügbar:", err);
+    }
+
+    // ===================================================
+    // 🧠 Empfehlungstexte
+    // ===================================================
+
+    const recommendationMap = {
+      loyalty_bonus:
+        "Kundenbindungsaktion erneut starten",
+
+      suggest_discount:
+        "Rabattaktion erneut testen",
+
+      low_bookings:
+        "Auslastung mit Kampagne steigern",
+
+      upsell_opportunity:
+        "Zusatzbehandlungen aktiv bewerben",
+
+      revenue_drop:
+        "Diese Strategie aktuell vermeiden"
+    };
+
+    const learningRecommendation =
+      recommendationMap[
+      bestStrategy?.strategy_type
+      ] || "Weitere Daten sammeln";
+
+
+    // ===================================================
+    // 🏆 Phase 5 – Top Strategien Ranking
+    // ===================================================
+
+    const topStrategies = [...allStrategies]
+      .sort((a, b) => b.avg_roi - a.avg_roi)
+      .slice(0, 3);
+
+    const worstStrategies = [...allStrategies]
+      .sort((a, b) => a.avg_roi - b.avg_roi)
+      .slice(0, 3);
+
+
+    // ===================================================
+    // 🎯 Phase 4 – Prioritätsbewertung
+    // ===================================================
+
+    let strategyPriority = "Niedrig";
+
+    if (bestStrategy) {
+
+      const roi =
+        Number(bestStrategy.avg_roi || 0);
+
+      const successRate =
+        Number(bestStrategy.success_rate || 0);
+
+      const revenueImpact =
+        Number(bestStrategy.avg_revenue_impact || 0);
+
+      if (
+        roi >= 1 ||
+        successRate >= 0.50 ||
+        revenueImpact >= 50
+      ) {
+        strategyPriority = "Mittel";
+      }
+
+      if (
+        roi >= 2 ||
+        successRate >= 0.70 ||
+        revenueImpact >= 100
+      ) {
+        strategyPriority = "Hoch";
+      }
+
+      if (
+        roi >= 3 ||
+        successRate >= 0.90 ||
+        revenueImpact >= 150
+      ) {
+        strategyPriority = "Kritisch";
+      }
+
+    }
+
+    console.log("🏆 Beste Strategie:", bestStrategy);
+    console.log("⚠️ Schlechteste Strategie:", worstStrategy);
+    console.log("🎯 Priorität:", strategyPriority);
+
+
+    // ===================================================
+    // 🖥️ Render
+    // ===================================================
 
     box.innerHTML = `
 
-    <div class="card" style="padding:12px">
+<div style="display:grid;gap:12px">
 
-      <div style="font-weight:600;margin-bottom:8px">
-        Umsatzanalyse (letzte 30 Tage)
-      </div>
+  <!-- Umsatzanalyse -->
+  <div class="card" style="padding:12px">
 
-      <div class="small muted">
-        Umsatz: <b>${revenue.toFixed(2)} €</b>
-      </div>
-
-      <div class="small muted">
-        Buchungen: <b>${bookings}</b>
-      </div>
-
-      <div class="small muted">
-        Ø Terminwert: <b>${avg} €</b>
-      </div>
-
-      <div style="margin-top:10px;font-size:13px">
-        Empfehlung:
-        <b>${recommendation}</b>
-      </div>
-
+    <div style="font-weight:600;margin-bottom:8px">
+      📊 Umsatzanalyse
     </div>
 
-    `;
+    <div class="small muted">
+      Umsatz:
+      <b>${revenue.toFixed(2)} €</b>
+    </div>
 
-  }catch(err){
-    console.error("❌ AURA Revenue Fehler:",err);
+    <div class="small muted">
+      Buchungen:
+      <b>${bookings}</b>
+    </div>
+
+    <div class="small muted">
+      Ø Terminwert:
+      <b>${avg.toFixed(2)} €</b>
+    </div>
+
+    <div style="margin-top:10px;font-size:13px">
+      Empfehlung:
+      <b>${recommendation}</b>
+    </div>
+
+  </div>
+
+  <!-- AURA Learning -->
+  <div class="card" style="padding:12px">
+
+    <div style="font-weight:600;margin-bottom:8px">
+      🧠 AURA Erkenntnisse
+    </div>
+
+    ${bestStrategy
+      ? `
+
+        <div class="small muted">
+          🏆 Beste Kampagne:
+          <b>${bestStrategy.strategy_type}</b>
+        </div>
+
+        <div class="small muted" style="margin-top:6px">
+          ROI:
+          <b>${Number(bestStrategy.avg_roi).toFixed(2)}</b>
+        </div>
+
+        <div class="small muted" style="margin-top:6px">
+          🤖 Empfehlung:
+          <b>${learningRecommendation}</b>
+        </div>
+
+        <div
+          class="small muted"
+          style="
+            margin-top:12px;
+            padding-top:10px;
+            border-top:1px solid rgba(0,0,0,.08);
+          "
+        >
+          <b>🏆 Top Strategien</b>
+
+          <div style="margin-top:6px;display:grid;gap:3px">
+            ${topStrategies
+              .map(
+                (s, i) => `
+                  <div>
+                    ${i + 1}. ${s.strategy_type}
+                    (ROI ${Number(s.avg_roi).toFixed(2)})
+                  </div>
+                `
+              )
+              .join("")}
+          </div>
+        </div>
+
+        ${worstStrategies.length
+          ? `
+            <div
+              class="small muted"
+              style="
+                margin-top:10px;
+                padding-top:8px;
+                border-top:1px solid rgba(0,0,0,.08);
+              "
+            >
+              <b>⚠️ Vermeiden</b>
+
+              <div style="margin-top:6px;display:grid;gap:3px">
+                ${worstStrategies
+                  .map(
+                    (s, i) => `
+                      <div>
+                        ${i + 1}. ${s.strategy_type}
+                        (ROI ${Number(s.avg_roi).toFixed(2)})
+                      </div>
+                    `
+                  )
+                  .join("")}
+              </div>
+            </div>
+          `
+          : ""
+        }
+
+        <details style="margin-top:10px">
+
+          <summary
+            style="
+              cursor:pointer;
+              font-size:13px;
+              font-weight:600;
+            "
+          >
+            Mehr Details anzeigen
+          </summary>
+
+          <div
+            class="small muted"
+            style="
+              margin-top:10px;
+              display:grid;
+              gap:4px;
+            "
+          >
+
+            <div>
+              Revenue Impact:
+              <b>+${Number(bestStrategy.avg_revenue_impact).toFixed(2)} €</b>
+            </div>
+
+            <div>
+              Booking Impact:
+              <b>+${Number(bestStrategy.avg_booking_impact).toFixed(1)}</b>
+            </div>
+
+            <div>
+              Success Rate:
+              <b>${Math.round(Number(bestStrategy.success_rate) * 100)}%</b>
+            </div>
+
+            <div>
+              Einsätze:
+              <b>${bestStrategy.total_runs}</b>
+            </div>
+
+          </div>
+
+        </details>
+
+      `
+      : `
+
+        <div class="small muted">
+          Noch nicht genügend Daten vorhanden.
+        </div>
+
+        <div
+          class="small muted"
+          style="
+            margin-top:8px;
+            line-height:1.5;
+          "
+        >
+          AURA sammelt aktuell Erkenntnisse aus
+          Buchungen, Kampagnen und
+          Kundenverhalten.
+        </div>
+
+      `
+    }
+
+  </div>
+
+</div>
+
+`;
+
+  } catch (err) {
+    console.error("❌ AURA Revenue Fehler:", err);
   }
 
 }
-
 
 
 

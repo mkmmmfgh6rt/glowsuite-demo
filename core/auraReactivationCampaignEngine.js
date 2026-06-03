@@ -5,6 +5,7 @@
 // =======================================================
 
 import { getAllBookings } from "./db.js";
+import { getAllCustomers } from "./memory.js";
 
 export function detectReactivationCandidates({ tenant, days = 45 }) {
 

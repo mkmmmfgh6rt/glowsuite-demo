@@ -1,9 +1,20 @@
 // =======================================================
 // 🧠 AURA Strategy ROI Learning Service – SQLite Only
 // Lernt auf Strategie-Ebene (strategy_type)
+// Robust Fallback für Alt-Daten
 // =======================================================
 
 import { getAuraMarketingHistory } from "./db.js";
+
+const KNOWN_STRATEGY_TYPES = new Set([
+  "free_slots_detected",
+  "revenue_drop",
+  "loyalty_bonus",
+  "vip_customer",
+  "upsell",
+  "forecast_drop",
+  "unknown_trigger"
+]);
 
 export function learnFromAuraActions({ tenant = null, limit = 200 } = {}) {
   if (!tenant) {
@@ -24,7 +35,7 @@ export function learnFromAuraActions({ tenant = null, limit = 200 } = {}) {
   const map = {};
 
   for (const r of records) {
-    const key = r.strategy_type || "unknown";
+    const key = detectStrategyType(r);
     if (!key) continue;
 
     if (!map[key]) {
@@ -57,7 +68,9 @@ export function learnFromAuraActions({ tenant = null, limit = 200 } = {}) {
     }
   }
 
-  const learned = Object.values(map).map(entry => {
+  const learned = Object.values(map)
+  .filter(entry => entry.strategy_type !== "unknown")
+  .map(entry => {
     const avgROI =
       entry.roi_values.length > 0
         ? entry.roi_values.reduce((a, b) => a + b, 0) /
@@ -89,11 +102,45 @@ export function learnFromAuraActions({ tenant = null, limit = 200 } = {}) {
 
   return {
     tenant,
-    learned_actions: learned.sort(
-      (a, b) => b.success_rate - a.success_rate
-    ),
+    learned_actions: learned.sort(sortLearnedActions),
     count: learned.length,
   };
+}
+
+// -------------------------------------------------------
+// 🧠 Strategy Type Resolver
+// -------------------------------------------------------
+// Priorität:
+// 1. echte DB-Spalte strategy_type
+// 2. Alt-Daten: headline, falls dort ein bekannter Trigger steht
+// 3. Fallback unknown
+// -------------------------------------------------------
+
+function detectStrategyType(action) {
+  const direct = normalizeStrategyType(action?.strategy_type);
+
+  if (direct) {
+    return direct;
+  }
+
+  const fromHeadline = normalizeStrategyType(action?.headline);
+
+  if (fromHeadline && KNOWN_STRATEGY_TYPES.has(fromHeadline)) {
+    return fromHeadline;
+  }
+
+  return "unknown";
+}
+
+function normalizeStrategyType(value) {
+  if (!value) return null;
+
+  const clean = String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+
+  return clean || null;
 }
 
 // -------------------------------------------------------
@@ -106,6 +153,26 @@ function normalizeROI(roi) {
   if (roi >= 0.5) return 0.5;
   if (roi > 0) return 0.25;
   return 0;
+}
+
+// -------------------------------------------------------
+// 📊 Ranking
+// -------------------------------------------------------
+
+function sortLearnedActions(a, b) {
+  if (b.success_rate !== a.success_rate) {
+    return b.success_rate - a.success_rate;
+  }
+
+  if (b.avg_roi !== a.avg_roi) {
+    return b.avg_roi - a.avg_roi;
+  }
+
+  if (b.avg_revenue_impact !== a.avg_revenue_impact) {
+    return b.avg_revenue_impact - a.avg_revenue_impact;
+  }
+
+  return b.avg_booking_impact - a.avg_booking_impact;
 }
 
 

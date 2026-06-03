@@ -74,21 +74,47 @@ async function runReminderScan() {
   const now = Date.now();
 
   for (const b of all) {
-    if (!b || !b.id || !b.dateTime || !b.phone) continue;
+
+    // 🚫 Stornierte Termine ignorieren
+    if (b?.status === "cancelled") {
+      continue;
+    }
+
+    // Basisvalidierung
+    if (!b || !b.id || !b.dateTime || !b.phone) {
+      continue;
+    }
 
     const dt = new Date(b.dateTime).getTime();
-    if (isNaN(dt) || dt <= now) continue; // nur zukünftige Termine
+
+    // nur zukünftige Termine
+    if (isNaN(dt) || dt <= now) {
+      continue;
+    }
 
     const diffMs = dt - now;
     const diffH = diffMs / (1000 * 60 * 60);
 
-    if (!state[b.id]) state[b.id] = { sent24: false, sent2: false };
+    if (!state[b.id]) {
+      state[b.id] = {
+        sent24: false,
+        sent2: false
+      };
+    }
 
     const { d, t } = formatBookingInfo(b);
     const brand = b.tenant || "Ihr Studio";
 
-    // 24h Reminder (Toleranzfenster: zwischen 23.5h und 24.5h)
-    if (!state[b.id].sent24 && diffH <= 24.5 && diffH >= 23.5) {
+    // =====================================================
+    // 📅 24h Reminder
+    // Toleranzfenster: 23.5h → 24.5h
+    // =====================================================
+    if (
+      !state[b.id].sent24 &&
+      diffH <= 24.5 &&
+      diffH >= 23.5
+    ) {
+
       const msg =
         `Erinnerung 📅\n\n` +
         `Du hast morgen einen Termin bei ${brand}:\n` +
@@ -96,18 +122,30 @@ async function runReminderScan() {
         `• Datum: ${d}\n` +
         `• Uhrzeit: ${t}\n\n` +
         `Wenn du den Termin nicht wahrnehmen kannst, antworte bitte kurz.`;
+
       await sendWhatsAppMessage(b.phone, msg);
+
       state[b.id].sent24 = true;
     }
 
-    // 2h Reminder (Toleranzfenster: zwischen 1.5h und 2.5h)
-    if (!state[b.id].sent2 && diffH <= 2.5 && diffH >= 1.5) {
+    // =====================================================
+    // ⏰ 2h Reminder
+    // Toleranzfenster: 1.5h → 2.5h
+    // =====================================================
+    if (
+      !state[b.id].sent2 &&
+      diffH <= 2.5 &&
+      diffH >= 1.5
+    ) {
+
       const msg =
         `Kurz vor deinem Termin ⏰\n\n` +
         `Dein Termin bei ${brand} ist in ca. 2 Stunden:\n` +
         `• Uhrzeit: ${t}\n\n` +
         `Wir freuen uns auf dich! 🤍`;
+
       await sendWhatsAppMessage(b.phone, msg);
+
       state[b.id].sent2 = true;
     }
   }

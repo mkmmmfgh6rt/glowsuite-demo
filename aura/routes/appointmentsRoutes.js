@@ -110,20 +110,32 @@ router.post("/", async (req, res) => {
     }
 
     const duration = Number(duration_minutes);
+
     if (!Number.isFinite(duration) || duration <= 0) {
-      return res.status(422).json({ error: "duration_minutes muss > 0 sein" });
+      return res.status(422).json({
+        error: "duration_minutes muss > 0 sein",
+      });
     }
 
     const start = parseISODateTime(start_time);
+
     if (!start) {
-      return res.status(422).json({ error: "start_time ist kein gültiges ISO-Datum" });
+      return res.status(422).json({
+        error: "start_time ist kein gültiges ISO-Datum",
+      });
     }
 
-    // Wir rechnen konsistent in ISO/UTC weiter
-    const dateOnly = start.toISOString().slice(0, 10); // YYYY-MM-DD
+    // =====================================================
+    // ISO / UTC
+    // =====================================================
+
+    const dateOnly = start.toISOString().slice(0, 10);
     const end = new Date(start.getTime() + duration * 60000);
 
-    /* ===== 1) EMPLOYEE LOAD ===== */
+    /* =====================================================
+       1) EMPLOYEE LOAD
+    ===================================================== */
+
     const { data: emp, error: empError } = await supabase
       .from("employees")
       .select("id, studio_id, active, work_start, work_end, working_days")
@@ -131,28 +143,50 @@ router.post("/", async (req, res) => {
       .single();
 
     if (empError) throw empError;
-    if (!emp) return res.status(404).json({ error: "Mitarbeiter nicht gefunden" });
-    if (!emp.active) return res.status(400).json({ error: "Mitarbeiter ist inaktiv" });
-    if (emp.studio_id !== studio_id) {
-      return res.status(403).json({ error: "Mitarbeiter gehört nicht zu diesem Studio" });
+
+    if (!emp) {
+      return res.status(404).json({
+        error: "Mitarbeiter nicht gefunden",
+      });
+    }
+
+    if (!emp.active) {
+      return res.status(400).json({
+        error: "Mitarbeiter ist inaktiv",
+      });
+    }
+
+    if (String(emp.studio_id) !== String(studio_id)) {
+      return res.status(403).json({
+        error: "Mitarbeiter gehört nicht zu diesem Studio",
+      });
     }
 
     if (!isWorkingDay(dateOnly, emp.working_days)) {
-      return res.status(400).json({ error: "Mitarbeiter arbeitet an diesem Tag nicht" });
+      return res.status(400).json({
+        error: "Mitarbeiter arbeitet an diesem Tag nicht",
+      });
     }
 
     if (!emp.work_start || !emp.work_end) {
-      return res.status(400).json({ error: "Mitarbeiter-Arbeitszeiten fehlen (work_start/work_end)" });
+      return res.status(400).json({
+        error: "Mitarbeiter-Arbeitszeiten fehlen (work_start/work_end)",
+      });
     }
 
     const workStart = buildDateTime(dateOnly, emp.work_start);
     const workEnd = buildDateTime(dateOnly, emp.work_end);
 
     if (start < workStart || end > workEnd) {
-      return res.status(400).json({ error: "Termin liegt außerhalb der Arbeitszeit" });
+      return res.status(400).json({
+        error: "Termin liegt außerhalb der Arbeitszeit",
+      });
     }
 
-    /* ===== 2) LOGICAL OVERLAP CHECK (nur Tagesbereich) ===== */
+    /* =====================================================
+       2) OVERLAP CHECK
+    ===================================================== */
+
     const dayStart = `${dateOnly}T00:00:00.000Z`;
     const dayEnd = `${dateOnly}T23:59:59.999Z`;
 
@@ -166,24 +200,53 @@ router.post("/", async (req, res) => {
 
     if (exError) throw exError;
 
-    const blocking = (existing || []).filter((a) => a.status !== "cancelled");
+    // =====================================================
+    // 🚫 CANCEL FILTER FIX
+    // =====================================================
 
-    // UX-Fehler vorher abfangen (freundliche Meldung)
+    const blocking = (existing || []).filter((a) => {
+
+      const status = String(a.status || "")
+        .trim()
+        .toLowerCase();
+
+      // 🔥 Alle stornierten / alten Stati ignorieren
+      return ![
+        "cancelled",
+        "canceled",
+        "cancel",
+        "deleted",
+        "removed",
+        "finished"
+      ].includes(status);
+
+    });
+
+    // UX-Fehler vorher abfangen
     assertNoOverlap(
-      { start_time: start.toISOString(), end_time: end.toISOString() },
+      {
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+      },
       blocking
     );
 
-    /* ===== 3) INSERT (A3.9A – DB Hard Lock) ===== */
+    /* =====================================================
+       3) INSERT
+    ===================================================== */
+
     const payload = {
       studio_id,
       employee_id,
       customer_id: customer_id || null,
+
       start_time: start.toISOString(),
       end_time: end.toISOString(),
+
       duration_minutes: duration,
       price: price ?? null,
       notes: notes || null,
+
       status: "pending",
     };
 
@@ -194,21 +257,33 @@ router.post("/", async (req, res) => {
       .single();
 
     if (insertError) {
-      // 23P01 = exclusion constraint violation (bei EXCLUDE USING gist)
+
+      // 23P01 = PostgreSQL exclusion constraint
       if (insertError.code === "23P01") {
         return res.status(409).json({
           error: "Slot ist bereits gebucht (Doppelbuchung verhindert).",
         });
       }
+
       throw insertError;
     }
 
-    return res.status(201).json({ success: true, appointment: data });
+    return res.status(201).json({
+      success: true,
+      appointment: data,
+    });
+
   } catch (err) {
+
     console.error("Create appointment error:", err.message);
-    return res.status(400).json({ error: err.message });
+
+    return res.status(400).json({
+      error: err.message,
+    });
+
   }
 });
+
 
 /* =====================================================
    RESCHEDULE (DRAG & DROP) – pending-only

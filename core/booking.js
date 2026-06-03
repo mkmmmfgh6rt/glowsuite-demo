@@ -134,6 +134,19 @@ export async function createBooking({
     // ==========================
     if (AURA_SQLITE_MIRROR) {
       try {
+
+        console.log("🔥 SQLITE MIRROR PAYLOAD:", {
+          id: payload.id,
+          name: payload.customer_name,
+          phone: payload.customer_phone,
+          service: srv.name,
+          price: payload.price,
+          duration: payload.duration_minutes,
+          dateTime: payload.start_time,
+          employeeId: payload.employee_id,
+          tenant: payload.studio_id,
+        });
+
         insertBooking({
           id: payload.id,
           name: payload.customer_name,
@@ -145,6 +158,7 @@ export async function createBooking({
           employeeId: payload.employee_id,
           tenant: payload.studio_id, // Studio = Tenant
         });
+
       } catch (e) {
         console.warn("⚠️ SQLite Mirror fehlgeschlagen (läuft weiter):", e.message);
       }

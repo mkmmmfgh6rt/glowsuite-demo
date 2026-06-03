@@ -85,7 +85,7 @@ function markEventCanceled(fcEvent) {
   if (!fcEvent) return;
 
   // Status lokal setzen
-  fcEvent.setExtendedProp("status", "canceled");
+  fcEvent.setExtendedProp("status", "cancelled");
 
   // Event sofort sperren
   fcEvent.setProp("editable", false);
@@ -195,7 +195,7 @@ function mapApiToFullCalendarEvents(events) {
         text = "#555";
       }
 
-      if (status === "canceled") {
+      if (status === "cancelled") {
         bg = "#e57373";
         border = "#d32f2f";
         text = "#fff";
@@ -211,7 +211,7 @@ function mapApiToFullCalendarEvents(events) {
         borderColor: border,
         textColor: text,
 
-        editable: status !== "canceled",
+        editable: status !== "cancelled",
         display: "block",
 
         extendedProps: {
@@ -303,7 +303,7 @@ if (delBtn) {
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "canceled" }),
+          body: JSON.stringify({ status: "cancelled" }),
         }
       );
 
@@ -312,7 +312,7 @@ if (delBtn) {
       }
 
       // ✅ UI sofort aktualisieren
-      selectedFcEvent.setExtendedProp("status", "canceled");
+      selectedFcEvent.setExtendedProp("status", "cancelled");
       selectedFcEvent.setProp("backgroundColor", "#e57373");
       selectedFcEvent.setProp("borderColor", "#d32f2f");
       selectedFcEvent.setProp("editable", false);
@@ -639,7 +639,7 @@ function initCalendar() {
       const status = props.status;
       const type = props.type;
 
-      if (status === "canceled") return false;
+      if (status === "cancelled") return false;
       if (type === "block") return false;
 
       return true;
@@ -658,7 +658,7 @@ function initCalendar() {
         const status = props.status;
         const type = props.type;
 
-        if (status === "canceled") {
+        if (status === "cancelled") {
           setStatus("🚫 Abgebrochene Termine sind nicht editierbar");
           return;
         }

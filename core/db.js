@@ -39,18 +39,90 @@ db.exec(`
     duration INTEGER DEFAULT 0,
     dateTime TEXT NOT NULL,
     employeeId TEXT,                 -- 👈 WICHTIG HINZUGEFÜGT
-    tenant TEXT
+    tenant TEXT,
+    status TEXT DEFAULT 'active',
+    cancelledAt TEXT
   );
 `);
 
-// Falls employeeId Spalte fehlt → automatisch hinzufügen
-const bookingColumns = db.prepare(`PRAGMA table_info(bookings)`).all().map(c => c.name);
+// =======================================================
+// 🛠️ BOOKINGS – Auto Migration Columns
+// =======================================================
+
+const bookingColumns = db
+  .prepare(`PRAGMA table_info(bookings)`)
+  .all()
+  .map(c => c.name);
+
+// -------------------------------------------------------
+// 👤 employeeId
+// -------------------------------------------------------
 if (!bookingColumns.includes("employeeId")) {
   try {
     db.exec(`ALTER TABLE bookings ADD COLUMN employeeId TEXT;`);
     console.log("🛠️ Spalte 'employeeId' zu bookings hinzugefügt.");
   } catch (err) {
-    console.warn("⚠️ employeeId konnte nicht hinzugefügt werden:", err.message);
+    console.warn(
+      "⚠️ employeeId konnte nicht hinzugefügt werden:",
+      err.message
+    );
+  }
+}
+
+// -------------------------------------------------------
+// ⭐ reviewSent
+// -------------------------------------------------------
+if (!bookingColumns.includes("reviewSent")) {
+  try {
+    db.exec(`
+      ALTER TABLE bookings
+      ADD COLUMN reviewSent INTEGER DEFAULT 0;
+    `);
+
+    console.log("⭐ Spalte 'reviewSent' hinzugefügt.");
+  } catch (err) {
+    console.warn(
+      "⚠️ reviewSent konnte nicht hinzugefügt werden:",
+      err.message
+    );
+  }
+}
+
+// -------------------------------------------------------
+// 🚫 status (Soft Cancel Grundlage)
+// -------------------------------------------------------
+if (!bookingColumns.includes("status")) {
+  try {
+    db.exec(`
+      ALTER TABLE bookings
+      ADD COLUMN status TEXT DEFAULT 'active';
+    `);
+
+    console.log("🛠️ Spalte 'status' hinzugefügt.");
+  } catch (err) {
+    console.warn(
+      "⚠️ status konnte nicht hinzugefügt werden:",
+      err.message
+    );
+  }
+}
+
+// -------------------------------------------------------
+// 🕓 cancelledAt
+// -------------------------------------------------------
+if (!bookingColumns.includes("cancelledAt")) {
+  try {
+    db.exec(`
+      ALTER TABLE bookings
+      ADD COLUMN cancelledAt TEXT;
+    `);
+
+    console.log("🛠️ Spalte 'cancelledAt' hinzugefügt.");
+  } catch (err) {
+    console.warn(
+      "⚠️ cancelledAt konnte nicht hinzugefügt werden:",
+      err.message
+    );
   }
 }
 
@@ -204,29 +276,55 @@ export function logEvent(event) {
 // =======================================================
 
 const stmtInsert = db.prepare(`
-  INSERT INTO bookings (id,name,phone,service,price,duration,dateTime,employeeId,tenant)
-  VALUES (@id,@name,@phone,@service,@price,@duration,@dateTime,@employeeId,@tenant)
+  INSERT INTO bookings (
+    id,
+    name,
+    phone,
+    service,
+    price,
+    duration,
+    dateTime,
+    employeeId,
+    tenant
+  )
+  VALUES (
+    @id,
+    @name,
+    @phone,
+    @service,
+    @price,
+    @duration,
+    @dateTime,
+    @employeeId,
+    @tenant
+  )
 `);
 
 const stmtGetAll = db.prepare(`
-  SELECT * FROM bookings 
+  SELECT * FROM bookings
   ORDER BY dateTime
 `);
 
 // 🔒 Slotprüfung pro Mitarbeiter + Zeit
+// Wichtig: Stornierte Termine blockieren den Slot NICHT mehr.
 const stmtGetByDate = db.prepare(`
-  SELECT * FROM bookings 
-  WHERE employeeId = ? 
-  AND dateTime = ?
+  SELECT *
+  FROM bookings
+  WHERE employeeId = ?
+    AND datetime(dateTime) = datetime(?)
+    AND status = 'active'
 `);
 
+// 🚫 Soft Cancel statt Hard Delete
 const stmtDelete = db.prepare(`
-  DELETE FROM bookings 
-  WHERE id = ?
+  UPDATE bookings
+     SET status = 'cancelled',
+         cancelledAt = datetime('now')
+   WHERE id = ?
 `);
 
 const stmtUpdate = db.prepare(`
-  UPDATE bookings 
+  UPDATE bookings
      SET dateTime = @dateTime,
          employeeId = @employeeId
    WHERE id = @id
@@ -242,19 +340,35 @@ export function insertBooking(booking) {
       booking.id = crypto.randomUUID();
     }
 
-    // 🔒 Race-Condition Schutz
+    // 🔒 Slotprüfung
+    console.log("🔍 CHECK SLOT:", {
+      employeeId: booking.employeeId,
+      dateTime: booking.dateTime
+    });
+
     const existing = stmtGetByDate.get(
       booking.employeeId,
       booking.dateTime
     );
 
-    if (existing) {
+    console.log("🔍 EXISTING:", existing);
+
+    // Wichtig:
+    // Stornierte Termine dürfen denselben Slot NICHT blockieren
+    if (
+      existing &&
+      existing.status !== "cancelled"
+    ) {
+
       console.warn(
         "⚠️ Slot bereits belegt:",
         booking.employeeId,
         booking.dateTime
       );
-      return null;
+
+      return {
+        error: "slot_blocked"
+      };
     }
 
     stmtInsert.run(booking);
@@ -828,12 +942,15 @@ export function clearAuraContext({ tenant, key = null }) {
 
 // =======================================================
 // 📣 AURA MARKETING OUTPUT LOG – Phase 6.5.3 (FIXED)
+// Strategy-Type Ready | Safe Auto Migration
 // =======================================================
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS aura_marketing_actions (
     id TEXT PRIMARY KEY,
     tenant TEXT NOT NULL,
+
+    strategy_type TEXT,
 
     headline TEXT,
     channels_json TEXT,
@@ -860,11 +977,66 @@ db.exec(`
   ON aura_marketing_actions(tenant, status);
 `);
 
+// =======================================================
+// 🛠️ AURA MARKETING – Safe Auto Migration Columns
+// =======================================================
+
+const auraMarketingColumns = db.prepare(`
+  PRAGMA table_info(aura_marketing_actions)
+`).all().map(c => c.name);
+
+const auraMarketingRequiredCols = [
+  { name: "strategy_type", type: "TEXT" },
+  { name: "impact_revenue", type: "REAL" },
+  { name: "impact_bookings", type: "INTEGER" },
+  { name: "roi_score", type: "REAL" }
+];
+
+for (const col of auraMarketingRequiredCols) {
+  if (!auraMarketingColumns.includes(col.name)) {
+    try {
+      db.exec(`
+        ALTER TABLE aura_marketing_actions
+        ADD COLUMN ${col.name} ${col.type};
+      `);
+
+      console.log(`🛠️ AURA Marketing-Spalte '${col.name}' hinzugefügt.`);
+    } catch (err) {
+      console.warn(
+        `⚠️ AURA Marketing-Spalte '${col.name}' konnte nicht hinzugefügt werden:`,
+        err.message
+      );
+    }
+  }
+}
+
+// =======================================================
+// 📣 AURA MARKETING – Prepared Statements
+// =======================================================
+
 const mktInsert = db.prepare(`
   INSERT INTO aura_marketing_actions (
-    id, tenant, headline, channels_json, offers_json, cta, confidence, reason, status
+    id,
+    tenant,
+    strategy_type,
+    headline,
+    channels_json,
+    offers_json,
+    cta,
+    confidence,
+    reason,
+    status
   ) VALUES (
-    @id, @tenant, @headline, @channels_json, @offers_json, @cta, @confidence, @reason, @status
+    @id,
+    @tenant,
+    @strategy_type,
+    @headline,
+    @channels_json,
+    @offers_json,
+    @cta,
+    @confidence,
+    @reason,
+    @status
   )
 `);
 
@@ -905,16 +1077,25 @@ export function insertAuraMarketingAction(record) {
     `).get(record.id, record.tenant);
 
     if (existing) {
-      // Schon vorhanden → NICHT erneut speichern
       return false;
     }
 
     // ---------------------------------------------------
-    // 2️⃣ Insert nur wenn nicht vorhanden
+    // 2️⃣ Strategy Type sicher bestimmen
+    // ---------------------------------------------------
+    const strategyType =
+      record.strategy_type ||
+      record.strategyType ||
+      record.triggerType ||
+      null;
+
+    // ---------------------------------------------------
+    // 3️⃣ Insert nur wenn nicht vorhanden
     // ---------------------------------------------------
     mktInsert.run({
       id: record.id,
       tenant: record.tenant,
+      strategy_type: strategyType,
       headline: record.headline ?? null,
       channels_json: JSON.stringify(record.channels ?? []),
       offers_json: JSON.stringify(record.offers ?? []),
@@ -924,7 +1105,6 @@ export function insertAuraMarketingAction(record) {
           ? record.confidence
           : null,
 
-      // 🔥 reason sauber serialisieren
       reason: record.reason
         ? JSON.stringify(record.reason)
         : null,
@@ -935,6 +1115,7 @@ export function insertAuraMarketingAction(record) {
     logAction("📣 AURA Marketing gespeichert", {
       id: record.id,
       tenant: record.tenant,
+      strategy_type: strategyType,
     });
 
     return true;
@@ -942,29 +1123,6 @@ export function insertAuraMarketingAction(record) {
   } catch (err) {
     console.error("❌ insertAuraMarketingAction:", err.message);
     return false;
-  }
-}
-
-
-// ROI / IMPACT Felder ergänzen (falls noch nicht vorhanden)
-const marketingCols = db.prepare(`
-  PRAGMA table_info(aura_marketing_actions)
-`).all().map(c => c.name);
-
-const roiCols = [
-  { name: "impact_revenue", type: "REAL" },
-  { name: "impact_bookings", type: "INTEGER" },
-  { name: "roi_score", type: "REAL" }
-];
-
-for (const col of roiCols) {
-  if (!marketingCols.includes(col.name)) {
-    try {
-      db.exec(`ALTER TABLE aura_marketing_actions ADD COLUMN ${col.name} ${col.type};`);
-      console.log(`📊 ROI-Spalte '${col.name}' hinzugefügt.`);
-    } catch (err) {
-      console.warn(`⚠️ ROI-Spalte '${col.name}' konnte nicht hinzugefügt werden:`, err.message);
-    }
   }
 }
 
@@ -1333,5 +1491,4 @@ export function expireOldGeneratedMarketingActions({
     return { expiredCount: 0 };
   }
 }
-
 
