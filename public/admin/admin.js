@@ -1630,13 +1630,28 @@ async function loadAuraRevenueInsights() {
     // ===================================================
 
     const topStrategies = [...allStrategies]
-      .sort((a, b) => b.avg_roi - a.avg_roi)
+      .filter(
+        s =>
+          Number(s.avg_roi || 0) > 0
+      )
+      .sort(
+        (a, b) =>
+          Number(b.avg_roi || 0) -
+          Number(a.avg_roi || 0)
+      )
       .slice(0, 3);
 
     const worstStrategies = [...allStrategies]
-      .sort((a, b) => a.avg_roi - b.avg_roi)
+      .filter(
+        s =>
+          Number(s.avg_roi || 0) < 0
+      )
+      .sort(
+        (a, b) =>
+          Number(a.avg_roi || 0) -
+          Number(b.avg_roi || 0)
+      )
       .slice(0, 3);
-
 
     // ===================================================
     // 🎯 Phase 4 – Prioritätsbewertung
@@ -1731,19 +1746,25 @@ async function loadAuraRevenueInsights() {
     </div>
 
     ${bestStrategy
-      ? `
+        ? `
 
         <div class="small muted">
           🏆 Beste Kampagne:
           <b>${bestStrategy.strategy_type}</b>
         </div>
 
-        <div class="small muted" style="margin-top:6px">
+        <div
+          class="small muted"
+          style="margin-top:6px"
+        >
           ROI:
           <b>${Number(bestStrategy.avg_roi).toFixed(2)}</b>
         </div>
 
-        <div class="small muted" style="margin-top:6px">
+        <div
+          class="small muted"
+          style="margin-top:6px"
+        >
           🤖 Empfehlung:
           <b>${learningRecommendation}</b>
         </div>
@@ -1758,18 +1779,66 @@ async function loadAuraRevenueInsights() {
         >
           <b>🏆 Top Strategien</b>
 
-          <div style="margin-top:6px;display:grid;gap:3px">
+          <div style="margin-top:8px;display:grid;gap:8px">
+
             ${topStrategies
-              .map(
-                (s, i) => `
+          .map((s, i) => {
+
+            const roi = Number(s.avg_roi || 0);
+
+            const width = Math.min(
+              Math.max(roi * 25, 8),
+              100
+            );
+
+            return `
                   <div>
-                    ${i + 1}. ${s.strategy_type}
-                    (ROI ${Number(s.avg_roi).toFixed(2)})
+
+                    <div
+                      style="
+                        display:flex;
+                        justify-content:space-between;
+                        font-size:12px;
+                        margin-bottom:3px;
+                      "
+                    >
+                      <span>
+                        ${i + 1}. ${s.strategy_type}
+                      </span>
+
+                      <b>
+                        ROI ${roi.toFixed(2)}
+                      </b>
+                    </div>
+
+                    <div
+                      style="
+                        height:8px;
+                        background:#ececec;
+                        border-radius:999px;
+                        overflow:hidden;
+                      "
+                    >
+                      <div
+                        style="
+                          width:${width}%;
+                          height:100%;
+                          background:linear-gradient(
+                            90deg,
+                            #C38B5F,
+                            #d7b384
+                          );
+                        "
+                      ></div>
+                    </div>
+
                   </div>
-                `
-              )
-              .join("")}
+                `;
+          })
+          .join("")}
+
           </div>
+
         </div>
 
         ${worstStrategies.length
@@ -1784,18 +1853,38 @@ async function loadAuraRevenueInsights() {
             >
               <b>⚠️ Vermeiden</b>
 
-              <div style="margin-top:6px;display:grid;gap:3px">
+              <div style="margin-top:8px;display:grid;gap:8px">
+
                 ${worstStrategies
-                  .map(
-                    (s, i) => `
-                      <div>
-                        ${i + 1}. ${s.strategy_type}
-                        (ROI ${Number(s.avg_roi).toFixed(2)})
+            .map((s, i) => {
+
+              const roi = Number(s.avg_roi || 0);
+
+              return `
+                      <div
+                        style="
+                          display:flex;
+                          justify-content:space-between;
+                          font-size:12px;
+                          padding:6px 8px;
+                          border-radius:8px;
+                          background:rgba(220,80,80,.08);
+                        "
+                      >
+                        <span>
+                          ${i + 1}. ${s.strategy_type}
+                        </span>
+
+                        <b>
+                          ROI ${roi.toFixed(2)}
+                        </b>
                       </div>
-                    `
-                  )
-                  .join("")}
+                    `;
+            })
+            .join("")}
+
               </div>
+
             </div>
           `
           : ""
@@ -1824,17 +1913,31 @@ async function loadAuraRevenueInsights() {
 
             <div>
               Revenue Impact:
-              <b>+${Number(bestStrategy.avg_revenue_impact).toFixed(2)} €</b>
+              <b>
+                +${Number(
+          bestStrategy.avg_revenue_impact
+        ).toFixed(2)} €
+              </b>
             </div>
 
             <div>
               Booking Impact:
-              <b>+${Number(bestStrategy.avg_booking_impact).toFixed(1)}</b>
+              <b>
+                +${Number(
+          bestStrategy.avg_booking_impact
+        ).toFixed(1)}
+              </b>
             </div>
 
             <div>
               Success Rate:
-              <b>${Math.round(Number(bestStrategy.success_rate) * 100)}%</b>
+              <b>
+                ${Math.round(
+          Number(
+            bestStrategy.success_rate
+          ) * 100
+        )}%
+              </b>
             </div>
 
             <div>
@@ -1847,7 +1950,7 @@ async function loadAuraRevenueInsights() {
         </details>
 
       `
-      : `
+        : `
 
         <div class="small muted">
           Noch nicht genügend Daten vorhanden.
@@ -1866,7 +1969,7 @@ async function loadAuraRevenueInsights() {
         </div>
 
       `
-    }
+      }
 
   </div>
 
