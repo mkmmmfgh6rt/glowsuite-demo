@@ -175,38 +175,43 @@ export async function createAppointmentPDF(booking) {
     // HEADER
     // =====================================================
 
-    if (branding.logo) {
+    try {
 
-      try {
+      const logoPath = path.join(
+        process.cwd(),
+        "public",
+        "assets",
+        "logo-glowsuite.png"
+      );
 
-        const logoPath = path.join(
-          process.cwd(),
-          "public",
-          branding.logo
+      console.log("========== LOGO TEST ==========");
+      console.log("PFAD:", logoPath);
+      console.log("EXISTS:", fs.existsSync(logoPath));
+
+      if (fs.existsSync(logoPath)) {
+
+        const logoSize = 72;
+
+        doc.image(
+          logoPath,
+          (doc.page.width / 2) - (logoSize / 2),
+          34,
+          {
+            width: logoSize
+          }
         );
-        console.log("LOGO PFAD:", logoPath);
-        console.log("LOGO GEFUNDEN:", fs.existsSync(logoPath));
 
-        if (fs.existsSync(logoPath)) {
+        console.log("LOGO EINGEFÜGT");
 
-          const logoSize = 72;
+      } else {
 
-          doc.image(
-            logoPath,
-            (doc.page.width / 2) - (logoSize / 2),
-            34,
-            {
-              width: logoSize
-            }
-          );
-
-        }
-
-      } catch (err) {
-
-        console.warn("Logo konnte nicht geladen werden");
+        console.log("LOGO NICHT GEFUNDEN");
 
       }
+
+    } catch (err) {
+
+      console.error("LOGO FEHLER:", err);
 
     }
 
