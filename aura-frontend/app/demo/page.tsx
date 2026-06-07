@@ -52,7 +52,7 @@ export default function DemoPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 52,
+            marginBottom: 36,
           }}
         >
           <div style={{ fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>
@@ -162,7 +162,7 @@ export default function DemoPage() {
         <section
           style={{
             marginBottom: 42,
-            padding: 18,
+            padding: 12,
             borderRadius: 30,
             background:
               "linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))",
