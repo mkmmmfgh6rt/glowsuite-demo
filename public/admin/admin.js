@@ -79,8 +79,15 @@ function applyBrandingTheme(b) {
   setCSSVar("--brand", b.brandColor);
   setCSSVar("--brandDark", b.brandDark);
 
-  $("#brandTitle").textContent = `${b.brandName} – Admin`;
-  $("#brandLogo").src = b.logo;
+  const brandTitle = $("#brandTitle");
+  if (brandTitle) {
+    brandTitle.textContent = b.brandName || "GlowSuite AI";
+  }
+
+  const brandLogo = $("#brandLogo");
+  if (brandLogo && b.logo) {
+    brandLogo.src = b.logo;
+  }
 }
 async function loadBranding() {
   try {
@@ -486,6 +493,20 @@ async function loadAuraMarketingHistory() {
 
     const meta = getAuraActionMeta(last.headline || last.action || last.type);
 
+    const recommendationMap = {
+      loyalty_bonus: "VIP-Kundenbonus erneut aktivieren",
+      suggest_discount: "Rabattaktion erneut starten",
+      low_bookings: "Freie Termine aktiv bewerben",
+      upsell_opportunity: "Zusatzbehandlungen empfehlen",
+    };
+
+    const recommendationText =
+      recommendationMap[
+      last.strategy_type ||
+      last.headline ||
+      last.action
+      ] || meta.label;
+
     const confidenceLabel =
       typeof getConfidenceLabel === "function"
         ? getConfidenceLabel(last.confidence)
@@ -525,84 +546,195 @@ async function loadAuraMarketingHistory() {
     card.className = "card";
 
     card.style.cssText = `
-      padding:12px 14px;
-      font-size:13px;
+      padding:18px;
       display:flex;
       flex-direction:column;
-      gap:6px;
+      gap:12px;
+      border-radius:18px;
+      border:1px solid rgba(207,168,111,.18);
+      box-shadow:0 8px 24px rgba(0,0,0,.04);
+      background:#fff;
       opacity:0.92;
     `;
 
     card.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:600">
-          Letzte AURA-Aktion
+  <div
+    style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    "
+  >
+    <div
+      style="
+        font-weight:600;
+        font-size:14px;
+      "
+    >
+      Letzte Marketingaktion
+    </div>
+
+    ${timeLabel
+        ? `
+        <div class="small muted">
+          ${timeLabel}
         </div>
-        ${timeLabel ? `<div class="small muted">${timeLabel}</div>` : ""}
-      </div>
+      `
+        : ""
+      }
+  </div>
 
-      <div style="font-weight:600">
-        ${meta.label}
-      </div>
+  <div
+    style="
+      font-size:13px;
+      color:#777;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:.5px;
+    "
+  >
+    Empfehlung
+  </div>
 
-      <div class="small muted" style="line-height:1.5">
-        ${summary}
-      </div>
+  <div
+    style="
+      font-size:18px;
+      font-weight:700;
+      margin-top:4px;
+      line-height:1.4;
+    "
+  >
+    ${recommendationText}
+  </div>
 
-      ${confidenceLabel
-        ? `<div class="small muted">
-               Priorität: <strong>${confidenceLabel}</strong>
-             </div>`
+  <div
+    class="small muted"
+    style="
+      margin-top:4px;
+      line-height:1.5;
+    "
+  >
+    ${summary}
+  </div>
+
+  <div
+    style="
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    "
+  >
+
+    ${confidenceLabel
+        ? `
+        <span
+          style="
+            padding:4px 8px;
+            border-radius:999px;
+            background:#F5F5F5;
+            font-size:12px;
+            font-weight:600;
+          "
+        >
+          Priorität: ${confidenceLabel}
+        </span>
+      `
         : ""
       }
 
-      <div class="small muted">
-        Status: <b>${statusLabel}</b>
-      </div>
+    <span
+      style="
+        padding:4px 8px;
+        border-radius:999px;
+        background:#F5F5F5;
+        font-size:12px;
+        font-weight:600;
+      "
+    >
+      Status: ${statusLabel}
+    </span>
 
-      ${last.status === "executed"
+  </div>
+
+  ${last.status === "executed"
         ? `
-            <div style="margin-top:6px;border-top:1px solid #eee;padding-top:8px;display:grid;gap:4px">
+      <div
+        style="
+          margin-top:10px;
+          padding-top:10px;
+          border-top:1px solid #eee;
+          display:grid;
+          gap:10px;
+        "
+      >
 
-              ${Number(last.impact_revenue) > 0
+        ${Number(last.impact_revenue) > 0
           ? `
-                    <div class="small">
-                      Zusatzumsatz:
-                      <b>${Number(last.impact_revenue).toFixed(2)} €</b>
-                    </div>
-                  `
-          : `
-                    <div class="small muted">
-                      Ergebnis wird analysiert …
-                    </div>
-                  `
-        }
+            <div>
+              <div class="small muted">
+                Zusätzlicher Umsatz
+              </div>
 
-              ${Number(last.impact_bookings) > 0
-          ? `
-                    <div class="small">
-                      Zusätzliche Buchungen:
-                      <b>${last.impact_bookings}</b>
-                    </div>
-                  `
-          : ""
-        }
-
-              ${last.roi_score !== null && Number(last.roi_score) > 0
-          ? `
-                    <div class="small">
-                      Erfolgswert:
-                      <b>${(Number(last.roi_score) * 100).toFixed(1)} %</b>
-                    </div>
-                  `
-          : ""
-        }
-
+              <div
+                style="
+                  font-size:16px;
+                  font-weight:600;
+                "
+              >
+                ${Number(last.impact_revenue).toFixed(2)} €
+              </div>
             </div>
           `
+          : ""
+        }
+
+        ${Number(last.impact_bookings) > 0
+          ? `
+            <div>
+              <div class="small muted">
+                Zusätzliche Buchungen
+              </div>
+
+              <div
+                style="
+                  font-size:16px;
+                  font-weight:600;
+                "
+              >
+                ${last.impact_bookings}
+              </div>
+            </div>
+          `
+          : ""
+        }
+
+        ${last.roi_score !== null &&
+          Number(last.roi_score) > 0
+          ? `
+            <div>
+              <div class="small muted">
+                Erfolgsquote
+              </div>
+
+              <div
+                style="
+                  font-size:16px;
+                  font-weight:600;
+                "
+              >
+                ${(Number(last.roi_score) * 100).toFixed(1)} %
+              </div>
+            </div>
+          `
+          : ""
+        }
+
+      </div>
+    `
         : ""
       }
-    `;
+`;
 
     box.appendChild(card);
 
@@ -638,11 +770,42 @@ async function loadBookings() {
 }
 
 function renderKPIs(k) {
+
   $("#statTotal").textContent = k.total;
   $("#statRevenue").textContent = euro(k.revenue);
   $("#statAvg").textContent = euro(k.avg);
   $("#statActive").textContent = k.active;
-  $("#statLoad").textContent = k.loadPct.toFixed(1) + " %";
+  $("#statLoad").textContent =
+    k.loadPct.toFixed(1) + " %";
+
+  // =========================
+  // KPI Hinweise
+  // =========================
+
+  $("#statTotalInfo").textContent =
+    k.total >= 50
+      ? "Buchungsvolumen stabil"
+      : "Wachstumspotenzial vorhanden";
+
+  $("#statRevenueInfo").textContent =
+    k.revenue >= 2000
+      ? "Positiver Umsatztrend"
+      : "Zusätzliche Marketingmaßnahmen sinnvoll";
+
+  $("#statAvgInfo").textContent =
+    k.avg >= 50
+      ? "Überdurchschnittlicher Terminwert"
+      : "Zusatzverkäufe möglich";
+
+  $("#statActiveInfo").textContent =
+    k.active >= 15
+      ? "Starke Kundenbindung"
+      : "Kundenaktivierung empfohlen";
+
+  $("#statLoadInfo").textContent =
+    k.loadPct >= 75
+      ? "Kapazität gut ausgelastet"
+      : "Freie Termine verfügbar";
 
   window.dashboardStats = {
     ...window.dashboardStats,
@@ -671,6 +834,7 @@ setInterval(fetchDashboardSilent, 60000);
 // =======================================================
 
 function renderAuraMarketingBox(m) {
+  console.log("AURA ACTIVE:", m);
   const box = document.getElementById("auraMarketingBox");
   if (!box) return;
 
@@ -721,18 +885,85 @@ function renderAuraMarketingBox(m) {
     <div style="display:flex;justify-content:space-between;gap:12px">
       <div style="flex:1">
 
-        <div style="font-weight:600;font-size:15px;line-height:1.3">
+        <div
+          style="
+            font-size:13px;
+            color:#777;
+            font-weight:600;
+            text-transform:uppercase;
+            letter-spacing:.5px;
+          "
+        >
+          AURA Empfehlung
+        </div>
+
+        <div
+          style="
+            font-size:20px;
+            font-weight:700;
+            margin-top:4px;
+            line-height:1.3;
+          "
+        >
           ${headline}
         </div>
 
+        ${Number(m.impact_revenue || 0) > 0
+      ? `
+            <div
+              style="
+                margin-top:8px;
+                font-size:15px;
+                font-weight:600;
+                color:#2f855a;
+              "
+            >
+              +${Number(m.impact_revenue).toFixed(0)} € Umsatzpotenzial
+            </div>
+          `
+      : ""
+    }
+
+        <div
+          style="
+            margin-top:10px;
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px;
+          "
+        >
+
+          <span class="badge">
+            Analyse abgeschlossen
+          </span>
+
+          ${confidenceLabel
+      ? `
+              <span class="badge">
+                Priorität ${confidenceLabel}
+              </span>
+            `
+      : ""
+    }
+
+          <span class="badge">
+            Kundenbindung
+          </span>
+
+        </div>
+
         ${m.reason
-      ? `<div class="small muted" style="margin-top:4px">
-                ${m.reason}
-                ${confidenceLabel
-        ? ` · Priorität: ${confidenceLabel}`
-        : ""
-      }
-               </div>`
+      ? `
+            <div
+              class="small muted"
+              style="
+                margin-top:10px;
+                line-height:1.5;
+              "
+            >
+              ${m.reason}
+            </div>
+          `
       : ""
     }
 
@@ -740,7 +971,8 @@ function renderAuraMarketingBox(m) {
     </div>
 
     <!-- 🔘 Actions -->
-    <div style="display:flex;gap:8px;margin-top:6px">
+
+    <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn-primary" data-status="executed">
         Maßnahme starten
       </button>
@@ -751,13 +983,20 @@ function renderAuraMarketingBox(m) {
     </div>
 
     <!-- 🧠 Explain Layer -->
-    <div class="aura-explain" style="margin-top:4px">
+
+    <div class="aura-explain" style="margin-top:6px">
       <button
         class="small muted"
         type="button"
         data-aura-explain-toggle
         aria-expanded="false"
-        style="background:none;border:0;text-decoration:underline;cursor:pointer;padding:0"
+        style="
+          background:none;
+          border:0;
+          text-decoration:underline;
+          cursor:pointer;
+          padding:0;
+        "
       >
         Warum empfiehlt AURA das?
       </button>
@@ -773,7 +1012,14 @@ function renderAuraMarketingBox(m) {
           margin-top:4px;
         "
       >
-        <ul data-aura-explain-list class="small muted" style="padding-left:16px;margin:0"></ul>
+        <ul
+          data-aura-explain-list
+          class="small muted"
+          style="
+            padding-left:16px;
+            margin:0;
+          "
+        ></ul>
       </div>
     </div>
   `;
@@ -1525,7 +1771,7 @@ async function loadAuraRevenueInsights() {
     // ===================================================
 
     const analyticsRes = await fetch(
-      "/api/aura/summary?tenant=beauty_lounge"
+      "/api/aura/summary?tenant=beauty_lounge&period=last_30_days"
     );
 
     if (!analyticsRes.ok) return;
@@ -1604,25 +1850,33 @@ async function loadAuraRevenueInsights() {
 
     const recommendationMap = {
       loyalty_bonus:
-        "Kundenbindungsaktion erneut starten",
+        "VIP-Kundenbonus erneut aktivieren",
 
       suggest_discount:
-        "Rabattaktion erneut testen",
+        "Gezielte Rabattaktion erneut starten",
 
       low_bookings:
-        "Auslastung mit Kampagne steigern",
+        "Mehr Termine durch Marketingkampagne gewinnen",
 
       upsell_opportunity:
-        "Zusatzbehandlungen aktiv bewerben",
+        "Zusatzbehandlungen aktiv empfehlen",
 
       revenue_drop:
-        "Diese Strategie aktuell vermeiden"
+        "Strategie aktuell pausieren und beobachten"
+    };
+
+    const strategyLabelMap = {
+      loyalty_bonus: "VIP-Kundenbonus",
+      suggest_discount: "Rabattaktion",
+      low_bookings: "Auslastungskampagne",
+      upsell_opportunity: "Zusatzbehandlung",
+      revenue_drop: "Umsatzrückgang"
     };
 
     const learningRecommendation =
       recommendationMap[
       bestStrategy?.strategy_type
-      ] || "Weitere Daten sammeln";
+      ] || "AURA sammelt weitere Erkenntnisse";
 
 
     // ===================================================
@@ -1696,6 +1950,47 @@ async function loadAuraRevenueInsights() {
 
     }
 
+
+    // ===================================================
+    // 📈 Forecast Daten
+    // ===================================================
+
+    let forecastData = null;
+
+    try {
+
+      const forecastRes = await fetch(
+        "/api/aura/forecast?tenant=beauty_lounge"
+      );
+
+      if (forecastRes.ok) {
+
+        const forecastJson =
+          await forecastRes.json();
+
+        forecastData =
+          forecastJson.forecast || null;
+
+        console.log(
+          "FORECAST JSON:",
+          forecastJson
+        );
+
+        console.log(
+          "FORECAST DATA:",
+          forecastData
+        );
+      }
+
+    } catch (err) {
+
+      console.warn(
+        "Forecast nicht verfügbar:",
+        err
+      );
+
+    }
+
     console.log("🏆 Beste Strategie:", bestStrategy);
     console.log("⚠️ Schlechteste Strategie:", worstStrategy);
     console.log("🎯 Priorität:", strategyPriority);
@@ -1707,275 +2002,337 @@ async function loadAuraRevenueInsights() {
 
     box.innerHTML = `
 
-<div style="display:grid;gap:12px">
+<div class="card" style="padding:12px">
 
-  <!-- Umsatzanalyse -->
-  <div class="card" style="padding:12px">
-
-    <div style="font-weight:600;margin-bottom:8px">
-      📊 Umsatzanalyse
-    </div>
-
-    <div class="small muted">
-      Umsatz:
-      <b>${revenue.toFixed(2)} €</b>
-    </div>
-
-    <div class="small muted">
-      Buchungen:
-      <b>${bookings}</b>
-    </div>
-
-    <div class="small muted">
-      Ø Terminwert:
-      <b>${avg.toFixed(2)} €</b>
-    </div>
-
-    <div style="margin-top:10px;font-size:13px">
-      Empfehlung:
-      <b>${recommendation}</b>
-    </div>
-
+  <div style="font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+    <i data-lucide="bar-chart-3"></i>
+    Umsatzanalyse
   </div>
 
-  <!-- AURA Learning -->
-  <div class="card" style="padding:12px">
+  <div class="small muted">
+    Umsatz:
+    <b>${revenue.toFixed(2)} €</b>
+  </div>
 
-    <div style="font-weight:600;margin-bottom:8px">
-      🧠 AURA Erkenntnisse
-    </div>
+  <div class="small muted">
+    Buchungen:
+    <b>${bookings}</b>
+  </div>
 
-    ${bestStrategy
+  <div class="small muted">
+    Ø Terminwert:
+    <b>${avg.toFixed(2)} €</b>
+  </div>
+
+  <div style="margin-top:10px;font-size:13px">
+    Empfehlung:
+    <b>${recommendation}</b>
+  </div>
+
+</div>
+
+<!-- AURA Learning -->
+
+<div class="card" style="padding:18px;border-radius:18px">
+
+  <div style="font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;font-size:18px">
+    <i data-lucide="brain"></i>
+    AURA Erkenntnisse
+  </div>
+
+  ${bestStrategy
+    ? `
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px">
+
+        <div style="padding:14px;border-radius:14px;background:rgba(207,168,111,.08);border:1px solid rgba(207,168,111,.18)">
+          <div class="small muted" style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <i data-lucide="award"></i>
+            Beste Marketingmaßnahme
+          </div>
+
+          <div style="font-size:18px;font-weight:700">
+            ${strategyLabelMap[bestStrategy.strategy_type] || bestStrategy.strategy_type}
+          </div>
+        </div>
+
+        <div style="padding:14px;border-radius:14px;background:rgba(47,133,90,.08);border:1px solid rgba(47,133,90,.16)">
+          <div class="small muted" style="margin-bottom:6px">
+            Erfolg
+          </div>
+
+          <div style="font-size:18px;font-weight:700;color:#2f855a">
+            ${Math.round(Number(bestStrategy.avg_roi || 0) * 100)} % Rendite
+          </div>
+        </div>
+
+        <div style="padding:14px;border-radius:14px;background:#f7f3ef;border:1px solid rgba(0,0,0,.06)">
+          <div class="small muted" style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <i data-lucide="sparkles"></i>
+            AURA empfiehlt
+          </div>
+
+          <div style="font-size:16px;font-weight:700">
+            ${learningRecommendation}
+          </div>
+        </div>
+
+      </div>
+
+      <div class="small muted" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,.08)">
+        <b style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+          <i data-lucide="trophy"></i>
+          Top Strategien
+        </b>
+
+        <div style="display:grid;gap:10px">
+
+          ${topStrategies
+            .map((s, i) => {
+              const roi = Number(s.avg_roi || 0);
+              const width = Math.min(Math.max(roi * 25, 8), 100);
+
+              return `
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+                    <span>
+                      ${i + 1}. ${strategyLabelMap[s.strategy_type] || s.strategy_type}
+                    </span>
+
+                    <b>
+                      ${Math.round(roi * 100)} %
+                    </b>
+                  </div>
+
+                  <div style="height:8px;background:#ececec;border-radius:999px;overflow:hidden">
+                    <div style="width:${width}%;height:100%;background:linear-gradient(90deg,#C38B5F,#d7b384)"></div>
+                  </div>
+                </div>
+              `;
+            })
+            .join("")}
+
+        </div>
+      </div>
+
+      ${worstStrategies.length
         ? `
+          <div class="small muted" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(0,0,0,.08)">
+            <b style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+              <i data-lucide="triangle-alert"></i>
+              Vermeiden
+            </b>
 
-        <div class="small muted">
-          🏆 Beste Kampagne:
-          <b>${bestStrategy.strategy_type}</b>
-        </div>
+            <div style="display:grid;gap:8px">
+              ${worstStrategies
+                .map((s, i) => {
+                  const roi = Number(s.avg_roi || 0);
 
-        <div
-          class="small muted"
-          style="margin-top:6px"
-        >
-          ROI:
-          <b>${Number(bestStrategy.avg_roi).toFixed(2)}</b>
-        </div>
-
-        <div
-          class="small muted"
-          style="margin-top:6px"
-        >
-          🤖 Empfehlung:
-          <b>${learningRecommendation}</b>
-        </div>
-
-        <div
-          class="small muted"
-          style="
-            margin-top:12px;
-            padding-top:10px;
-            border-top:1px solid rgba(0,0,0,.08);
-          "
-        >
-          <b>🏆 Top Strategien</b>
-
-          <div style="margin-top:8px;display:grid;gap:8px">
-
-            ${topStrategies
-          .map((s, i) => {
-
-            const roi = Number(s.avg_roi || 0);
-
-            const width = Math.min(
-              Math.max(roi * 25, 8),
-              100
-            );
-
-            return `
-                  <div>
-
-                    <div
-                      style="
-                        display:flex;
-                        justify-content:space-between;
-                        font-size:12px;
-                        margin-bottom:3px;
-                      "
-                    >
+                  return `
+                    <div style="display:flex;justify-content:space-between;font-size:12px;padding:8px 10px;border-radius:10px;background:rgba(220,80,80,.08)">
                       <span>
-                        ${i + 1}. ${s.strategy_type}
+                        ${i + 1}. ${strategyLabelMap[s.strategy_type] || s.strategy_type}
                       </span>
 
                       <b>
                         ROI ${roi.toFixed(2)}
                       </b>
                     </div>
+                  `;
+                })
+                .join("")}
+            </div>
+          </div>
+        `
+        : ""
+      }
 
-                    <div
-                      style="
-                        height:8px;
-                        background:#ececec;
-                        border-radius:999px;
-                        overflow:hidden;
-                      "
-                    >
-                      <div
-                        style="
-                          width:${width}%;
-                          height:100%;
-                          background:linear-gradient(
-                            90deg,
-                            #C38B5F,
-                            #d7b384
-                          );
-                        "
-                      ></div>
-                    </div>
+      <details style="margin-top:12px">
+        <summary style="cursor:pointer;font-size:13px;font-weight:600">
+          Mehr Details anzeigen
+        </summary>
 
-                  </div>
-                `;
-          })
-          .join("")}
-
+        <div class="small muted" style="margin-top:10px;display:grid;gap:4px">
+          <div>
+            Zusätzlicher Umsatz:
+            <b>+${Number(bestStrategy.avg_revenue_impact).toFixed(2)} €</b>
           </div>
 
+          <div>
+            Zusätzliche Termine:
+            <b>+${Number(bestStrategy.avg_booking_impact).toFixed(1)}</b>
+          </div>
+
+          <div>
+            Erfolgsquote:
+            <b>${Math.round(Number(bestStrategy.success_rate) * 100)}%</b>
+          </div>
+
+          <div>
+            Bisher genutzt:
+            <b>${bestStrategy.total_runs}</b>
+          </div>
         </div>
+      </details>
 
-        ${worstStrategies.length
-          ? `
-            <div
-              class="small muted"
-              style="
-                margin-top:10px;
-                padding-top:8px;
-                border-top:1px solid rgba(0,0,0,.08);
-              "
-            >
-              <b>⚠️ Vermeiden</b>
+    `
+    : `
 
-              <div style="margin-top:8px;display:grid;gap:8px">
+      <div class="small muted">
+        Noch nicht genügend Daten vorhanden.
+      </div>
 
-                ${worstStrategies
-            .map((s, i) => {
+      <div class="small muted" style="margin-top:8px;line-height:1.5">
+        AURA sammelt aktuell Erkenntnisse aus Buchungen, Kampagnen und Kundenverhalten.
+      </div>
 
-              const roi = Number(s.avg_roi || 0);
+    `
+  }
 
-              return `
-                      <div
-                        style="
-                          display:flex;
-                          justify-content:space-between;
-                          font-size:12px;
-                          padding:6px 8px;
-                          border-radius:8px;
-                          background:rgba(220,80,80,.08);
-                        "
-                      >
-                        <span>
-                          ${i + 1}. ${s.strategy_type}
-                        </span>
+</div>
 
-                        <b>
-                          ROI ${roi.toFixed(2)}
-                        </b>
-                      </div>
-                    `;
-            })
-            .join("")}
+${forecastData ? `
 
-              </div>
+<div class="card" style="padding:18px;border-radius:18px">
 
-            </div>
-          `
-          : ""
-        }
+  <div style="font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;font-size:18px">
+    <i data-lucide="sparkles"></i>
+    AURA Prognose
+  </div>
 
-        <details style="margin-top:10px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
 
-          <summary
-            style="
-              cursor:pointer;
-              font-size:13px;
-              font-weight:600;
-            "
-          >
-            Mehr Details anzeigen
-          </summary>
+    <div style="padding:14px;border-radius:14px;background:rgba(207,168,111,.08);border:1px solid rgba(207,168,111,.18)">
+      <div class="small muted" style="margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <i data-lucide="calendar-days"></i>
+        Erwartete Buchungen
+      </div>
 
-          <div
-            class="small muted"
-            style="
-              margin-top:10px;
-              display:grid;
-              gap:4px;
-            "
-          >
-
-            <div>
-              Revenue Impact:
-              <b>
-                +${Number(
-          bestStrategy.avg_revenue_impact
-        ).toFixed(2)} €
-              </b>
-            </div>
-
-            <div>
-              Booking Impact:
-              <b>
-                +${Number(
-          bestStrategy.avg_booking_impact
-        ).toFixed(1)}
-              </b>
-            </div>
-
-            <div>
-              Success Rate:
-              <b>
-                ${Math.round(
+      <div style="font-size:24px;font-weight:700">
+        ${Math.round(
           Number(
-            bestStrategy.success_rate
+            forecastData?.adjustedForecast?.[0]?.adjusted_bookings ?? 0
+          )
+        )}
+      </div>
+
+      <div class="small muted" style="margin-top:4px">
+        Termine
+      </div>
+    </div>
+
+    <div style="padding:14px;border-radius:14px;background:rgba(47,133,90,.08);border:1px solid rgba(47,133,90,.16)">
+      <div class="small muted" style="margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <i data-lucide="wallet"></i>
+        Erwarteter Umsatz
+      </div>
+
+      <div style="font-size:24px;font-weight:700;color:#2f855a">
+        ${Number(
+          forecastData?.adjustedForecast?.[0]?.adjusted_revenue ?? 0
+        ).toFixed(2)} €
+      </div>
+
+      <div class="small muted" style="margin-top:4px">
+        Prognosezeitraum
+      </div>
+    </div>
+
+    <div style="padding:14px;border-radius:14px;background:#f7f3ef;border:1px solid rgba(0,0,0,.06)">
+      <div class="small muted" style="margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <i data-lucide="target"></i>
+        Prognosesicherheit
+      </div>
+
+      <div style="font-size:24px;font-weight:700">
+        ${Math.round(
+          Number(
+            forecastData?.confidence ?? 0
           ) * 100
         )}%
-              </b>
-            </div>
+      </div>
 
-            <div>
-              Einsätze:
-              <b>${bestStrategy.total_runs}</b>
-            </div>
+      <div class="small muted" style="margin-top:4px">
+        Vorhersagegenauigkeit
+      </div>
+    </div>
 
-          </div>
+    <div style="padding:14px;border-radius:14px;background:#f7f3ef;border:1px solid rgba(0,0,0,.06)">
+      <div class="small muted" style="margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <i data-lucide="shield-check"></i>
+        Zuverlässigkeit
+      </div>
 
-        </details>
+      <div style="font-size:24px;font-weight:700;text-transform:capitalize">
+        ${forecastData?.reliability ?? "unbekannt"}
+      </div>
 
-      `
-        : `
+      <div class="small muted" style="margin-top:4px">
+        Datenqualität
+      </div>
+    </div>
 
-        <div class="small muted">
-          Noch nicht genügend Daten vorhanden.
-        </div>
+  </div>
 
-        <div
-          class="small muted"
-          style="
-            margin-top:8px;
-            line-height:1.5;
-          "
-        >
-          AURA sammelt aktuell Erkenntnisse aus
-          Buchungen, Kampagnen und
-          Kundenverhalten.
-        </div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px">
 
-      `
+    <span
+      style="
+        display:flex;
+        align-items:center;
+        gap:6px;
+        padding:8px 12px;
+        border-radius:999px;
+        background:rgba(207,168,111,.10);
+        font-size:13px;
+        font-weight:600;
+      "
+    >
+      <i data-lucide="activity"></i>
+
+      Trend:
+      ${
+        forecastData?.trigger
+          ? "Risiko erkannt"
+          : "Wachstum"
       }
+    </span>
+
+    <span
+      style="
+        display:flex;
+        align-items:center;
+        gap:6px;
+        padding:8px 12px;
+        border-radius:999px;
+        background:${
+          forecastData?.trigger
+            ? "rgba(220,80,80,.10)"
+            : "rgba(47,133,90,.10)"
+        };
+        font-size:13px;
+        font-weight:600;
+      "
+    >
+      <i data-lucide="shield-check"></i>
+
+      ${
+        forecastData?.trigger?.message ||
+        "Keine Risiken erkannt"
+      }
+    </span>
 
   </div>
 
 </div>
 
+` : ""}
+
 `;
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
 
   } catch (err) {
     console.error("❌ AURA Revenue Fehler:", err);

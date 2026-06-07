@@ -103,7 +103,7 @@ export default function DemoPage() {
 
           <h1
             style={{
-              fontSize: "clamp(38px, 6vw, 68px)",
+              fontSize: "clamp(30px, 8vw, 68px)",
               lineHeight: 1.04,
               margin: "0 auto 20px",
               maxWidth: 900,
@@ -188,7 +188,7 @@ export default function DemoPage() {
           >
             <iframe
               src="/widget.html"
-              style={{ width: "100%", height: 820, border: "none" }}
+              style={{ width: "100%", height: 650, border: "none" }}
               title="GlowSuite Widget Demo"
             />
           </div>
@@ -289,7 +289,7 @@ export default function DemoPage() {
             <h2
               style={{
                 margin: "0 0 12px",
-                fontSize: 34,
+                fontSize:"clamp(28px,5vw,34px)",
                 color: "#fff8ea",
               }}
             >
@@ -348,7 +348,7 @@ export default function DemoPage() {
                 <h2
                   style={{
                     margin: "0 0 12px",
-                    fontSize: 34,
+                    fontSize:"clamp(28px,5vw,34px)",
                     color: "#fff8ea",
                   }}
                 >

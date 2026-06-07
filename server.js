@@ -3996,37 +3996,61 @@ app.get("/api/dashboard", authMiddleware, (_req, res) => {
   try {
     const all = getAllBookings();
     const since30 = new Date(Date.now() - 30 * 864e5);
+
     const month = all.filter(
       (b) => new Date(b.dateTime) >= since30,
     );
+
     const total = all.length;
+
     const revenue = month.reduce(
       (sum, b) => sum + (+b.price || 0),
       0,
     );
+
     const avg = month.length ? revenue / month.length : 0;
-    const active = new Set(all.map((b) => b.phone)).size;
+
+    const active = new Set(
+      all.map((b) => b.phone),
+    ).size;
+
     const load = ((month.length / 30) * 100).toFixed(1);
+
     const byService = {};
+
     month.forEach((b) => {
-      if (b.service) byService[b.service] = (byService[b.service] || 0) + 1;
+      if (b.service) {
+        byService[b.service] =
+          (byService[b.service] || 0) + 1;
+      }
     });
+
     const top5 = Object.entries(byService)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
 
     res.json({
       success: true,
-      data: { total, revenue, avg, active, load, top5 },
+      data: {
+        total,
+        revenue,
+        avg,
+        active,
+        load,
+        top5,
+      },
     });
+
   } catch (err) {
     console.error("❌ /api/dashboard:", err.message);
+
     res.status(500).json({
       success: false,
       error: "Fehler beim Dashboard.",
     });
   }
 });
+
 
 // 🎨 Mitarbeiter-Farbpalette (stabil & UI-tauglich)
 const EMPLOYEE_COLORS = [

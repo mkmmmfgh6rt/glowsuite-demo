@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,137 +13,159 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
-<style>
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  @keyframes pulse {
-    0% { opacity: .6; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.05); }
-    100% { opacity: .6; transform: scale(1); }
-  }
+  <style>
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
 
-  :root { --brand: #cfa86f; }
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
-  /* =========================
+    @keyframes pulse {
+      0% {
+        opacity: .6;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+
+      100% {
+        opacity: .6;
+        transform: scale(1);
+      }
+    }
+
+    :root {
+      --brand: #cfa86f;
+    }
+
+    /* =========================
      DASHBOARD – RUHIGES LAYOUT
      ========================= */
 
-  .chart-card {
-    position: relative;
-    padding: 14px 16px;
-    height: 340px;
-    display: flex;
-    flex-direction: column;
-    background: var(--card);
-    border: 1px solid rgba(0,0,0,0.06);
-    box-shadow: none;
-  }
+    .chart-card {
+      position: relative;
+      padding: 14px 16px;
+      height: 340px;
+      display: flex;
+      flex-direction: column;
+      background: var(--card);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: none;
+    }
 
-  .chart-card canvas {
-    position: absolute;
-    top: 55%;
-    left: 50%;
-    width: 250px !important;
-    height: 250px !important;
-    transform: translate(-50%, -50%);
-  }
+    .chart-card canvas {
+      position: absolute;
+      top: 55%;
+      left: 50%;
+      width: 250px !important;
+      height: 250px !important;
+      transform: translate(-50%, -50%);
+    }
 
-  .chart-head {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+    .chart-head {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-  /* =========================
+    /* =========================
      A.U.R.A – DASHBOARD VERSION
      (Advisor, nicht Promo)
      ========================= */
-  .aura-panel {
-    background: rgba(197,138,219,0.06);
-    border: 1px solid rgba(197,138,219,0.18);
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 18px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: none;
-  }
+    .aura-panel {
+      background: rgba(197, 138, 219, 0.06);
+      border: 1px solid rgba(197, 138, 219, 0.18);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: none;
+    }
 
-  .aura-left {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+    .aura-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
-  .aura-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-  }
+    .aura-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
 
-  .aura-sub {
-    font-size: 12.5px;
-    color: var(--muted);
-  }
+    .aura-sub {
+      font-size: 12.5px;
+      color: var(--muted);
+    }
 
-  .aura-btn {
-    padding: 8px 14px;
-    border-radius: 10px;
-    background: transparent;
-    border: 1px solid rgba(0,0,0,0.14);
-    color: var(--text);
-    font-weight: 600;
-    font-size: 12.5px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
+    .aura-btn {
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 12.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-  .aura-btn:hover {
-    background: rgba(0,0,0,0.04);
-  }
+    .aura-btn:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
 
-  /* =========================
+    /* =========================
      AURA ERGEBNIS PANEL
      ========================= */
-  #auraPanel {
-    display: none;
-    background: var(--card);
-    border-radius: 12px;
-    border: 1px solid rgba(0,0,0,0.08);
-    padding: 12px 14px;
-    margin-bottom: 18px;
-    max-height: 220px;
-    overflow-y: auto;
-    font-size: 13px;
-    box-shadow: none;
-  }
+    #auraPanel {
+      display: none;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      max-height: 220px;
+      overflow-y: auto;
+      font-size: 13px;
+      box-shadow: none;
+    }
 
-  /* =========================
+    /* =========================
      KPI – B2B / CFO STYLE
      ========================= */
-  .kpi {
-    background: var(--card);
-    border: 1px solid rgba(0,0,0,0.06);
-    box-shadow: none;
-  }
+    .kpi {
+      background: var(--card);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: none;
+    }
 
-  .kpi-label {
-    font-size: 12.5px;
-    color: var(--muted);
-    font-weight: 500;
-  }
+    .kpi-label {
+      font-size: 12.5px;
+      color: var(--muted);
+      font-weight: 500;
+    }
 
-  .kpi-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text);
-  }
-</style>
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+  </style>
 
 </head>
 
@@ -160,12 +183,10 @@
   </script>
 
   <!-- 🌸 Loading Overlay -->
-  <div id="loadingOverlay"
-       style="position:fixed;inset:0;background:var(--bg);color:var(--text);
+  <div id="loadingOverlay" style="position:fixed;inset:0;background:var(--bg);color:var(--text);
               display:flex;align-items:center;justify-content:center;
               flex-direction:column;z-index:9999;">
-    <img src="/favicon.ico" alt="Logo"
-         style="width:64px;height:64px;animation:pulse 1.5s infinite;">
+    <img src="/favicon.ico" alt="Logo" style="width:64px;height:64px;animation:pulse 1.5s infinite;">
     <h2 style="margin-top:12px;">GlowSuite AI lädt …</h2>
     <div style="margin-top:10px;width:36px;height:36px;border:4px solid rgba(0,0,0,0.2);
                 border-top:4px solid var(--brand);border-radius:50%;
@@ -173,332 +194,406 @@
   </div>
 
   <!-- ===== HEADER ===== -->
-<header class="app-header">
+  <header class="app-header">
 
-  <div class="brand">
-    <img id="brandLogo" src="/favicon.ico" alt="Logo" />
+    <div class="brand">
+      <img id="brandLogo" src="/favicon.ico" alt="Logo" />
 
-    <div>
-      <h1 id="brandTitle">GlowSuite AI – Admin</h1>
-      <div class="small">Autonomous Salon OS</div>
-      <div class="small" id="dateToday"></div>
+      <div>
+        <h1 id="brandTitle">GlowSuite AI – Admin</h1>
+        <div class="small">Autonomous Salon OS</div>
+        <div class="small" id="dateToday"></div>
+      </div>
     </div>
-  </div>
 
-  <div class="header-actions">
+    <div class="header-actions">
 
-    <!-- 🌙 Theme -->
-    <button id="themeToggle">
-      <i data-lucide="sun-moon"></i>
-    </button>
+      <!-- 🌙 Theme -->
+      <button id="themeToggle">
+        <i data-lucide="sun-moon"></i>
+      </button>
 
-    <!-- 🔥 Clean Logout Icon -->
-    <button id="logoutBtn">
-      <i data-lucide="log-out"></i>
-    </button>
-
-  </div>
-
-</header>
-
-  <!-- ========= SIDEBAR ========= -->
-  <nav class="sidebar">
-      <div class="sidebar-brand">
-        <img src="/assets/glowsuite-logo.png" alt="GlowSuite Logo" class="sidebar-logo">
-      </div>
-
-      <a href="#statsPro" class="active"><i data-lucide="bar-chart-3"></i> Dashboard</a>
-      <a href="/admin-calendar.html"><i data-lucide="calendar"></i> Kalender</a>
-      <a href="/admin-appointments.html"><i data-lucide="calendar-days"></i> Termine</a>
-      <a href="#todo"><i data-lucide="check-square"></i> Aufgaben</a>
-      <a href="/admin-employees.html"><i data-lucide="users"></i> Mitarbeiter</a>
-      <a href="/admin/services.html"><i data-lucide="sparkles"></i> Behandlungen</a>
-      <a href="#gdpr"><i data-lucide="shield-check"></i> DSGVO & Preisliste</a>
-      <a href="/datenschutz.html" target="_blank"><i data-lucide="scale"></i> Datenschutz</a>
-  </nav>
-
-<!-- ===== MAIN CONTENT ===== -->
-<main class="container">
-
-  <section id="statsPro" class="card fade-in">
-    <h2><i data-lucide="activity"></i> GlowSuite AI Dashboard</h2>
-    <p class="muted small">Live-Auswertung der letzten 30 Tage</p>
-
-    <!-- ⭐⭐⭐ A.U.R.A – Advisor Panel -->
-    <div class="aura-panel aura-card">
-
-      <div class="aura-left">
-
-        <div class="aura-title">
-          A.U.R.A – KI-Advisor für Umsatz & Auslastung
-        </div>
-
-        <div class="aura-sub">
-          Analysiert deine Studiotrends und gibt klare, umsetzbare Empfehlungen.
-        </div>
-
-        <!-- 🔥 NEU: AURA lebt -->
-        <div class="aura-status">
-          <div class="aura-dot"></div>
-          <span>AURA analysiert Live-Daten…</span>
-        </div>
-
-      </div>
-
-      <!-- EINZIGE aktive Aktion (DEAKTIVIERT – PRO LEVEL) -->
-      <button class="aura-btn" disabled title="Feature kommt bald">
-        <i data-lucide="sparkles"></i>
-        Empfehlungen anzeigen (bald verfügbar)
+      <!-- 🔥 Clean Logout Icon -->
+      <button id="logoutBtn">
+        <i data-lucide="log-out"></i>
       </button>
 
     </div>
 
-    <!-- ========================= -->
-    <!-- 📊 AURA Umsatzanalyse -->
-    <!-- ========================= -->
-    <div id="auraRevenueBox" style="margin-top:18px"></div>
+  </header>
 
-    <!-- 🔹 AURA – AKTIVE MARKETING-EMPFEHLUNG (Phase 6.5) -->
-    <!-- wird per JS direkt UNTER dem Panel eingefügt -->
-
-    <!-- STATUS -->
-    <div id="status" class="status">⏳ Lade Daten …</div>
-
-    <!-- KPIs -->
-    <div class="kpi-grid">
-      <div class="card kpi-card kpi">
-        <div class="kpi-label"><i data-lucide="clipboard-list"></i> Gesamtbuchungen</div>
-        <div id="statTotal" class="kpi-value">–</div>
-      </div>
-
-      <div class="kpi">
-        <div class="kpi-label"><i data-lucide="wallet"></i> Umsatz (30 Tage)</div>
-        <div id="statRevenue" class="kpi-value">–</div>
-      </div>
-
-      <div class="kpi">
-        <div class="kpi-label"><i data-lucide="timer"></i> Ø Buchungswert</div>
-        <div id="statAvg" class="kpi-value">–</div>
-      </div>
-
-      <div class="kpi">
-        <div class="kpi-label"><i data-lucide="user-check"></i> Aktive Kunden</div>
-        <div id="statActive" class="kpi-value">–</div>
-      </div>
-
-      <div class="kpi">
-        <div class="kpi-label"><i data-lucide="pie-chart"></i> Auslastung</div>
-        <div id="statLoad" class="kpi-value">– %</div>
-      </div>
+  <!-- ========= SIDEBAR ========= -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <img src="/assets/glowsuite-logo.png" alt="GlowSuite Logo" class="sidebar-logo">
     </div>
 
-    <!-- ========================= -->
-    <!-- AURA – LETZTE MARKETING-AKTION -->
-    <!-- Phase 6.7.1 -->
-    <!-- ========================= -->
-    <div
-      id="auraMarketingHistory"
-      class="card"
-      style="
+    <a href="#statsPro" class="active"><i data-lucide="bar-chart-3"></i> Dashboard</a>
+    <a href="/admin-calendar.html"><i data-lucide="calendar"></i> Kalender</a>
+    <a href="/admin-appointments.html"><i data-lucide="calendar-days"></i> Termine</a>
+    <a href="#todo"><i data-lucide="check-square"></i> Aufgaben</a>
+    <a href="/admin-employees.html"><i data-lucide="users"></i> Mitarbeiter</a>
+    <a href="/admin/services.html"><i data-lucide="sparkles"></i> Behandlungen</a>
+    <a href="#gdpr"><i data-lucide="shield-check"></i> DSGVO & Preisliste</a>
+    <a href="/datenschutz.html" target="_blank"><i data-lucide="scale"></i> Datenschutz</a>
+  </nav>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="container">
+
+    <section id="statsPro" class="card fade-in">
+      <h2><i data-lucide="activity"></i> GlowSuite AI Dashboard</h2>
+      <p class="muted small">Live-Auswertung der letzten 30 Tage</p>
+
+      <!-- ⭐⭐⭐ A.U.R.A – Advisor Panel -->
+      <div class="aura-panel aura-card">
+
+        <div class="aura-left">
+
+          <div class="aura-title">
+            A.U.R.A – KI-Advisor für Umsatz & Auslastung
+          </div>
+
+          <div class="aura-sub">
+            Analysiert Buchungen, Umsatztrends und Marketingdaten, um die sinnvollste nächste Maßnahme zu empfehlen.
+          </div>
+
+          <!-- 🔥 Live Status -->
+          <div class="aura-status">
+            <div class="aura-dot"></div>
+            <span>AURA analysiert Live-Daten…</span>
+          </div>
+
+          <!-- 🔥 Demo-Reife Informationen -->
+          <div style="
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:12px;
+    ">
+
+            <div style="
+        padding:8px 12px;
+        border-radius:10px;
+        background:rgba(184,148,94,0.10);
+        font-size:12px;
+      ">
+              <strong>Priorität:</strong> Hoch
+            </div>
+
+            <div style="
+        padding:8px 12px;
+        border-radius:10px;
+        background:rgba(184,148,94,0.10);
+        font-size:12px;
+      ">
+              <strong>Analyse:</strong> Live
+            </div>
+
+            <div style="
+        padding:8px 12px;
+        border-radius:10px;
+        background:rgba(184,148,94,0.10);
+        font-size:12px;
+      ">
+              <strong>Fokus:</strong> Umsatz & Auslastung
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Rechte Seite -->
+        <div style="
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    text-align:right;
+    min-width:180px;
+  ">
+
+          <div class="small muted">
+            Aktueller Modus
+          </div>
+
+          <div style="
+      font-weight:700;
+      font-size:14px;
+    ">
+            Beraten · nicht automatisieren
+          </div>
+
+          <div class="small muted">
+            Studio entscheidet selbst
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- 🔹 AURA – AKTIVE MARKETING-EMPFEHLUNG (Phase 6.5) -->
+      <!-- wird per JS direkt UNTER dem Panel eingefügt -->
+
+      <!-- STATUS -->
+      <div id="status" class="status">⏳ Lade Daten …</div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+
+        <div class="card kpi-card kpi">
+          <div class="kpi-label">
+            <i data-lucide="clipboard-list"></i>
+            Gesamtbuchungen
+          </div>
+
+          <div id="statTotal" class="kpi-value">–</div>
+
+          <div id="statTotalInfo" class="small muted" style="margin-top:6px">
+            Wird analysiert...
+          </div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi-label">
+            <i data-lucide="wallet"></i>
+            Umsatz (30 Tage)
+          </div>
+
+          <div id="statRevenue" class="kpi-value">–</div>
+
+          <div id="statRevenueInfo" class="small muted" style="margin-top:6px">
+            Wird analysiert...
+          </div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi-label">
+            <i data-lucide="timer"></i>
+            Ø Buchungswert
+          </div>
+
+          <div id="statAvg" class="kpi-value">–</div>
+
+          <div id="statAvgInfo" class="small muted" style="margin-top:6px">
+            Wird analysiert...
+          </div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi-label">
+            <i data-lucide="user-check"></i>
+            Aktive Kunden
+          </div>
+
+          <div id="statActive" class="kpi-value">–</div>
+
+          <div id="statActiveInfo" class="small muted" style="margin-top:6px">
+            Wird analysiert...
+          </div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi-label">
+            <i data-lucide="pie-chart"></i>
+            Auslastung
+          </div>
+
+          <div id="statLoad" class="kpi-value">– %</div>
+
+          <div id="statLoadInfo" class="small muted" style="margin-top:6px">
+            Wird analysiert...
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================= -->
+      <!-- AURA – LETZTE MARKETING-AKTION -->
+      <!-- Phase 6.7.1 -->
+      <!-- ========================= -->
+      <div id="auraMarketingHistory" class="card" style="
         margin-top:18px;
         padding:14px 16px;
         background:rgba(207,168,111,0.06);
         border:1px solid rgba(207,168,111,0.25);
         display:none;
-      "
-    >
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px">
-        📣 Letzte AURA Marketing-Aktion
-      </div>
-
-      <div
-        id="auraMarketingHistoryList"
-        class="small muted"
-        style="display:flex;flex-direction:column;gap:6px"
-      >
-        Wird geladen …
-      </div>
-    </div>
-
-    <!-- Charts -->
-    <div class="charts-grid">
-
-      <div class="card chart-card">
-        <div class="chart-head">
-          <i data-lucide="line-chart"></i>
-          <span>Umsatzentwicklung (30 Tage)</span>
-        </div>
-        <canvas id="chartRevenueTrend"></canvas>
-      </div>
-
-      <div class="card chart-card">
-        <div class="chart-head">
-          <i data-lucide="star"></i>
-          <span>Top 5 Services</span>
-        </div>
-        <canvas id="chartTopServices"></canvas>
-      </div>
-
-    </div>
-
-  </section>
-</main>
-
-
-
-<!-- ===================== -->
-<!-- DSGVO + TODO (FINAL) -->
-<!-- ===================== -->
-
-<main class="container">
-
-  <!-- ================= -->
-  <!-- DSGVO / PREISLISTE -->
-  <!-- ================= -->
-  <section id="gdpr" class="card fade-in">
-    <h2>
-      <i data-lucide="shield-check"></i>
-      DSGVO & Preisliste
-    </h2>
-
-    <div class="grid-3">
-
-      <!-- Preisliste -->
-      <div>
-        <h3>
-          <i data-lucide="file-text"></i>
-          Preisliste
-        </h3>
-
-        <p class="muted small">
-          Lade hier deine Preisliste hoch (PDF, DOCX, PNG, JPG)
-        </p>
-
-        <div class="toolbar" style="gap:8px; flex-wrap:wrap">
-          <button id="btnViewPreisliste" class="ghost" disabled>
-            <i data-lucide="eye"></i>
-            Ansehen
-          </button>
-
-          <button id="btnDownloadPreisliste" disabled>
-            <i data-lucide="download"></i>
-            Herunterladen
-          </button>
-
-          <button id="btnUploadPreisliste">
-            <i data-lucide="upload-cloud"></i>
-            Hochladen
-          </button>
-
-          <input
-            id="preislisteFile"
-            type="file"
-            accept=".pdf,.docx,.jpg,.jpeg,.png"
-            hidden
-          />
+      ">
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">
+          📣 Letzte AURA Marketing-Aktion
         </div>
 
-        <div
-          id="preislisteStatus"
-          class="small muted"
-          style="display:flex;align-items:center;gap:8px;margin-top:6px"
-        >
-          <i data-lucide="loader-2" class="spin"></i>
-          Status: wird überprüft …
+        <div id="auraMarketingHistoryList" class="small muted" style="display:flex;flex-direction:column;gap:6px">
+          Wird geladen …
         </div>
       </div>
 
-      <!-- Export / Anonymisierung -->
-      <div>
-        <h3>
-          <i data-lucide="send"></i>
-          Export / Anonymisierung
-        </h3>
+      <!-- Charts -->
+      <div class="charts-grid">
 
-        <input
-          id="gdprPhone"
-          placeholder="Telefonnummer"
-        />
-
-        <div class="toolbar" style="gap:8px; flex-wrap:wrap">
-          <button id="btnGDPRExport" class="btn-secondary">
-            <i data-lucide="download"></i>
-            Exportieren
-          </button>
-
-          <button id="btnGDPRAnonym" class="danger">
-            <i data-lucide="trash-2"></i>
-            Anonymisieren
-          </button>
+        <div class="card chart-card">
+          <div class="chart-head">
+            <i data-lucide="line-chart"></i>
+            <span>Umsatzentwicklung (30 Tage)</span>
+          </div>
+          <canvas id="chartRevenueTrend"></canvas>
         </div>
-      </div>
 
-      <!-- Ausgabe (optional / versteckt) -->
-      <div style="display:none">
-        <pre id="gdprOut" class="kbd small">
+        <div class="card chart-card">
+          <div class="chart-head">
+            <i data-lucide="star"></i>
+            <span>Top 5 Services</span>
+          </div>
+          <canvas id="chartTopServices"></canvas>
+        </div>
+
+      </div>
+      <!-- ========================= -->
+      <!-- 📊 AURA Umsatzanalyse -->
+      <!-- ========================= -->
+      <div id="auraRevenueBox" style="margin-top:18px"></div>
+    </section>
+  </main>
+
+
+
+  <!-- ===================== -->
+  <!-- DSGVO + TODO (FINAL) -->
+  <!-- ===================== -->
+
+  <main class="container">
+
+    <!-- ================= -->
+    <!-- DSGVO / PREISLISTE -->
+    <!-- ================= -->
+    <section id="gdpr" class="card fade-in">
+      <h2>
+        <i data-lucide="shield-check"></i>
+        DSGVO & Preisliste
+      </h2>
+
+      <div class="grid-3">
+
+        <!-- Preisliste -->
+        <div>
+          <h3>
+            <i data-lucide="file-text"></i>
+            Preisliste
+          </h3>
+
+          <p class="muted small">
+            Lade hier deine Preisliste hoch (PDF, DOCX, PNG, JPG)
+          </p>
+
+          <div class="toolbar" style="gap:8px; flex-wrap:wrap">
+            <button id="btnViewPreisliste" class="ghost" disabled>
+              <i data-lucide="eye"></i>
+              Ansehen
+            </button>
+
+            <button id="btnDownloadPreisliste" disabled>
+              <i data-lucide="download"></i>
+              Herunterladen
+            </button>
+
+            <button id="btnUploadPreisliste">
+              <i data-lucide="upload-cloud"></i>
+              Hochladen
+            </button>
+
+            <input id="preislisteFile" type="file" accept=".pdf,.docx,.jpg,.jpeg,.png" hidden />
+          </div>
+
+          <div id="preislisteStatus" class="small muted" style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            <i data-lucide="loader-2" class="spin"></i>
+            Status: wird überprüft …
+          </div>
+        </div>
+
+        <!-- Export / Anonymisierung -->
+        <div>
+          <h3>
+            <i data-lucide="send"></i>
+            Export / Anonymisierung
+          </h3>
+
+          <input id="gdprPhone" placeholder="Telefonnummer" />
+
+          <div class="toolbar" style="gap:8px; flex-wrap:wrap">
+            <button id="btnGDPRExport" class="btn-secondary">
+              <i data-lucide="download"></i>
+              Exportieren
+            </button>
+
+            <button id="btnGDPRAnonym" class="danger">
+              <i data-lucide="trash-2"></i>
+              Anonymisieren
+            </button>
+          </div>
+        </div>
+
+        <!-- Ausgabe (optional / versteckt) -->
+        <div style="display:none">
+          <pre id="gdprOut" class="kbd small">
 Noch keine Ausgabe …
         </pre>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== -->
+    <!-- TODO LISTE -->
+    <!-- ========== -->
+    <section id="todo" class="card fade-in">
+      <h2>
+        <i data-lucide="check-square"></i>
+        Aufgaben (To-Do)
+      </h2>
+
+      <p class="muted small">
+        Organisiere deine täglichen Aufgaben.
+      </p>
+
+      <div class="toolbar" style="gap:10px; flex-wrap:wrap">
+        <input id="todoTitle" placeholder="Neue Aufgabe …" style="flex:1; min-width:220px" />
+
+        <select id="todoPrio">
+          <option value="0" selected>Priorität: Normal</option>
+          <option value="1">Hoch</option>
+          <option value="2">🔥 Kritisch</option>
+        </select>
+
+        <input id="todoDue" type="date" />
+
+        <button id="btnTodoAdd" class="btn-success">
+          <i data-lucide="plus"></i>
+          Hinzufügen
+        </button>
+
+        <button id="btnTodoReload" class="ghost">
+          <i data-lucide="refresh-cw"></i>
+          Neu laden
+        </button>
       </div>
 
-    </div>
-  </section>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead>
+            <tr>
+              <th>Erledigt</th>
+              <th>Titel</th>
+              <th>Fällig</th>
+              <th>Priorität</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody id="todoBody"></tbody>
+        </table>
+      </div>
+    </section>
 
-  <!-- ========== -->
-  <!-- TODO LISTE -->
-  <!-- ========== -->
-  <section id="todo" class="card fade-in">
-    <h2>
-      <i data-lucide="check-square"></i>
-      Aufgaben (To-Do)
-    </h2>
-
-    <p class="muted small">
-      Organisiere deine täglichen Aufgaben.
-    </p>
-
-    <div class="toolbar" style="gap:10px; flex-wrap:wrap">
-      <input
-        id="todoTitle"
-        placeholder="Neue Aufgabe …"
-        style="flex:1; min-width:220px"
-      />
-
-      <select id="todoPrio">
-        <option value="0" selected>Priorität: Normal</option>
-        <option value="1">Hoch</option>
-        <option value="2">🔥 Kritisch</option>
-      </select>
-
-      <input id="todoDue" type="date" />
-
-      <button id="btnTodoAdd" class="btn-success">
-        <i data-lucide="plus"></i>
-        Hinzufügen
-      </button>
-
-      <button id="btnTodoReload" class="ghost">
-        <i data-lucide="refresh-cw"></i>
-        Neu laden
-      </button>
-    </div>
-
-    <div class="table-wrap" style="margin-top:12px">
-      <table>
-        <thead>
-          <tr>
-            <th>Erledigt</th>
-            <th>Titel</th>
-            <th>Fällig</th>
-            <th>Priorität</th>
-            <th>Aktion</th>
-          </tr>
-        </thead>
-        <tbody id="todoBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-</main>
+  </main>
 
 
 
@@ -562,6 +657,3 @@ Noch keine Ausgabe …
       window.location.href = "/admin/login.html";
     };
   </script>
-
-
-
