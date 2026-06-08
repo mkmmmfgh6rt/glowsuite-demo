@@ -96,7 +96,7 @@ export async function createAppointmentPDF(booking) {
 
     const branding = {
       brandName: "GlowSuite AI",
-      logo: "assets/login.png"
+      logo: "assets/login.jpg"
     };
 
     // ===============================
@@ -197,8 +197,10 @@ export async function createAppointmentPDF(booking) {
 
           const logoSize = 72;
 
+          const logoBuffer = fs.readFileSync(logoPath);
+
           doc.image(
-            logoPath,
+            logoBuffer,
             (doc.page.width / 2) - (logoSize / 2),
             34,
             {
@@ -206,13 +208,13 @@ export async function createAppointmentPDF(booking) {
             }
           );
 
-          console.log("LOGO EINGEFÜGT");
+          console.log("✅ LOGO ALS BUFFER EINGEFÜGT");
 
         }
 
       } catch (err) {
 
-        console.error("LOGO FEHLER:", err);
+        console.error("❌ LOGO FEHLER:", err);
 
       }
 
