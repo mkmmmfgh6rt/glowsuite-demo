@@ -197,10 +197,8 @@ export async function createAppointmentPDF(booking) {
 
           const logoSize = 72;
 
-          const logoBuffer = fs.readFileSync(logoPath);
-
           doc.image(
-            logoBuffer,
+            logoPath,
             (doc.page.width / 2) - (logoSize / 2),
             34,
             {
