@@ -96,7 +96,7 @@ export async function createAppointmentPDF(booking) {
 
     const branding = {
       brandName: "GlowSuite AI",
-      logo: "assets/logo-glowsuite.png"
+      logo: "assets/logo-glowsuite.jpg"
     };
 
     // ===============================
@@ -191,8 +191,10 @@ export async function createAppointmentPDF(booking) {
 
         const logoSize = 72;
 
+        const logoBuffer = fs.readFileSync(logoPath);
+
         doc.image(
-          logoPath,
+          logoBuffer,
           (doc.page.width / 2) - (logoSize / 2),
           34,
           {
