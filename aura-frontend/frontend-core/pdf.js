@@ -179,11 +179,13 @@ export async function createAppointmentPDF(booking) {
 
       const logoPath = path.join(
         process.cwd(),
+        "aura-frontend",
         "public",
         branding.logo
       );
 
       console.log("========== LOGO TEST ==========");
+      console.log("CWD:", process.cwd());
       console.log("PFAD:", logoPath);
       console.log("EXISTS:", fs.existsSync(logoPath));
 
