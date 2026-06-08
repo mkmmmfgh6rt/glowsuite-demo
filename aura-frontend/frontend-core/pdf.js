@@ -186,6 +186,7 @@ export async function createAppointmentPDF(booking) {
 
         const logoPath = path.join(
           process.cwd(),
+          "aura-frontend",
           "public",
           branding.logo
         );
