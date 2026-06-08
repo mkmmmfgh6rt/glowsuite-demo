@@ -175,49 +175,48 @@ export async function createAppointmentPDF(booking) {
     // HEADER
     // =====================================================
 
-    try {
+    console.log("========== PDF LOGO DEBUG ==========");
+    console.log("TENANT:", tenant);
+    console.log("BRANDING:", branding);
+    console.log("BRANDING.LOGO:", branding?.logo);
 
-      const logoPath = path.join(
-        process.cwd(),
-        "aura-frontend",
-        "public",
-        branding.logo
-      );
+    if (branding?.logo) {
 
-      console.log("========== LOGO TEST ==========");
-      console.log("CWD:", process.cwd());
-      console.log("PFAD:", logoPath);
-      console.log("EXISTS:", fs.existsSync(logoPath));
+      try {
 
-      if (fs.existsSync(logoPath)) {
-
-        const logoBuffer = fs.readFileSync(logoPath);
-
-        console.log("BUFFER SIZE:", logoBuffer.length);
-
-        doc.image(
-          logoBuffer,
-          (doc.page.width / 2) - 36,
-          34,
-          {
-            width: 72
-          }
+        const logoPath = path.join(
+          process.cwd(),
+          "public",
+          branding.logo
         );
 
-        console.log("LOGO EINGEFÜGT");
+        console.log("LOGOPFAD:", logoPath);
+        console.log("LOGO EXISTIERT:", fs.existsSync(logoPath));
 
-      } else {
+        if (fs.existsSync(logoPath)) {
 
-        console.log("LOGO NICHT GEFUNDEN");
+          const logoSize = 72;
+
+          doc.image(
+            logoPath,
+            (doc.page.width / 2) - (logoSize / 2),
+            34,
+            {
+              width: logoSize
+            }
+          );
+
+          console.log("LOGO EINGEFÜGT");
+
+        }
+
+      } catch (err) {
+
+        console.error("LOGO FEHLER:", err);
 
       }
 
-    } catch (err) {
-
-      console.error("LOGO FEHLER:", err);
-
     }
-
     // =====================================================
     // TITLE
     // =====================================================
