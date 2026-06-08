@@ -95,7 +95,7 @@ export async function createAppointmentPDF(booking) {
     const tenant = appointment.studios.slug;
 
     const branding = {
-      brandName: "TEST PDF 123",
+      brandName: "GlowSuite AI",
       logo: "assets/logo-glowsuite.jpg"
     };
 
