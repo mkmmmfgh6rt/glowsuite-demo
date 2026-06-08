@@ -96,7 +96,7 @@ export async function createAppointmentPDF(booking) {
 
     const branding = {
       brandName: "GlowSuite AI",
-      logo: "assets/logo-glowsuite.jpg"
+      logo: "assets/logo-glowsuite.png"
     };
 
     // ===============================
@@ -175,22 +175,44 @@ export async function createAppointmentPDF(booking) {
     // HEADER
     // =====================================================
 
-    // =====================================================
-    // LOGO TEST – ROTES QUADRAT
-    // =====================================================
+    try {
 
-    doc
-      .save()
-      .rect(
-        (doc.page.width / 2) - 36,
-        34,
-        72,
-        72
-      )
-      .fill("#ff0000")
-      .restore();
+      const logoPath = path.join(
+        process.cwd(),
+        "public",
+        branding.logo
+      );
 
-    console.log("✅ ROTES QUADRAT WURDE GEZEICHNET");
+      console.log("========== LOGO TEST ==========");
+      console.log("PFAD:", logoPath);
+      console.log("EXISTS:", fs.existsSync(logoPath));
+
+      if (fs.existsSync(logoPath)) {
+
+        const logoSize = 72;
+
+        doc.image(
+          logoPath,
+          (doc.page.width / 2) - (logoSize / 2),
+          34,
+          {
+            width: logoSize
+          }
+        );
+
+        console.log("LOGO EINGEFÜGT");
+
+      } else {
+
+        console.log("LOGO NICHT GEFUNDEN");
+
+      }
+
+    } catch (err) {
+
+      console.error("LOGO FEHLER:", err);
+
+    }
 
     // =====================================================
     // TITLE
