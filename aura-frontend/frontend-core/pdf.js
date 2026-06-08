@@ -175,45 +175,22 @@ export async function createAppointmentPDF(booking) {
     // HEADER
     // =====================================================
 
-    try {
+    // =====================================================
+    // LOGO TEST – ROTES QUADRAT
+    // =====================================================
 
-      const logoPath = path.join(
-        process.cwd(),
-        "public",
-        "assets",
-        "logo-glowsuite.png"
-      );
+    doc
+      .save()
+      .rect(
+        (doc.page.width / 2) - 36,
+        34,
+        72,
+        72
+      )
+      .fill("#ff0000")
+      .restore();
 
-      console.log("========== LOGO TEST ==========");
-      console.log("PFAD:", logoPath);
-      console.log("EXISTS:", fs.existsSync(logoPath));
-
-      if (fs.existsSync(logoPath)) {
-
-        const logoSize = 72;
-
-        doc.image(
-          logoPath,
-          (doc.page.width / 2) - (logoSize / 2),
-          34,
-          {
-            width: logoSize
-          }
-        );
-
-        console.log("LOGO EINGEFÜGT");
-
-      } else {
-
-        console.log("LOGO NICHT GEFUNDEN");
-
-      }
-
-    } catch (err) {
-
-      console.error("LOGO FEHLER:", err);
-
-    }
+    console.log("✅ ROTES QUADRAT WURDE GEZEICHNET");
 
     // =====================================================
     // TITLE
