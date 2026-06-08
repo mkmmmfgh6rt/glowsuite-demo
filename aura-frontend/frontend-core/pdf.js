@@ -189,16 +189,16 @@ export async function createAppointmentPDF(booking) {
 
       if (fs.existsSync(logoPath)) {
 
-        const logoSize = 72;
-
         const logoBuffer = fs.readFileSync(logoPath);
+
+        console.log("BUFFER SIZE:", logoBuffer.length);
 
         doc.image(
           logoBuffer,
-          (doc.page.width / 2) - (logoSize / 2),
+          (doc.page.width / 2) - 36,
           34,
           {
-            width: logoSize
+            width: 72
           }
         );
 
