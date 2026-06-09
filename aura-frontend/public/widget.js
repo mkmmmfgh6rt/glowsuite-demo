@@ -1670,6 +1670,11 @@ async function createBooking() {
       j.booking?.icsBase64 ||
       null;
 
+    const bookingId =
+      j.booking?.id ||
+      j.id ||
+      null;
+
     let extra = "";
 
     // =====================================================
