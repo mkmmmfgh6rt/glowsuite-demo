@@ -1650,24 +1650,18 @@ async function createBooking() {
     // PDF + ICS DATEN HOLEN
     // =====================================================
 
-    const pdfUrl =
+    const pdfData =
+      j.pdfBase64 ||
+      j.booking?.pdfBase64 ||
       j.pdfUrl ||
       j.booking?.pdfUrl ||
       null;
 
-    const icsUrl =
-      j.icsUrl ||
-      j.booking?.icsUrl ||
-      null;
-
-    const pdfBase64 =
-      j.pdfBase64 ||
-      j.booking?.pdfBase64 ||
-      null;
-
-    const icsBase64 =
+    const icsData =
       j.icsBase64 ||
       j.booking?.icsBase64 ||
+      j.icsUrl ||
+      j.booking?.icsUrl ||
       null;
 
     const bookingId =
@@ -1681,22 +1675,24 @@ async function createBooking() {
     // PDF LINK
     // =====================================================
 
-    if (pdfUrl || pdfBase64) {
+    if (pdfData) {
 
       const pdfHref =
-        pdfUrl ||
-        `data:application/pdf;base64,${pdfBase64}`;
+        pdfData.startsWith("/pdf/")
+          ? pdfData
+          : pdfData.startsWith("data:")
+            ? pdfData
+            : `data:application/pdf;base64,${pdfData}`;
 
       extra += `
     <br><br>
-
     <a
       href="${pdfHref}"
+      download="terminbestaetigung.pdf"
       target="_blank"
-      class="pill"
-      style="display:inline-block;text-decoration:none;"
+      class="download-link"
     >
-      📄 Terminbestätigung herunterladen
+      📄 PDF herunterladen
     </a>
   `;
     }
@@ -1705,24 +1701,22 @@ async function createBooking() {
     // ICS LINK
     // =====================================================
 
-    if (icsUrl || icsBase64) {
+    if (icsData) {
 
-      const icsHref =
-        icsUrl ||
-        `data:text/calendar;base64,${icsBase64}`;
+      const icsHref = icsData.startsWith("data:")
+        ? icsData
+        : `data:text/calendar;base64,${icsData}`;
 
       extra += `
-    <br><br>
-
-    <a
-      href="${icsHref}"
-      target="_blank"
-      class="pill"
-      style="display:inline-block;text-decoration:none;"
-    >
-      📅 Termin im Kalender speichern
-    </a>
-  `;
+        <br>
+        <a
+          href="${icsHref}"
+          download="termin.ics"
+          class="download-link"
+        >
+          📅 Kalender speichern
+        </a>
+      `;
     }
 
     // =====================================================
