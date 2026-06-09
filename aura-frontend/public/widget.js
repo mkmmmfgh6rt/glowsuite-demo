@@ -1691,8 +1691,7 @@ async function createBooking() {
      download="terminbestaetigung.pdf"
      target="_blank"
      class="download-link"
-     style="display:inline-flex;align-items:center;gap:7px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"
-    >
+     style="display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:190px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"    >
       📄 PDF herunterladen
     </a>
   `;
@@ -1714,8 +1713,7 @@ async function createBooking() {
           href="${icsHref}"
           download="termin.ics"
           class="download-link"
-          style="display:inline-flex;align-items:center;gap:7px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"
-        >
+          style="display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:190px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"        >
           📅 Kalender speichern
         </a>
       `;
@@ -1794,7 +1792,7 @@ async function createBooking() {
       : null;
 
     $msg(
-      `${goldIcon(ICONS.info)}✅ Dein Termin wurde erfolgreich eingetragen!<br>` +
+      `${goldIcon(ICONS.info)}✅ Dein Termin wurde erfolgreich bestätigt!<br>` +
       `<span class="tag">${serviceNames}</span>` +
       extra
     );
@@ -1819,7 +1817,7 @@ async function createBooking() {
 function showSoftClose(lastService = null) {
 
   const box = $msg(
-    `${goldIcon(ICONS.info)}✨ Möchtest du direkt deinen nächsten Termin sichern?<br>
+    `${goldIcon(ICONS.info)}✨ Viele Kundinnen sichern sich ihren Wunschtermin bereits heute.<br>
      <span class="muted-small">Viele Kunden buchen direkt vor, damit sie ihren Wunschslot behalten.</span>`
   );
 
