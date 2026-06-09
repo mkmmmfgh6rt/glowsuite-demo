@@ -1687,10 +1687,11 @@ async function createBooking() {
       extra += `
     <br><br>
     <a
-      href="${pdfHref}"
-      download="terminbestaetigung.pdf"
-      target="_blank"
-      class="download-link"
+     href="${pdfHref}"
+     download="terminbestaetigung.pdf"
+     target="_blank"
+     class="download-link"
+     style="display:inline-flex;align-items:center;gap:7px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"
     >
       📄 PDF herunterladen
     </a>
@@ -1713,6 +1714,7 @@ async function createBooking() {
           href="${icsHref}"
           download="termin.ics"
           class="download-link"
+          style="display:inline-flex;align-items:center;gap:7px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"
         >
           📅 Kalender speichern
         </a>
