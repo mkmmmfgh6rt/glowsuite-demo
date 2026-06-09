@@ -187,7 +187,7 @@ export async function createAppointmentPDF(booking) {
       const logoArrayBuffer = await logoResponse.arrayBuffer();
       const logoBuffer = Buffer.from(logoArrayBuffer);
 
-      const logoSize = 85;
+      const logoSize = 80;
 
       doc.image(
         logoBuffer,
@@ -460,7 +460,7 @@ export async function createAppointmentPDF(booking) {
 
     try {
 
-      const calendarUrl = `/ics/${appointment.id}.ics`;
+      const calendarUrl = `https://glowsuite-ai.de/ics/${appointment.id}.ics`;
 
       const qrData = await QRCode.toDataURL(calendarUrl);
 
