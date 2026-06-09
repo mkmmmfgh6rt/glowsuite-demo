@@ -96,7 +96,7 @@ export async function createAppointmentPDF(booking) {
 
     const branding = {
       brandName: "GlowSuite AI",
-      logo: "assets/logo.png"
+      logo: "assets/login.png"
     };
 
     // ===============================
@@ -172,51 +172,36 @@ export async function createAppointmentPDF(booking) {
     doc.fillColor("#f5efe6");
 
     // =====================================================
-    // HEADER
+    // HEADER LOGO – DIREKT VON DOMAIN LADEN
     // =====================================================
 
-    console.log("========== PDF LOGO DEBUG ==========");
-    console.log("TENANT:", tenant);
-    console.log("BRANDING:", branding);
-    console.log("BRANDING.LOGO:", branding?.logo);
+    try {
+      const logoUrl = "https://glowsuite-ai.de/assets/login.png";
 
-    if (branding?.logo) {
+      const logoResponse = await fetch(logoUrl);
 
-      try {
-
-        const logoPath = path.join(
-          process.cwd(),
-          "aura-frontend",
-          "public",
-          branding.logo
-        );
-
-        console.log("LOGOPFAD:", logoPath);
-        console.log("LOGO EXISTIERT:", fs.existsSync(logoPath));
-
-        if (fs.existsSync(logoPath)) {
-
-          const logoSize = 72;
-
-          doc.image(
-            logoPath,
-            (doc.page.width / 2) - (logoSize / 2),
-            34,
-            {
-              width: logoSize
-            }
-          );
-
-          console.log("✅ LOGO ALS BUFFER EINGEFÜGT");
-
-        }
-
-      } catch (err) {
-
-        console.error("❌ LOGO FEHLER:", err);
-
+      if (!logoResponse.ok) {
+        throw new Error(`Logo konnte nicht geladen werden: ${logoResponse.status}`);
       }
 
+      const logoArrayBuffer = await logoResponse.arrayBuffer();
+      const logoBuffer = Buffer.from(logoArrayBuffer);
+
+      const logoSize = 72;
+
+      doc.image(
+        logoBuffer,
+        (doc.page.width / 2) - (logoSize / 2),
+        34,
+        {
+          width: logoSize
+        }
+      );
+
+      console.log("✅ LOGO VON URL GELADEN UND EINGEFÜGT");
+
+    } catch (err) {
+      console.error("❌ LOGO URL FEHLER:", err);
     }
     // =====================================================
     // TITLE
