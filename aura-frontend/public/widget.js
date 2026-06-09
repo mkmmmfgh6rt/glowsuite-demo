@@ -1730,6 +1730,10 @@ async function createBooking() {
 
     <button
       class="pill alt"
+      style="
+        min-width:200px;
+        justify-content:center;
+      "
       onclick="
         (async () => {
 
