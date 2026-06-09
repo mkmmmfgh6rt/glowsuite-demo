@@ -3334,6 +3334,7 @@ app.delete("/api/bookings/:id", async (req, res) => {
     }
 
     console.log("🗑️ DELETE BOOKING:", id);
+    console.log("🧪 DELETE REQUEST ID:", id);
 
     const success = deleteBooking(id);
 
