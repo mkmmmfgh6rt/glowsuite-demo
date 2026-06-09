@@ -96,7 +96,7 @@ export async function createAppointmentPDF(booking) {
 
     const branding = {
       brandName: "GlowSuite AI",
-      logo: "assets/login.png"
+      logo: "assets/logo.png"
     };
 
     // ===============================
@@ -176,7 +176,7 @@ export async function createAppointmentPDF(booking) {
     // =====================================================
 
     try {
-      const logoUrl = "https://glowsuite-ai.de/assets/login.png";
+      const logoUrl = "https://glowsuite-ai.de/assets/logo.png";
 
       const logoResponse = await fetch(logoUrl);
 
