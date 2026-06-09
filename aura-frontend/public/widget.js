@@ -1726,50 +1726,50 @@ async function createBooking() {
     if (bookingId) {
 
       extra += `
-        <br><br>
+    <br><br>
 
-        <button
-          class="pill alt"
-          onclick="
-            (async () => {
+    <button
+      class="pill alt"
+      onclick="
+        (async () => {
 
-              const ok = confirm('Termin wirklich stornieren?');
+          const ok = confirm('Termin wirklich stornieren?');
 
-              if (!ok) return;
+          if (!ok) return;
 
-              try {
+          try {
 
-                const r = await fetch('/api/bookings/${bookingId}', {
-                  method: 'DELETE'
-                });
+            const r = await fetch('/api/bookings/${bookingId}', {
+              method: 'DELETE'
+            });
 
-                const j = await r.json();
+            const j = await r.json();
 
-                if (j.success) {
+            if (j.success) {
 
-                  alert('Termin erfolgreich storniert');
+              alert('Termin erfolgreich storniert');
 
-                  location.reload();
+              location.reload();
 
-                } else {
+            } else {
 
-                  alert('Stornierung fehlgeschlagen');
+              alert('Stornierung fehlgeschlagen');
 
-                }
+            }
 
-              } catch(e) {
+          } catch(e) {
 
-                console.error(e);
-                alert('Technischer Fehler');
+            console.error(e);
+            alert('Technischer Fehler');
 
-              }
+          }
 
-            })()
-          "
-        >
-          ❌ Termin stornieren
-        </button>
-      `;
+        })()
+      "
+    >
+      ❌ Termin stornieren
+    </button>
+  `;
     }
 
     // =====================================================
@@ -1777,22 +1777,26 @@ async function createBooking() {
     // =====================================================
 
     extra += `
-      <br><br>
+  <br><br>
 
-      <button
-        class="pill"
-        onclick="location.reload()"
-      >
-        ✨ Neuen Termin buchen
-      </button>
-    `;
+  <button
+    class="pill"
+    style="
+      min-width:200px;
+      justify-content:center;
+    "
+    onclick="location.reload()"
+  >
+    ✨ Neuen Termin buchen
+  </button>
+`;
 
     const lastServiceForRepeat = chosenService
       ? { ...chosenService }
       : null;
 
     $msg(
-      `${goldIcon(ICONS.info)}✅ Dein Termin wurde erfolgreich bestätigt!<br>` +
+      `${goldIcon(ICONS.info)}🎉 Dein Termin wurde erfolgreich bestätigt!<br>` +
       `<span class="tag">${serviceNames}</span>` +
       extra
     );
@@ -1817,8 +1821,8 @@ async function createBooking() {
 function showSoftClose(lastService = null) {
 
   const box = $msg(
-    `${goldIcon(ICONS.info)}✨ Viele Kundinnen sichern sich ihren Wunschtermin bereits heute.<br>
-     <span class="muted-small">Viele Kunden buchen direkt vor, damit sie ihren Wunschslot behalten.</span>`
+    `${goldIcon(ICONS.info)}✨ Möchtest du direkt deinen nächsten Termin sichern<br>
+     <span class="muted-small">✨ Viele Kunden buchen direkt vor, damit sie ihren Wunschslot behalten.</span>`
   );
 
   const row = document.createElement("div");
@@ -1826,6 +1830,8 @@ function showSoftClose(lastService = null) {
 
   const yes = document.createElement("button");
   yes.className = "pill";
+  yes.style.minWidth = "200px";
+  yes.style.justifyContent = "center";
   yes.textContent = "Ja, nächsten Termin planen";
 
   yes.onclick = () => {
@@ -1902,6 +1908,8 @@ function showSoftClose(lastService = null) {
 
   const later = document.createElement("button");
   later.className = "pill alt";
+  later.style.minWidth = "95px";
+  later.style.justifyContent = "center";
   later.textContent = "Später";
 
   later.onclick = () => {
