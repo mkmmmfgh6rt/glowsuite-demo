@@ -187,12 +187,12 @@ export async function createAppointmentPDF(booking) {
       const logoArrayBuffer = await logoResponse.arrayBuffer();
       const logoBuffer = Buffer.from(logoArrayBuffer);
 
-      const logoSize = 105;
+      const logoSize = 85;
 
       doc.image(
         logoBuffer,
         (doc.page.width / 2) - (logoSize / 2),
-        50,
+        38,
         {
           width: logoSize
         }
