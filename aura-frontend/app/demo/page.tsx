@@ -205,8 +205,9 @@ export default function DemoPage() {
                 fontSize: 16,
               }}
             >
-              Kundinnen können ganz normal schreiben. GlowSuite erkennt automatisch
-              Service, Datum, Uhrzeit und Mitarbeiterwunsch.
+              Kundinnen schreiben so, wie sie es aus WhatsApp gewohnt sind.
+              Selbst unvollständige Nachrichten und Synonyme werden erkannt –
+              A.U.R.A führt automatisch durch die Terminbuchung.
             </p>
           </div>
 
@@ -256,10 +257,15 @@ export default function DemoPage() {
               </div>
 
               <div style={{ color: "#fff8ea", lineHeight: 1.9, fontSize: 16 }}>
-                ✅ erkennt Service<br />
-                ✅ erkennt Datum<br />
-                ✅ erkennt Mitarbeiter<br />
-                ✅ prüft freie Termine
+                „Finger morgen um 17 Uhr.“
+
+                ↓
+
+                ✅ Synonym erkannt
+                Finger → Maniküre
+
+                ✅ Datum erkannt
+                ✅ Uhrzeit erkannt
               </div>
             </div>
 
@@ -276,10 +282,16 @@ export default function DemoPage() {
               </div>
 
               <div style={{ color: "#fff8ea", lineHeight: 1.9, fontSize: 16 }}>
-                ✅ WhatsApp-Erinnerung<br />
-                ✅ PDF-Bestätigung<br />
-                ✅ Google-Bewertung<br />
-                ✅ Kundenreaktivierung
+                „Maniküre morgen 17 Uhr.“
+
+                ↓
+
+                ✅ Service erkannt
+                ✅ Datum erkannt
+                ✅ Uhrzeit erkannt
+
+                → Welche Mitarbeiterin darf
+                den Termin übernehmen?
               </div>
             </div>
           </div>
@@ -302,8 +314,9 @@ export default function DemoPage() {
           <div style={{ textAlign: "center", marginBottom: 18 }}>
             <h2 style={{ margin: 0, fontSize: 26 }}>Live Beauty AI testen</h2>
             <p style={{ margin: "8px 0 0", color: "rgba(248,243,236,0.70)" }}>
-              Buche einen Testtermin und sieh, wie automatisch PDF, Kalender und
-              Folgeprozesse starten.
+              Schreibe einfach wie in WhatsApp und teste,
+              wie A.U.R.A Termine automatisch erkennt,
+              fehlende Angaben ergänzt und Folgeprozesse startet.
             </p>
           </div>
 
