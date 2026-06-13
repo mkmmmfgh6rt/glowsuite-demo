@@ -978,26 +978,20 @@ function parseBookingIntent(message, services, employees) {
   }
 
   // =======================================================
-  // 🔥 Deutsches Datum erkennen
+  // 🔥 Deutsches Datum erkennen: 24.06 / 24.06.2026
   // =======================================================
-  const germanDateMatch = msg.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b/);
+  const parsedGermanDate = parseGermanDate(message);
 
-  if (germanDateMatch) {
-    const day = germanDateMatch[1].padStart(2, "0");
-    const month = germanDateMatch[2].padStart(2, "0");
-    const year = germanDateMatch[3];
-
-    result.date = `${year}-${month}-${day}`;
+  if (parsedGermanDate) {
+    result.date = parsedGermanDate;
   }
-
 
   // =======================================================
   // 🔥 Uhrzeit erkennen (sauber, kein Datum-Bug)
   // =======================================================
   const timeMatch =
-    msg.match(/\b(\d{1,2}):(\d{2})\b/) ||
-    msg.match(/\b(\d{1,2})\s*uhr\b/i) ||
-    msg.match(/\b(\d{1,2})\b/);
+    message.match(/\b(\d{1,2}):(\d{2})\b/) ||
+    message.match(/\b(\d{1,2})\s*uhr\b/i);
 
   if (timeMatch) {
     const hour = String(timeMatch[1]).padStart(2, "0");
@@ -1010,7 +1004,6 @@ function parseBookingIntent(message, services, employees) {
 
   return result;
 }
-
 
 
 app.post("/api/whatsapp/incoming", async (req, res) => {
@@ -1054,6 +1047,69 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
     }
 
     // =======================================================
+    // 🚫 STORNO AUSWAHL (Mehrere Termine)
+    // =======================================================
+
+    if (sessions[from]?.step === "cancel_selection") {
+
+      const selection = Number(message);
+
+      const options = sessions[from].cancelOptions || [];
+
+      const booking = options[selection - 1];
+
+      if (!booking) {
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: from,
+          body:
+            "Bitte antworte mit der Nummer des Termins, den du stornieren möchtest."
+        });
+
+        return res.sendStatus(200);
+      }
+
+      const success = deleteBooking(booking.id);
+
+      if (!success) {
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: from,
+          body:
+            "Der Termin konnte leider nicht storniert werden."
+        });
+
+        delete sessions[from];
+
+        return res.sendStatus(200);
+      }
+
+      completedBookings.delete(
+        from.replace("whatsapp:", "")
+      );
+
+      abandonedWhatsappSessions.delete(from);
+
+      delete sessions[from];
+
+      await twilioClient.messages.create({
+        from: TWILIO_WHATSAPP_FROM,
+        to: from,
+        body:
+          "✅ Dein Termin wurde erfolgreich storniert.\n\n" +
+          "Der Platz wurde wieder freigegeben.\n\n" +
+          "Falls du einen neuen Termin möchtest:\n" +
+          "1️⃣ Termin buchen"
+      });
+
+      console.log("🚫 Termin storniert:", booking.id);
+
+      return res.sendStatus(200);
+    }
+
+    // =======================================================
     // 🚫 GLOBAL STORNO
     // =======================================================
 
@@ -1078,15 +1134,75 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
             new Date(a.dateTime) - new Date(b.dateTime)
           );
 
-        const booking = upcoming[0];
+        if (upcoming.length === 1) {
 
-        if (!booking) {
+          const booking = upcoming[0];
+
+          const ok = deleteBooking(booking.id);
+
+          if (!ok) {
+
+            await twilioClient.messages.create({
+              from: TWILIO_WHATSAPP_FROM,
+              to: from,
+              body:
+                "Der Termin konnte leider nicht storniert werden."
+            });
+
+            return res.sendStatus(200);
+          }
+
+          completedBookings.delete(phone);
+          abandonedWhatsappSessions.delete(from);
+          delete sessions[from];
 
           await twilioClient.messages.create({
             from: TWILIO_WHATSAPP_FROM,
             to: from,
             body:
-              "Ich konnte keinen aktiven Termin finden."
+              "✅ Dein Termin wurde erfolgreich storniert.\n\n" +
+              "Der Platz wurde wieder freigegeben.\n\n" +
+              "Falls du einen neuen Termin möchtest:\n" +
+              "1️⃣ Termin buchen"
+          });
+
+          console.log("🚫 Termin storniert:", booking.id);
+
+          return res.sendStatus(200);
+        }
+
+        if (upcoming.length > 1) {
+
+          sessions[from] = {
+            step: "cancel_selection",
+            cancelOptions: upcoming
+          };
+
+          const lines = upcoming
+            .map((b, i) => {
+
+              const dt = new Date(b.dateTime);
+
+              const date = dt.toLocaleDateString("de-DE");
+
+              const time = dt.toLocaleTimeString("de-DE", {
+                hour: "2-digit",
+                minute: "2-digit"
+              });
+
+              return `${i + 1}️⃣ ${b.service}\n📅 ${date} um ${time}`;
+
+            })
+            .join("\n\n");
+
+          await twilioClient.messages.create({
+            from: TWILIO_WHATSAPP_FROM,
+            to: from,
+            body:
+              "Ich habe mehrere zukünftige Termine gefunden.\n\n" +
+              "Welchen Termin möchtest du stornieren?\n\n" +
+              lines +
+              "\n\nBitte antworte mit der entsprechenden Nummer."
           });
 
           return res.sendStatus(200);
@@ -1737,19 +1853,83 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
         reply =
           "Bitte wähle einen Mitarbeiter.\n\n" +
           employeeLines;
+
       } else {
         session.employee = emp;
         session.employee_id = emp.id;
 
-        session.step = "date_pick";
+        // 🔥 Falls Datum aus AI-Flow schon vorhanden ist
+        if (session.selectedDate) {
+          const slots = calculateSlotsForEmployee({
+            emp: session.employee,
+            serviceDuration: session.duration,
+            date: session.selectedDate,
+            tenant: TENANT_DEFAULT,
+          });
 
-        reply =
-          "Bitte wähle ein Datum:\n\n" +
-          "1️⃣ Heute\n" +
-          "2️⃣ Morgen\n" +
-          "3️⃣ Übermorgen\n\n" +
-          "oder schreibe ein Datum:\n" +
-          "z.B. 15.03.2026";
+          if (!slots.length) {
+            reply = "Leider sind an diesem Tag keine Termine frei.";
+            session.step = "menu";
+
+          } else if (session.aiTime) {
+            let matchedSlot = slots.find(s => s.time === session.aiTime);
+
+            if (!matchedSlot) {
+              matchedSlot = slots.find(s =>
+                s.time.startsWith(session.aiTime.slice(0, 2))
+              );
+            }
+
+            if (matchedSlot) {
+              session.selectedSlot = matchedSlot;
+              session.step = "ask_name";
+
+              reply =
+                `Perfekt 👌\n\n` +
+                `${session.service}\n` +
+                `${session.selectedDate} um ${matchedSlot.time}\n\n` +
+                `Wie heißt du?`;
+
+            } else {
+              session.slots = slots.slice(0, 5);
+              session.step = "slot_pick";
+
+              const slotLines = session.slots
+                .map((s, i) => `${i + 1}️⃣ ${s.time}`)
+                .join("\n");
+
+              reply =
+                `📅 ${session.selectedDate}\n\n` +
+                `Die Uhrzeit ${session.aiTime} ist leider nicht frei.\n\n` +
+                "Diese Uhrzeiten sind frei:\n\n" +
+                slotLines;
+            }
+
+          } else {
+            session.slots = slots.slice(0, 5);
+            session.step = "slot_pick";
+
+            const slotLines = session.slots
+              .map((s, i) => `${i + 1}️⃣ ${s.time}`)
+              .join("\n");
+
+            reply =
+              `📅 ${session.selectedDate}\n\n` +
+              "Diese Uhrzeiten sind frei:\n\n" +
+              slotLines;
+          }
+
+        } else {
+          session.step = "date_pick";
+
+          reply =
+            "Bitte wähle ein Datum:\n\n" +
+            "1️⃣ Heute\n" +
+            "2️⃣ Morgen\n" +
+            "3️⃣ Übermorgen\n\n" +
+            "oder schreibe ein Datum:\n" +
+            "z.B. 15.03.2026";
+        }
       }
     }
 
@@ -1761,8 +1941,7 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
 
       const timeMatch =
         rawDateInput.match(/\b(\d{1,2}):(\d{2})\b/) ||
-        rawDateInput.match(/\b(\d{1,2})\s*uhr\b/i) ||
-        rawDateInput.match(/\b(\d{1,2})\b/);
+        rawDateInput.match(/\b(\d{1,2})\s*uhr\b/i);
 
       if (timeMatch) {
         const hour = String(timeMatch[1]).padStart(2, "0");

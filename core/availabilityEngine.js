@@ -95,7 +95,10 @@ export function verifySlotSignature({
   if (expected !== signature) return false;
 
   const bookings = getAllBookings().filter(
-    (b) => b.employeeId === employeeId && b.dateTime.startsWith(date)
+    (b) =>
+      b.employeeId === employeeId &&
+      b.dateTime.startsWith(date) &&
+      b.status !== "cancelled"
   );
 
   const newStart = new Date(`${date}T${time}:00`).getTime();
@@ -148,9 +151,12 @@ export function calculateSlotsForEmployee({
     );
   }
 
-  const bookings = getAllBookings().filter(
-    (b) => b.employeeId === emp.id && b.dateTime.startsWith(dateStr)
-  );
+const bookings = getAllBookings().filter(
+  (b) =>
+    b.employeeId === emp.id &&
+    b.dateTime.startsWith(dateStr) &&
+    b.status !== "cancelled"
+);
 
   const slots = [];
   let cur = new Date(start);

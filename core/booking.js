@@ -10,12 +10,15 @@ import { createClient } from "@supabase/supabase-js";
 // 🔁 SQLite Mirror (für RFM / Segmentierung – Phase 10)
 // 👉 Pfad ggf. anpassen, z. B. "../core/db.js" oder "./db.js"
 import { insertBooking } from "../core/db.js";
+import { loadTenantConfig } from "../core/utils.js";
 
 // =====================
 // FEATURE FLAGS
 // =====================
 const USE_SUPABASE = process.env.USE_SUPABASE === "true";
-const AURA_SQLITE_MIRROR = process.env.AURA_SQLITE_MIRROR === "true";
+
+console.log("BOOKING ENV:", process.env.AURA_SQLITE_MIRROR);
+
 
 // =====================
 // SUPABASE INIT (nur wenn aktiv)
@@ -33,20 +36,38 @@ if (USE_SUPABASE) {
 }
 
 // =====================
-// SERVICES
+// SERVICES AUS TENANT CONFIG
 // =====================
-export const serviceMap = {
-  "haarschnitt damen": { name: "Haarschnitt Damen", price: 45, duration: 60 },
-  "haarschnitt herren": { name: "Haarschnitt Herren", price: 30, duration: 45 },
-  "maniküre": { name: "Maniküre", price: 25, duration: 30 },
-  "pediküre": { name: "Pediküre", price: 35, duration: 45 },
-  "gesichtsbehandlung": { name: "Gesichtsbehandlung", price: 50, duration: 60 },
-  "wimpernlifting": { name: "Wimpernlifting", price: 45, duration: 45 },
-  "augenbrauenlifting": { name: "Augenbrauenlifting", price: 40, duration: 40 },
-};
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
-export function services() {
-  return Object.values(serviceMap).map((s) => s.name);
+function getConfigService(serviceName, tenant = process.env.TENANT_DEFAULT || "beauty_lounge") {
+  const cfg = loadTenantConfig(tenant);
+  const list = Array.isArray(cfg?.services) ? cfg.services : [];
+
+  const key = normalizeText(serviceName);
+
+  return list.find((s) => {
+    const name = normalizeText(s.name);
+
+    const aliases = Array.isArray(s.aliases)
+      ? s.aliases.map(a => normalizeText(a))
+      : [];
+
+    return name === key || aliases.includes(key);
+  });
+}
+
+export function services(tenant = process.env.TENANT_DEFAULT || "beauty_lounge") {
+  const cfg = loadTenantConfig(tenant);
+  return Array.isArray(cfg?.services)
+    ? cfg.services.map((s) => s.name)
+    : [];
 }
 
 // =====================
@@ -57,14 +78,8 @@ function roundTo15(date) {
   return new Date(Math.round(date.getTime() / ms) * ms);
 }
 
-function normalizeService(service) {
-  const key = String(service || "").toLowerCase();
-  return (
-    serviceMap[key] ||
-    Object.values(serviceMap).find(
-      (s) => s.name.toLowerCase() === key
-    )
-  );
+function normalizeService(service, tenant = process.env.TENANT_DEFAULT || "beauty_lounge") {
+  return getConfigService(service, tenant);
 }
 
 // =====================
@@ -85,14 +100,33 @@ export async function createBooking({
     };
   }
 
-  const srv = normalizeService(service);
+  const tenantId = process.env.TENANT_DEFAULT || "beauty_lounge";
+
+  const srv = normalizeService(
+    service,
+    tenantId
+  );
+
+  console.log("🔍 SERVICE SUCHE:", service);
+  console.log("🔍 SERVICE AUS CONFIG:", srv);
+  console.log("🧪 DURATION:", srv?.duration);
+  console.log("🧪 PRICE:", srv?.price);
+  console.log("🧪 NAME:", srv?.name);
+
   if (!srv) {
-    return { status: "error", message: "❌ Unbekannter Service." };
+    return {
+      status: "error",
+      message: "❌ Unbekannter Service."
+    };
   }
 
   const start = roundTo15(new Date(dateTime));
+
   if (isNaN(start)) {
-    return { status: "error", message: "❌ Ungültiges Datum." };
+    return {
+      status: "error",
+      message: "❌ Ungültiges Datum."
+    };
   }
 
   const end = new Date(start.getTime() + srv.duration * 60000);
@@ -132,7 +166,7 @@ export async function createBooking({
     // ==========================
     // 🔁 SQLITE MIRROR (OFFLINE-SAFE)
     // ==========================
-    if (AURA_SQLITE_MIRROR) {
+    if (process.env.AURA_SQLITE_MIRROR === "true") {
       try {
 
         console.log("🔥 SQLITE MIRROR PAYLOAD:", {
@@ -147,7 +181,7 @@ export async function createBooking({
           tenant: payload.studio_id,
         });
 
-        insertBooking({
+        const sqliteResult = insertBooking({
           id: payload.id,
           name: payload.customer_name,
           phone: payload.customer_phone,
@@ -159,8 +193,21 @@ export async function createBooking({
           tenant: payload.studio_id, // Studio = Tenant
         });
 
+        console.log("🔥 SQLITE RESULT:", sqliteResult);
+
+        if (!sqliteResult) {
+          console.warn("⚠️ SQLite konnte Termin nicht speichern.");
+        }
+
+        if (sqliteResult?.error) {
+          console.warn("⚠️ SQLite Fehler:", sqliteResult.error);
+        }
+
       } catch (e) {
-        console.warn("⚠️ SQLite Mirror fehlgeschlagen (läuft weiter):", e.message);
+        console.warn(
+          "⚠️ SQLite Mirror fehlgeschlagen (läuft weiter):",
+          e.message
+        );
       }
     }
 
