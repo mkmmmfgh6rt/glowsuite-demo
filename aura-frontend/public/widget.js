@@ -515,11 +515,10 @@ function showWelcome() {
   // 👉 Bot Antwort mit Animation (VERKAUFSTEXT)
   botReply(
     `${goldIcon(ICONS.welcome)}<b>Willkommen bei ${name} 👋</b><br><br>
-     Ich bin dein automatischer Beauty-Agent 🤖<br><br>
-     ✔ buche Termine für dich<br>
-     ✔ beantworte Kundenfragen<br>
-     ✔ arbeite 24/7 für dein Studio<br><br>
-     👉 Teste jetzt einfach eine Buchung`,
+     ✔ Dein Beauty-Agent beantwortet Fragen>
+     ✔ und nimmt Termine 24/7 entgegen.>
+     
+     👇 Probiere es jetzt aus:`,
     600
   );
 

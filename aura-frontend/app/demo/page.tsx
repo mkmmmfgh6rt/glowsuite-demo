@@ -110,7 +110,7 @@ export default function DemoPage() {
               letterSpacing: "-0.06em",
             }}
           >
-            Dein Studio arbeitet bald 24/7 automatisch
+            Weniger Stress. Mehr Buchungen. Zufriedenere Kunden.
           </h1>
 
           <p
@@ -122,9 +122,8 @@ export default function DemoPage() {
               margin: "0 auto",
             }}
           >
-            GlowSuite AI übernimmt Terminbuchungen, WhatsApp Erinnerungen,
-            Kundenreaktivierung, Bewertungsanfragen und Kampagnen — ohne dass dein
-            Studio ständig Nachrichten beantworten muss.
+            GlowSuite übernimmt Terminanfragen, WhatsApp-Erinnerungen und Kundenreaktivierung – automatisch.
+            Damit du dich auf deine Kundinnen konzentrieren kannst.
           </p>
         </section>
 
@@ -157,6 +156,136 @@ export default function DemoPage() {
             </div>
           ))}
         </section>
+
+        {/* HOW IT WORKS */}
+        <section
+          style={{
+            marginBottom: 42,
+            padding: "34px 28px",
+            borderRadius: 30,
+            background:
+              "linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))",
+            border: "1px solid rgba(212,175,116,0.22)",
+            boxShadow: "0 25px 70px rgba(0,0,0,0.28)",
+          }}
+        >
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div
+              style={{
+                display: "inline-flex",
+                marginBottom: 14,
+                padding: "8px 14px",
+                borderRadius: 999,
+                background: "rgba(212,175,116,0.16)",
+                color: "#d4af74",
+                fontSize: 13,
+                fontWeight: 800,
+              }}
+            >
+              So einfach funktioniert es
+            </div>
+
+            <h2
+              style={{
+                fontSize: "clamp(28px,5vw,42px)",
+                margin: "0 0 10px",
+                color: "#fff8ea",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              Eine Nachricht reicht — A.U.R.A übernimmt den Rest
+            </h2>
+
+            <p
+              style={{
+                margin: "0 auto",
+                maxWidth: 760,
+                color: "rgba(248,243,236,0.72)",
+                lineHeight: 1.6,
+                fontSize: 16,
+              }}
+            >
+              Kundinnen können ganz normal schreiben. GlowSuite erkennt automatisch
+              Service, Datum, Uhrzeit und Mitarbeiterwunsch.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+              gap: 18,
+            }}
+          >
+            <div
+              style={{
+                padding: 24,
+                borderRadius: 24,
+                background: "#16110d",
+                border: "1px solid rgba(212,175,116,0.22)",
+              }}
+            >
+              <div style={{ color: "#d4af74", fontWeight: 800, marginBottom: 12 }}>
+                1️⃣ Kunde schreibt
+              </div>
+
+              <div
+                style={{
+                  padding: 18,
+                  borderRadius: 18,
+                  background: "#0f0f0f",
+                  color: "#fff8ea",
+                  lineHeight: 1.6,
+                  fontSize: 16,
+                }}
+              >
+                „Augenbrauenlifting am 24.06. um 10 Uhr bei Anna.“
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: 24,
+                borderRadius: 24,
+                background: "#16110d",
+                border: "1px solid rgba(212,175,116,0.22)",
+              }}
+            >
+              <div style={{ color: "#d4af74", fontWeight: 800, marginBottom: 12 }}>
+                2️⃣ A.U.R.A übernimmt
+              </div>
+
+              <div style={{ color: "#fff8ea", lineHeight: 1.9, fontSize: 16 }}>
+                ✅ erkennt Service<br />
+                ✅ erkennt Datum<br />
+                ✅ erkennt Mitarbeiter<br />
+                ✅ prüft freie Termine
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: 24,
+                borderRadius: 24,
+                background: "#16110d",
+                border: "1px solid rgba(212,175,116,0.22)",
+              }}
+            >
+              <div style={{ color: "#d4af74", fontWeight: 800, marginBottom: 12 }}>
+                3️⃣ Termin bestätigt
+              </div>
+
+              <div style={{ color: "#fff8ea", lineHeight: 1.9, fontSize: 16 }}>
+                ✅ WhatsApp-Erinnerung<br />
+                ✅ PDF-Bestätigung<br />
+                ✅ Google-Bewertung<br />
+                ✅ Kundenreaktivierung
+              </div>
+            </div>
+          </div>
+        </section>
+
+
 
         {/* WIDGET */}
         <section
@@ -289,7 +418,7 @@ export default function DemoPage() {
             <h2
               style={{
                 margin: "0 0 12px",
-                fontSize:"clamp(28px,5vw,34px)",
+                fontSize: "clamp(28px,5vw,34px)",
                 color: "#fff8ea",
               }}
             >
@@ -348,7 +477,7 @@ export default function DemoPage() {
                 <h2
                   style={{
                     margin: "0 0 12px",
-                    fontSize:"clamp(28px,5vw,34px)",
+                    fontSize: "clamp(28px,5vw,34px)",
                     color: "#fff8ea",
                   }}
                 >
@@ -435,7 +564,7 @@ export default function DemoPage() {
                 }}
               >
                 A.U.R.A hat das Problem erkannt und empfiehlt automatisch eine Rückgewinnungskampagne für inaktive Kundinnen.
-              
+
               </p>
 
               <div
@@ -796,12 +925,13 @@ export default function DemoPage() {
           }}
         >
           <h2 style={{ fontSize: 34, margin: "0 0 10px" }}>
-            20 Studios können GlowSuite kostenlos testen
+            Noch 12 kostenlose Testplätze verfügbar
           </h2>
 
           <p style={{ margin: "0 auto 24px", maxWidth: 680, lineHeight: 1.6 }}>
-            Du bekommst eine persönliche Demo und kannst testen, ob GlowSuite zu
-            deinem Studio passt.
+            Teste GlowSuite 30 Tage kostenlos und finde heraus,
+            wie viel Zeit und Umsatz dein Studio zurückgewinnen kann.
+
           </p>
 
           <button
