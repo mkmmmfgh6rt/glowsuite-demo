@@ -239,7 +239,11 @@ export default function DemoPage() {
                   fontSize: 16,
                 }}
               >
-                „Augenbrauenlifting am 24.06. um 10 Uhr bei Anna.“
+                💬 Augenbrauenlifting am 24.06. um 10 Uhr bei Anna.
+
+                💬 Finger morgen um 17 Uhr.
+
+                💬 Maniküre morgen 11:00.
               </div>
             </div>
 

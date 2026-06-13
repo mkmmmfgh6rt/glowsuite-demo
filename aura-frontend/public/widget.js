@@ -515,10 +515,17 @@ function showWelcome() {
   // 👉 Bot Antwort mit Animation (VERKAUFSTEXT)
   botReply(
     `${goldIcon(ICONS.welcome)}<b>Willkommen bei ${name} 👋</b><br><br>
-     ✔ Dein Beauty-Agent beantwortet Fragen>
-     ✔ und nimmt Termine 24/7 entgegen.>
-     
-     👇 Probiere es jetzt aus:`,
+
+   ✨ Schreibe einfach wie in WhatsApp.<br><br>
+
+   💬 Augenbrauenlifting am 24.06. um 10 Uhr bei Anna.<br>
+   💬 Finger morgen um 17 Uhr.<br>
+   💬 Maniküre morgen 11:00.<br><br>
+
+   <span class="muted-small">
+   A.U.R.A erkennt automatisch Service, Datum,
+   Uhrzeit und fehlende Angaben.
+   </span>`,
     600
   );
 
