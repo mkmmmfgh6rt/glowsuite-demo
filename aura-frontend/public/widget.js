@@ -516,15 +516,18 @@ function showWelcome() {
   botReply(
     `${goldIcon(ICONS.welcome)}<b>Willkommen bei ${name} 👋</b><br><br>
 
-   ✨ Schreibe einfach wie in WhatsApp.<br><br>
+   ✨ <b>Probiere die KI jetzt aus.</b><br><br>
 
-   💬 Augenbrauenlifting am 24.06. um 10 Uhr bei Anna.<br>
-   💬 Finger morgen um 17 Uhr.<br>
+   💬 Augenbrauenlifting am 24.06.<br>
+   &nbsp;&nbsp;&nbsp;&nbsp;um 10 Uhr bei Anna.<br><br>
+
+   💬 Finger morgen um 17 Uhr.<br><br>
+
    💬 Maniküre morgen 11:00.<br><br>
 
    <span class="muted-small">
-   A.U.R.A erkennt automatisch Service, Datum,
-   Uhrzeit und fehlende Angaben.
+   A.U.R.A erkennt automatisch Service,
+   Datum, Uhrzeit und fehlende Angaben.
    </span>`,
     600
   );
