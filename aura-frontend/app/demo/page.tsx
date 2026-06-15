@@ -1,5 +1,16 @@
 "use client";
 
+
+import Image from "next/image";
+
+import dashboardKpis from "../../public/demo.bilder/demo-dashboard-kpis.webp";
+import dashboardAnalytics from "../../public/demo.bilder/demo-dashboard-analytics.webp";
+import kalender from "../../public/demo.bilder/demo-kalender.webp";
+import whatsappUpsell from "../../public/demo.bilder/demo-whatsapp-upsell.webp";
+import whatsappMitarbeiter from "../../public/demo.bilder/demo-whatsapp-mitarbeiter.webp";
+import whatsappStorno from "../../public/demo.bilder/demo-whatsapp-storno.webp";
+import terminbestaetigung from "../../public/demo.bilder/demo-terminbestaetigung.webp";
+
 const automationEvents = [
   {
     icon: "📲",
@@ -330,6 +341,141 @@ export default function DemoPage() {
             />
           </div>
         </section>
+
+
+        {/* DEMO SCREENSHOTS */}
+        <section
+          style={{
+            marginBottom: 42,
+            padding: "34px 28px",
+            borderRadius: 30,
+            background:
+              "linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))",
+            border: "1px solid rgba(212,175,116,0.22)",
+            boxShadow: "0 25px 70px rgba(0,0,0,0.28)",
+          }}
+        >
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <h2
+              style={{
+                fontSize: "clamp(28px,5vw,42px)",
+                margin: "0 0 10px",
+                color: "#fff8ea",
+              }}
+            >
+              So arbeitet GlowSuite im Studio-Alltag
+            </h2>
+
+            <p
+              style={{
+                margin: "0 auto",
+                maxWidth: 760,
+                color: "rgba(248,243,236,0.72)",
+                lineHeight: 1.6,
+              }}
+            >
+              Echte Einblicke in WhatsApp-Automation, Kalender, Dashboard und Terminbestätigung.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+              gap: 20,
+            }}
+          >
+            {[
+              {
+                src: "/demo.bilder/demo-whatsapp-upsell.webp",
+                title: "WhatsApp Buchung & Upsell",
+                text: "A.U.R.A erkennt Terminwunsch und empfiehlt automatisch passende Zusatzleistungen.",
+              },
+              {
+                src: "/demo.bilder/demo-whatsapp-mitarbeiter.webp",
+                title: "Fehlende Angaben erkannt",
+                text: "Wenn eine Angabe fehlt, fragt GlowSuite automatisch nach und hält den Termin kurz frei.",
+              },
+              {
+                src: "/demo.bilder/demo-whatsapp-storno.webp",
+                title: "Storno über WhatsApp",
+                text: "Kundinnen können Termine selbstständig stornieren, ohne dein Team zu belasten.",
+              },
+              {
+                src: "/demo.bilder/demo-kalender.webp",
+                title: "Automatischer Kalender",
+                text: "Alle Buchungen landen übersichtlich im Kalender.",
+              },
+              {
+                src: "/demo.bilder/demo-dashboard-kpis.webp",
+                title: "Dashboard Kennzahlen",
+                text: "Buchungen, Umsatz und aktive Kunden auf einen Blick.",
+              },
+              {
+                src: "/demo.bilder/demo-dashboard-analytics.webp",
+                title: "A.U.R.A Umsatzanalyse",
+                text: "GlowSuite erkennt Top-Services, Trends und Umsatzchancen.",
+              },
+              {
+                src: "/demo.bilder/demo-terminbestaetigung.webp",
+                title: "Premium Terminbestätigung",
+                text: "Kundinnen erhalten eine hochwertige Bestätigung mit Kalenderintegration.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                style={{
+                  overflow: "hidden",
+                  borderRadius: 24,
+                  background: "#16110d",
+                  border: "1px solid rgba(212,175,116,0.22)",
+                  boxShadow: "0 18px 50px rgba(0,0,0,0.28)",
+                }}
+              >
+                <div style={{ padding: 20 }}>
+                  <h3
+                    style={{
+                      margin: "0 0 8px",
+                      color: "#fff8ea",
+                      fontSize: 20,
+                    }}
+                  >
+                    {item.title}
+                  </h3>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "rgba(248,243,236,0.70)",
+                      lineHeight: 1.55,
+                      fontSize: 14,
+                    }}
+                  >
+                    {item.text}
+                  </p>
+                </div>
+
+                <Image
+                  src={item.src}
+                  alt={item.title}
+                  width={1200}
+                  height={720}
+                  style={{
+                    width: "100%",
+                    height: 360,
+                    objectFit: "contain",
+                    background: "#0f0f0f",
+                    display: "block",
+                    borderTop: "1px solid rgba(212,175,116,0.16)",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+
+
 
         {/* AUTOMATION FEED */}
         <section
