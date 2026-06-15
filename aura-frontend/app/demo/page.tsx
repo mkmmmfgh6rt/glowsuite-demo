@@ -413,7 +413,7 @@ export default function DemoPage() {
               },
               {
                 src: "/demo.bilder/demo-dashboard-analytics.webp",
-                title: "A.U.R.A Umsatzanalyse",
+                title: "Umsatzanalyse",
                 text: "GlowSuite erkennt Top-Services, Trends und Umsatzchancen.",
               },
               {
