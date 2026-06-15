@@ -462,7 +462,7 @@ export default function DemoPage() {
                   height={720}
                   style={{
                     width: "100%",
-                    height: 255,
+                    height: 235,
                     objectFit: "contain",
                     background: "#0f0f0f",
                     display: "block",
