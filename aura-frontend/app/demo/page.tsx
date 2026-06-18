@@ -168,6 +168,31 @@ export default function DemoPage() {
           ))}
         </section>
 
+        {/* TRUST BAR */}
+        <section
+          style={{
+            marginBottom: 34,
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              padding: "16px 24px",
+              borderRadius: 20,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(212,175,116,0.18)",
+              color: "#f8f3ec",
+              fontSize: 15,
+              fontWeight: 600,
+            }}
+          >
+            ✅ 20+ Studios auf der Testliste &nbsp; • &nbsp;
+            ✅ 30 Tage kostenlos testen &nbsp; • &nbsp;
+            ✅ 0 % Provision &nbsp; • &nbsp;
+            ✅ Persönliche Einrichtung
+          </div>
+        </section>
+
         {/* HOW IT WORKS */}
         <section
           style={{
@@ -1067,6 +1092,55 @@ export default function DemoPage() {
           </div>
         </section>
 
+        {/* ROI RECHNER */}
+        <section
+          style={{
+            marginBottom: 42,
+            padding: "34px 28px",
+            borderRadius: 30,
+            background:
+              "linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))",
+            border: "1px solid rgba(212,175,116,0.22)",
+            textAlign: "center",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "clamp(28px,5vw,42px)",
+              marginBottom: 12,
+            }}
+          >
+            Rechnet sich GlowSuite?
+          </h2>
+
+          <p
+            style={{
+              color: "rgba(248,243,236,0.75)",
+              marginBottom: 24,
+            }}
+          >
+            Schon wenige zusätzliche Termine können die Kosten decken.
+          </p>
+
+          <div
+            style={{
+              fontSize: 22,
+              lineHeight: 2,
+              fontWeight: 700,
+            }}
+          >
+            3 zusätzliche Termine × 70 € Durchschnittsumsatz
+            <br />
+            = 210 € zusätzlicher Umsatz
+            <br />
+            <span style={{ color: "#d4af74" }}>
+              GlowSuite ab 99 € / Monat
+            </span>
+          </div>
+        </section>
+
+
+
         {/* CTA */}
         <section
           style={{
@@ -1079,12 +1153,12 @@ export default function DemoPage() {
           }}
         >
           <h2 style={{ fontSize: 34, margin: "0 0 10px" }}>
-            Noch 12 kostenlose Testplätze verfügbar
+            30 Tage kostenlos testen
           </h2>
 
           <p style={{ margin: "0 auto 24px", maxWidth: 680, lineHeight: 1.6 }}>
             Teste GlowSuite 30 Tage kostenlos und finde heraus,
-            wie viel Zeit und Umsatz dein Studio zurückgewinnen kann.
+            wie viel Zeit, Stress und Umsatz dein Studio zurückgewinnen kann.
 
           </p>
 
