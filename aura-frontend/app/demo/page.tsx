@@ -186,10 +186,10 @@ export default function DemoPage() {
               fontWeight: 600,
             }}
           >
-            ✅ 20+ Studios auf der Testliste &nbsp; • &nbsp;
-            ✅ 30 Tage kostenlos testen &nbsp; • &nbsp;
-            ✅ 0 % Provision &nbsp; • &nbsp;
-            ✅ Persönliche Einrichtung
+            ✅ 20+ Studios auf der Warteliste &nbsp; • &nbsp;
+            ✅ WhatsApp & Website-Buchung &nbsp; • &nbsp;
+            ✅ Persönliche Einrichtung inklusive &nbsp; • &nbsp;
+            ✅ Für Beauty Studios entwickelt
           </div>
         </section>
 
@@ -1153,7 +1153,7 @@ export default function DemoPage() {
           }}
         >
           <h2 style={{ fontSize: 34, margin: "0 0 10px" }}>
-            30 Tage kostenlos testen
+            Kostenlosen Testplatz anfragen
           </h2>
 
           <p style={{ margin: "0 auto 24px", maxWidth: 680, lineHeight: 1.6 }}>
