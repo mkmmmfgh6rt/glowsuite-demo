@@ -168,29 +168,77 @@ export default function DemoPage() {
           ))}
         </section>
 
-        {/* TRUST BAR */}
+        {/* TRUST FEATURES */}
         <section
           style={{
             marginBottom: 34,
-            textAlign: "center",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+            gap: 16,
           }}
         >
-          <div
-            style={{
-              padding: "16px 24px",
-              borderRadius: 20,
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(212,175,116,0.18)",
-              color: "#f8f3ec",
-              fontSize: 15,
-              fontWeight: 600,
-            }}
-          >
-            ✅ 20+ Studios auf der Warteliste &nbsp; • &nbsp;
-            ✅ WhatsApp & Website-Buchung &nbsp; • &nbsp;
-            ✅ Persönliche Einrichtung inklusive &nbsp; • &nbsp;
-            ✅ Für Beauty Studios entwickelt
-          </div>
+          {[
+            {
+              icon: "🏆",
+              title: "20+ Studios",
+              text: "auf der Warteliste",
+            },
+            {
+              icon: "📲",
+              title: "WhatsApp & Website",
+              text: "Buchung möglich",
+            },
+            {
+              icon: "🛠️",
+              title: "Persönliche",
+              text: "Einrichtung inklusive",
+            },
+            {
+              icon: "💄",
+              title: "Speziell entwickelt",
+              text: "für Beauty Studios",
+            },
+          ].map((item) => (
+            <div
+              key={item.title}
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(212,175,116,0.18)",
+                borderRadius: 22,
+                padding: "22px 18px",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 28,
+                  marginBottom: 10,
+                }}
+              >
+                {item.icon}
+              </div>
+
+              <div
+                style={{
+                  color: "#f8f3ec",
+                  fontWeight: 700,
+                  fontSize: 16,
+                  marginBottom: 4,
+                }}
+              >
+                {item.title}
+              </div>
+
+              <div
+                style={{
+                  color: "rgba(248,243,236,0.72)",
+                  fontSize: 14,
+                }}
+              >
+                {item.text}
+              </div>
+            </div>
+          ))}
         </section>
 
         {/* HOW IT WORKS */}
