@@ -501,7 +501,7 @@ export default function DemoPage() {
                 text: "GlowSuite erinnert Kundinnen automatisch vor dem Termin und reduziert dadurch No-Shows.",
               },
               {
-                src: "/demo.bilder/demo-google-bewertung.webp",
+                src: "/demo.bilder/demo-google-review.webp",
                 title: "Google Bewertung nach dem Termin",
                 text: "Nach dem Besuch fragt GlowSuite automatisch nach einer Bewertung und stärkt so das Studio.",
               },
