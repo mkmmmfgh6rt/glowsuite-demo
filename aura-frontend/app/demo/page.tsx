@@ -447,52 +447,63 @@ export default function DemoPage() {
                 lineHeight: 1.6,
               }}
             >
-              Echte Einblicke in WhatsApp-Automation, Kalender, Dashboard und Terminbestätigung.
+              Echte Einblicke in Dashboard, WhatsApp-Automation, Kalender,
+              Terminbestätigung, Erinnerungen und Bewertungsanfragen.
             </p>
           </div>
 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-              gap: 20,
+              gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+              gap: 18,
             }}
           >
             {[
               {
-                src: "/demo.bilder/demo-whatsapp-upsell.webp",
-                title: "WhatsApp Buchung & Upsell",
-                text: "A.U.R.A erkennt Terminwunsch und empfiehlt automatisch passende Zusatzleistungen.",
-              },
-              {
-                src: "/demo.bilder/demo-whatsapp-mitarbeiter.webp",
-                title: "Fehlende Angaben erkannt",
-                text: "Wenn eine Angabe fehlt, fragt GlowSuite automatisch nach und hält den Termin kurz frei.",
-              },
-              {
-                src: "/demo.bilder/demo-whatsapp-storno.webp",
-                title: "Storno über WhatsApp",
-                text: "Kundinnen können Termine selbstständig stornieren, ohne dein Team zu belasten.",
-              },
-              {
-                src: "/demo.bilder/demo-kalender.webp",
-                title: "Automatischer Kalender",
-                text: "Alle Buchungen landen übersichtlich im Kalender.",
-              },
-              {
                 src: "/demo.bilder/demo-dashboard-kpis.webp",
-                title: "Dashboard Kennzahlen",
-                text: "Buchungen, Umsatz und aktive Kunden auf einen Blick.",
+                title: "Dashboard Übersicht",
+                text: "Buchungen, Umsatz, aktive Kunden und wichtige Kennzahlen auf einen Blick.",
               },
               {
                 src: "/demo.bilder/demo-dashboard-analytics.webp",
                 title: "Umsatzanalyse",
-                text: "GlowSuite erkennt Top-Services, Trends und Umsatzchancen.",
+                text: "GlowSuite erkennt Top-Services, Trends und Umsatzchancen im Studio.",
+              },
+              {
+                src: "/demo.bilder/demo-kalender.webp",
+                title: "Automatischer Kalender",
+                text: "Alle Buchungen landen übersichtlich und strukturiert im Kalender.",
               },
               {
                 src: "/demo.bilder/demo-terminbestaetigung.webp",
                 title: "Premium Terminbestätigung",
-                text: "Kundinnen erhalten eine hochwertige Bestätigung mit Kalenderintegration.",
+                text: "Kundinnen erhalten automatisch eine hochwertige Bestätigung mit PDF und Kalenderdatei.",
+              },
+              {
+                src: "/demo.bilder/demo-whatsapp-upsell.webp",
+                title: "Intelligente Empfehlung",
+                text: "GlowSuite kann passende Zusatzleistungen empfehlen, bevor der Termin abgeschlossen wird.",
+              },
+              {
+                src: "/demo.bilder/demo-whatsapp-mitarbeiter.webp",
+                title: "Mitarbeiter-Auswahl",
+                text: "Kundinnen können direkt per WhatsApp den passenden Mitarbeiter auswählen.",
+              },
+              {
+                src: "/demo.bilder/demo-whatsapp-storno.webp",
+                title: "Storno per WhatsApp",
+                text: "Falls ein Termin nicht passt, kann die Kundin einfach per WhatsApp absagen.",
+              },
+              {
+                src: "/demo.bilder/demo-erinnerung.webp",
+                title: "Automatische Erinnerung",
+                text: "GlowSuite erinnert Kundinnen automatisch vor dem Termin und reduziert dadurch No-Shows.",
+              },
+              {
+                src: "/demo.bilder/demo-google-bewertung.webp",
+                title: "Google Bewertung nach dem Termin",
+                text: "Nach dem Besuch fragt GlowSuite automatisch nach einer Bewertung und stärkt so das Studio.",
               },
             ].map((item) => (
               <div
@@ -546,7 +557,6 @@ export default function DemoPage() {
             ))}
           </div>
         </section>
-
 
 
 
@@ -1163,12 +1173,39 @@ export default function DemoPage() {
 
           <p
             style={{
-              color: "rgba(248,243,236,0.75)",
-              marginBottom: 24,
+              color: "rgba(248,243,236,0.78)",
+              marginBottom: 22,
+              maxWidth: 760,
+              marginLeft: "auto",
+              marginRight: "auto",
+              lineHeight: 1.7,
+              fontSize: 16,
             }}
           >
-            Schon wenige zusätzliche Termine können die Kosten decken.
+            GlowSuite bringt nicht einfach „magisch“ neue Kundinnen.
+            Der zusätzliche Umsatz entsteht durch Dinge, die in vielen Studios
+            jeden Monat verloren gehen: verpasste Anfragen, vergessene Termine,
+            No-Shows, fehlende Bewertungen und Kundinnen, die nicht erneut buchen.
           </p>
+
+          <div
+            style={{
+              display: "grid",
+              gap: 12,
+              maxWidth: 760,
+              margin: "0 auto 28px",
+              textAlign: "left",
+              color: "rgba(248,243,236,0.82)",
+              fontSize: 15,
+              lineHeight: 1.7,
+            }}
+          >
+            <div>✅ weniger vergessene Termine durch automatische Erinnerungen</div>
+            <div>✅ weniger No-Shows durch einfache STORNO-Antwort per WhatsApp</div>
+            <div>✅ mehr Wiederbuchungen durch automatische Kundenreaktivierung</div>
+            <div>✅ mehr Vertrauen durch automatische Google-Bewertungsanfragen</div>
+            <div>✅ weniger verlorene Anfragen, weil GlowSuite sofort antwortet</div>
+          </div>
 
           <div
             style={{
@@ -1177,9 +1214,9 @@ export default function DemoPage() {
               fontWeight: 700,
             }}
           >
-            3 zusätzliche Termine × 70 € Durchschnittsumsatz
+            3 zusätzliche oder gerettete Termine × 70 € Durchschnittsumsatz
             <br />
-            = 210 € zusätzlicher Umsatz
+            = 210 € zusätzlicher Monatsumsatz
             <br />
             <span style={{ color: "#d4af74" }}>
               GlowSuite ab 99 € / Monat
