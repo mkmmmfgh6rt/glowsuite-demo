@@ -176,7 +176,8 @@ export default function StudioCheckPage() {
 
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
-
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const question = questions[currentQuestion];
 
   const score = useMemo(() => {
@@ -229,11 +230,47 @@ export default function StudioCheckPage() {
     }
   };
 
-  const showStudioResult = () => {
+  const showStudioResult = async () => {
     if (!firstName.trim() || !email.trim()) return;
 
-    setShowResult(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setSaving(true);
+    setSaveError("");
+
+    try {
+      const response = await fetch("/api/studio-check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          email: email.trim(),
+          answers,
+          recommendations: recommendations.map(
+            (item) => item.recommendation
+          ),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error || "Die Auswertung konnte nicht gespeichert werden."
+        );
+      }
+
+      setShowResult(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      console.error("Studio-Check speichern fehlgeschlagen:", error);
+
+      setSaveError(
+        "Deine Auswertung konnte gerade nicht gespeichert werden. Bitte versuche es erneut."
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getResultHeadline = () => {
@@ -764,7 +801,7 @@ export default function StudioCheckPage() {
 
               <button
                 onClick={showStudioResult}
-                disabled={!firstName.trim() || !email.trim()}
+                disabled={!firstName.trim() || !email.trim() || saving}
                 style={{
                   padding: "14px 24px",
                   borderRadius: 14,
@@ -780,7 +817,7 @@ export default function StudioCheckPage() {
                   fontWeight: 800,
                   fontSize: 14,
                   cursor:
-                    !firstName.trim() || !email.trim()
+                    !firstName.trim() || !email.trim() || saving
                       ? "not-allowed"
                       : "pointer",
                   boxShadow:
@@ -789,9 +826,26 @@ export default function StudioCheckPage() {
                       : "0 12px 30px rgba(0,0,0,0.20)",
                 }}
               >
-                Meine Auswertung anzeigen →
+                {saving ? "Auswertung wird erstellt..." : "Meine Auswertung anzeigen →"}
               </button>
             </div>
+
+            {saveError && (
+              <p
+                style={{
+                  marginTop: 16,
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  background: "rgba(150,45,35,0.10)",
+                  border: "1px solid rgba(150,45,35,0.18)",
+                  color: "#8b352b",
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
+              >
+                {saveError}
+              </p>
+            )}
           </section>
         )}
 
