@@ -44,7 +44,7 @@ export default function DemoPage() {
       style={{
         minHeight: "100vh",
         background:
-          "radial-gradient(circle at 20% 0%, rgba(212,175,116,0.22), transparent 35%), linear-gradient(180deg,#120d0a 0%,#1b130f 45%,#f8f3ec 100%)",
+          "radial-gradient(circle at 20% 0%, rgba(212,175,116,0.18), transparent 32%), radial-gradient(circle at 80% 75%, rgba(184,121,91,0.10), transparent 38%), linear-gradient(180deg,#120d0a 0%,#1b130f 48%,#120d0a 100%)",
         color: "#f8f3ec",
         padding: "34px 20px 60px",
       }}
@@ -149,7 +149,8 @@ export default function DemoPage() {
                 padding: "15px 28px",
                 borderRadius: 999,
                 border: "none",
-                background: "linear-gradient(135deg,#d4af74,#b8795b)",
+                background:"linear-gradient(135deg,#e3bf83,#c88f62)",
+                boxShadow: "0 12px 32px rgba(212,175,116,0.22)",
                 color: "#1d120c",
                 fontWeight: 800,
                 fontSize: 15,
@@ -277,7 +278,7 @@ export default function DemoPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+              gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))",
               gap: 14,
             }}
           >
@@ -293,12 +294,14 @@ export default function DemoPage() {
                 style={{
                   padding: 18,
                   borderRadius: 18,
-                  background: "#ffffff",
-                  border: "1px solid rgba(180,130,75,0.18)",
+                  background: "#fffdf9",
+                  border: "1px solid rgba(184,121,91,0.20)",
+                  boxShadow: "0 8px 24px rgba(80,45,20,0.06)",
                   fontWeight: 700,
                 }}
               >
-                ❌ {item}
+                <span style={{ color: "#b8795b", marginRight: 8 }}>✕</span>
+                {item}
               </div>
             ))}
           </div>
@@ -1191,8 +1194,9 @@ export default function DemoPage() {
               marginTop: 28,
               padding: "26px 20px",
               borderRadius: 24,
-              background: "#16110d",
-              border: "1px solid rgba(212,175,116,0.28)",
+              background: "linear-gradient(135deg,#18110d,#241810)",
+              border: "1px solid rgba(212,175,116,0.32)",
+              boxShadow: "0 18px 50px rgba(0,0,0,0.28)",
             }}
           >
             <div
@@ -1225,8 +1229,9 @@ export default function DemoPage() {
             textAlign: "center",
             padding: "46px 28px",
             borderRadius: 30,
-            background: "linear-gradient(135deg,#d4af74,#b8795b)",
+            background: "linear-gradient(135deg,#fffaf4 0%,#f4e5d2 55%,#ead0ae 100%)",
             color: "#1d120c",
+            border: "1px solid rgba(212,175,116,0.35)",
             boxShadow: "0 30px 80px rgba(0,0,0,0.25)",
           }}
         >
