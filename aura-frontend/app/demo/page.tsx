@@ -146,15 +146,16 @@ export default function DemoPage() {
                   ?.scrollIntoView({ behavior: "smooth" })
               }
               style={{
-                padding: "15px 28px",
-                borderRadius: 999,
-                border: "none",
-                background: "linear-gradient(135deg,#e3bf83,#c88f62)",
-                boxShadow: "0 12px 32px rgba(212,175,116,0.22)",
-                color: "#1d120c",
-                fontWeight: 800,
-                fontSize: 15,
+                padding: "14px 24px",
+                borderRadius: 14,
+                border: "1px solid rgba(212,175,116,0.48)",
+                background: "linear-gradient(135deg,#fffaf4,#eadcc9)",
+                color: "#2a1a12",
+                fontWeight: 700,
+                fontSize: 14,
                 cursor: "pointer",
+                letterSpacing: "-0.01em",
+                boxShadow: "0 10px 28px rgba(0,0,0,0.20)",
               }}
             >
               Kostenlosen Studio-Check starten
