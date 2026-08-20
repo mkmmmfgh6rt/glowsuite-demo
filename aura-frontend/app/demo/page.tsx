@@ -149,7 +149,7 @@ export default function DemoPage() {
                 padding: "15px 28px",
                 borderRadius: 999,
                 border: "none",
-                background:"linear-gradient(135deg,#e3bf83,#c88f62)",
+                background: "linear-gradient(135deg,#e3bf83,#c88f62)",
                 boxShadow: "0 12px 32px rgba(212,175,116,0.22)",
                 color: "#1d120c",
                 fontWeight: 800,
@@ -1229,22 +1229,28 @@ export default function DemoPage() {
             textAlign: "center",
             padding: "46px 28px",
             borderRadius: 30,
-            background: "linear-gradient(135deg,#fffaf4 0%,#f4e5d2 55%,#ead0ae 100%)",
+            background: "linear-gradient(135deg,#d4af74,#b8795b)",
             color: "#1d120c",
-            border: "1px solid rgba(212,175,116,0.35)",
+            border: "1px solid rgba(212,175,116,0.28)",
             boxShadow: "0 30px 80px rgba(0,0,0,0.25)",
           }}
         >
           <div
             style={{
-              fontSize: 13,
-              fontWeight: 800,
-              marginBottom: 10,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "7px 13px",
+              marginBottom: 16,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.20)",
+              border: "1px solid rgba(255,255,255,0.28)",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+              color: "#3b2418",
             }}
           >
-            Kostenlos · ca. 5 Minuten
+            ✦ Kostenloser Studio-Check · ca. 5 Minuten
           </div>
 
           <h2
