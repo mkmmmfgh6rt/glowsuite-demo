@@ -162,11 +162,9 @@ export default function DemoPage() {
             </button>
 
             <button
-              onClick={() =>
-                document
-                  .getElementById("live-demo")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
+              onClick={() => {
+                window.location.href = "/studio-check";
+              }}
               style={{
                 padding: "15px 28px",
                 borderRadius: 999,
@@ -1277,7 +1275,7 @@ export default function DemoPage() {
 
           <button
             onClick={() => {
-              alert("Studio-Check Formular bauen wir als nächsten Schritt.");
+              window.location.href = "/studio-check";
             }}
             style={{
               padding: "15px 34px",
