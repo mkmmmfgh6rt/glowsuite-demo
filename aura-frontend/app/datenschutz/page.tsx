@@ -261,7 +261,51 @@ export default function DatenschutzPage() {
             </p>
           </LegalSection>
 
-          <LegalSection title="5. Hosting und technische Bereitstellung">
+          <LegalSection title="5. Versand der Studio-Auswertung mit Brevo">
+            <p>
+              Für den Versand der persönlichen GlowSuite Studio-Auswertung
+              per E-Mail nutzen wir den Dienst Brevo.
+            </p>
+
+            <p>
+              Wenn du im Rahmen des Studio-Checks deine E-Mail-Adresse
+              angibst und die Auswertung anforderst, werden die für den
+              Versand erforderlichen Daten an Brevo übermittelt.
+              Hierzu können insbesondere dein Vorname, deine E-Mail-Adresse,
+              dein Studio-Score sowie die aus dem Studio-Check abgeleiteten
+              Hinweise und Optimierungspotenziale gehören.
+            </p>
+
+            <p>
+              Die Verarbeitung erfolgt ausschließlich zur Erstellung und
+              Bereitstellung der von dir angeforderten Studio-Auswertung.
+              Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, soweit die
+              Verarbeitung zur Durchführung des Studio-Checks und
+              vorvertraglicher Maßnahmen auf deine Anfrage hin erforderlich ist.
+            </p>
+
+            <p>
+              Brevo wird dabei als Dienstleister für den Versand
+              transaktionaler E-Mails eingesetzt. Die über den Studio-Check
+              ausgelöste Ergebnis-E-Mail stellt keinen automatischen
+              Newsletter-Bezug dar.
+            </p>
+
+            <p>
+              Mit Brevo bestehen Regelungen zur Auftragsverarbeitung.
+              Nach Angaben von Brevo befinden sich die Hosting-Server,
+              auf denen die Datenbanken verarbeitet und gespeichert werden,
+              innerhalb der Europäischen Union.
+            </p>
+
+            <p>
+              Weitere Informationen zur Verarbeitung personenbezogener Daten
+              durch Brevo findest du in den Datenschutzinformationen des
+              Anbieters.
+            </p>
+          </LegalSection>
+
+          <LegalSection title="6. Hosting und technische Bereitstellung">
             <p>
               Unsere Website und die für den Studio-Check erforderlichen
               technischen Funktionen werden über externe Hosting- und
@@ -288,7 +332,7 @@ export default function DatenschutzPage() {
             </p>
           </LegalSection>
 
-          <LegalSection title="6. Keine automatische Einwilligung in Werbung">
+          <LegalSection title="7. Keine automatische Einwilligung in Werbung">
             <p>
               Die Angabe einer E-Mail-Adresse im Rahmen des Studio-Checks
               bedeutet nicht automatisch, dass ein Newsletter oder regelmäßige
@@ -303,7 +347,7 @@ export default function DatenschutzPage() {
             </p>
           </LegalSection>
 
-          <LegalSection title="7. Speicherdauer und Löschung">
+          <LegalSection title="8. Speicherdauer und Löschung">
             <p>
               Personenbezogene Daten werden nur so lange gespeichert, wie dies
               für den jeweiligen Verarbeitungszweck erforderlich ist oder
@@ -325,7 +369,7 @@ export default function DatenschutzPage() {
             </p>
           </LegalSection>
 
-          <LegalSection title="8. Datensicherheit">
+          <LegalSection title="9. Datensicherheit">
             <p>
               Wir treffen angemessene technische und organisatorische
               Maßnahmen, um personenbezogene Daten vor Verlust, unbefugtem
@@ -338,7 +382,7 @@ export default function DatenschutzPage() {
             </p>
           </LegalSection>
 
-          <LegalSection title="9. Deine Rechte">
+          <LegalSection title="10. Deine Rechte">
             <p>
               Nach Maßgabe der gesetzlichen Voraussetzungen bestehen
               insbesondere folgende Datenschutzrechte:
@@ -358,7 +402,7 @@ export default function DatenschutzPage() {
             </ul>
           </LegalSection>
 
-          <LegalSection title="10. Widerspruchsrecht">
+          <LegalSection title="11. Widerspruchsrecht">
             <p>
               Soweit wir personenbezogene Daten auf Grundlage von Art. 6 Abs. 1
               lit. f DSGVO verarbeiten, besteht unter den gesetzlichen
@@ -366,7 +410,7 @@ export default function DatenschutzPage() {
             </p>
           </LegalSection>
 
-          <LegalSection title="11. Beschwerderecht">
+          <LegalSection title="12. Beschwerderecht">
             <p>
               Es besteht das Recht, sich bei einer
               Datenschutz-Aufsichtsbehörde über die Verarbeitung
@@ -374,7 +418,7 @@ export default function DatenschutzPage() {
             </p>
           </LegalSection>
 
-          <LegalSection title="12. Änderungen dieser Datenschutzerklärung">
+          <LegalSection title="13. Änderungen dieser Datenschutzerklärung">
             <p>
               Wir können diese Datenschutzerklärung anpassen, wenn sich unsere
               Website, eingesetzte Dienste oder gesetzliche Anforderungen
