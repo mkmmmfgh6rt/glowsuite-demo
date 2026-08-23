@@ -769,11 +769,26 @@ export default function StudioCheckPage() {
                 fontSize: 11,
                 color: "#77665b",
                 margin: "12px 0 0",
-                lineHeight: 1.5,
+                lineHeight: 1.6,
               }}
             >
-              Deine Angaben verwenden wir ausschließlich im Zusammenhang
-              mit deiner GlowSuite Studio-Auswertung.
+              Deine Angaben verwenden wir zur Erstellung, Speicherung und
+              Bereitstellung deiner persönlichen GlowSuite Studio-Auswertung.
+              Weitere Informationen findest du in unserer{" "}
+              <a
+                href="/datenschutz"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#8a5b25",
+                  fontWeight: 700,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 2,
+                }}
+              >
+                Datenschutzerklärung
+              </a>
+              .
             </p>
 
             <div

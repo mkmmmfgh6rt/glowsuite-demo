@@ -1,141 +1,416 @@
 <!DOCTYPE html>
 <html lang="de" data-theme="light">
+
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GlowSuite AI – Datenschutz</title>
 
-<title>GlowSuite AI – Datenschutz</title>
+  <link rel="stylesheet" href="/admin/admin.css?v=12">
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-<link rel="stylesheet" href="/admin/admin.css?v=12">
-<script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .container {
+      margin-left: 0;
+      max-width: 980px;
+      margin-right: auto;
+      margin-left: auto;
+      padding: 100px 24px 50px;
+    }
 
+    .card {
+      line-height: 1.7;
+    }
+
+    .card h2 {
+      margin-top: 32px;
+      margin-bottom: 12px;
+    }
+
+    .card h2:first-child {
+      margin-top: 0;
+    }
+
+    .card p,
+    .card li {
+      line-height: 1.7;
+    }
+
+    @media (max-width: 780px) {
+      .container {
+        margin-left: 0;
+        padding: 88px 14px 32px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<header class="app-header">
+  <header class="app-header">
 
-  <div class="brand">
-    <img id="brandLogo" src="/img/logo-glowsuite.png">
+    <div class="brand">
+      <img id="brandLogo" src="/img/logo-glowsuite.png" alt="GlowSuite AI Logo">
 
-    <div>
-      <h1 id="brandTitle">GlowSuite AI</h1>
-      <div class="small">Autonomous Salon OS</div>
-      <div class="small" id="dateToday"></div>
+      <div>
+        <h1 id="brandTitle">GlowSuite AI</h1>
+        <div class="small">Autonomous Salon OS</div>
+        <div class="small" id="dateToday"></div>
+      </div>
     </div>
-  </div>
 
-  <div class="header-actions">
-    <button id="themeToggle">
-      <i data-lucide="sun-moon"></i>
-    </button>
-  </div>
+    <div class="header-actions">
+      <button id="themeToggle" type="button" aria-label="Darstellung wechseln">
+        <i data-lucide="sun-moon"></i>
+      </button>
+    </div>
 
-</header>
-
-
-<main class="container">
-
-  <!-- 🔥 BACK BUTTON -->
-  <a class="btn-back" href="/admin.html">
-    ← Dashboard
-  </a>
-
-  <div class="card fade-in">
-
-    <h2>Datenschutzerklärung</h2>
-
-    <p>
-      Wir freuen uns über Ihr Interesse an unserem Unternehmen. Der Schutz Ihrer persönlichen Daten ist uns sehr wichtig.
-      Nachfolgend informieren wir Sie über den Umgang mit Ihren Daten gemäß der DSGVO.
-    </p>
-
-    <h2>1. Verantwortlicher</h2>
-    <p>
-      Verantwortlich für die Datenverarbeitung:<br>
-      <strong id="companyName">Jennifer Nowicki</strong><br>
-      <span id="companyAddress">Oderstraße 24 16303 Schwedt Oder</span><br>
-      E-Mail: <a id="companyEmail" href="mailto:info@glowsuite.ai">mmazur871@gmail.com</a>
-    </p>
-
-    <h2>2. Erhebung und Verarbeitung personenbezogener Daten</h2>
-    <p>
-      Wir verarbeiten personenbezogene Daten ausschließlich zur Terminverwaltung
-      und Kundenkommunikation. Eine Weitergabe an Dritte erfolgt nicht.
-    </p>
-
-    <h2>3. Speicherung und Löschung</h2>
-    <p>
-      Daten werden gemäß DSGVO nach gesetzlichen Fristen gelöscht.
-    </p>
-
-    <h2>4. Ihre Rechte</h2>
-    <ul>
-      <li>Auskunft</li>
-      <li>Berichtigung</li>
-      <li>Löschung</li>
-      <li>Datenübertragbarkeit</li>
-      <li>Widerspruch</li>
-    </ul>
-
-    <h2>5. Datensicherheit</h2>
-    <p>
-      Ihre Daten werden auf sicheren Servern gespeichert und geschützt.
-    </p>
-
-  </div>
-
-</main>
+  </header>
 
 
-<footer></footer>
+  <main class="container">
+
+    <a class="btn-back" href="/admin.html">
+      ← Dashboard
+    </a>
+
+    <div class="card fade-in">
+
+      <h2>Datenschutzerklärung</h2>
+
+      <p>
+        Der Schutz Ihrer personenbezogenen Daten ist uns wichtig.
+        Nachfolgend informieren wir Sie darüber, welche personenbezogenen
+        Daten bei der Nutzung von GlowSuite AI verarbeitet werden,
+        zu welchen Zwecken dies erfolgt und welche Rechte Ihnen zustehen.
+      </p>
 
 
-<script>
+      <h2>1. Verantwortlicher</h2>
 
-/* DATE */
-document.getElementById("dateToday").textContent =
-  new Date().toLocaleDateString("de-DE", {
-    weekday:'long',
-    day:'2-digit',
-    month:'long',
-    year:'numeric'
-  });
+      <p>
+        Verantwortlich für die Datenverarbeitung im Sinne der
+        Datenschutz-Grundverordnung (DSGVO) ist:
+      </p>
 
-/* THEME */
-(function(){
-  const saved = localStorage.getItem("theme");
-  if(saved) document.documentElement.setAttribute("data-theme", saved);
+      <p>
+        <strong>Jennifer Nowicki</strong><br>
+        Oderstraße 24<br>
+        16303 Schwedt/Oder<br><br>
 
-  document.getElementById("themeToggle").onclick = ()=>{
-    const root = document.documentElement;
-    const next = root.getAttribute("data-theme")==="dark" ? "light" : "dark";
-    root.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-  };
-})();
+        E-Mail:
+        <a href="mailto:mmazur871@gmail.com">
+          mmazur871@gmail.com
+        </a>
+      </p>
 
-/* BRANDING */
-fetch("/config/branding.json")
-  .then(r => r.json())
-  .then(b => {
-    if(b.brandName) document.getElementById("brandTitle").textContent = b.brandName + " – Datenschutz";
-    if(b.logo) document.getElementById("brandLogo").src = "/" + b.logo;
 
-    if (b.address?.street)
-      document.getElementById("companyAddress").textContent =
-        `${b.address.street}, ${b.address.postalCode} ${b.address.city}`;
+      <h2>2. Verarbeitung personenbezogener Daten</h2>
 
-    if (b.contact?.email) {
-      document.getElementById("companyEmail").textContent = b.contact.email;
-      document.getElementById("companyEmail").href = "mailto:" + b.contact.email;
-    }
-  });
+      <p>
+        Wir verarbeiten personenbezogene Daten nur, soweit dies für die
+        Bereitstellung unserer Website, die Durchführung des GlowSuite
+        Studio-Checks, die Bearbeitung von Anfragen oder die Anbahnung
+        einer möglichen Geschäftsbeziehung erforderlich ist.
+      </p>
 
-lucide.createIcons();
+      <p>
+        Abhängig von der jeweiligen Nutzung können insbesondere folgende
+        Daten verarbeitet werden:
+      </p>
 
-</script>
+      <ul>
+        <li>Name bzw. Vorname</li>
+        <li>E-Mail-Adresse</li>
+        <li>freiwillig mitgeteilte Kontaktdaten</li>
+        <li>Angaben aus dem GlowSuite Studio-Check</li>
+        <li>ermittelter Studio-Score</li>
+        <li>erkannte Optimierungs- und Automatisierungspotenziale</li>
+        <li>Zeitpunkt der Übermittlung</li>
+        <li>technisch erforderliche Verbindungs- und Serverdaten</li>
+      </ul>
+
+
+      <h2>3. GlowSuite Studio-Check</h2>
+
+      <p>
+        Auf unserer Website können Sie einen kostenlosen Studio-Check
+        durchführen. Dabei beantworten Sie Fragen zu ausgewählten
+        organisatorischen und digitalen Abläufen Ihres Studios.
+      </p>
+
+      <p>
+        Zur Erstellung und Bereitstellung Ihrer persönlichen Auswertung
+        verarbeiten wir insbesondere Ihren Vornamen, Ihre E-Mail-Adresse,
+        Ihre Antworten, den daraus berechneten Studio-Score sowie die
+        daraus abgeleiteten Optimierungspotenziale.
+      </p>
+
+      <p>
+        Die Verarbeitung erfolgt zur Durchführung des von Ihnen
+        angeforderten Studio-Checks und zur Bearbeitung einer daraus
+        entstehenden Kontakt- oder Geschäftsanfrage.
+      </p>
+
+      <p>
+        Rechtsgrundlage ist insbesondere Art. 6 Abs. 1 lit. b DSGVO,
+        soweit die Verarbeitung zur Durchführung vorvertraglicher
+        Maßnahmen auf Ihre Anfrage hin erforderlich ist.
+      </p>
+
+      <p>
+        Soweit darüber hinaus eine Verarbeitung zur Organisation,
+        Dokumentation und Bearbeitung eingehender Interessentenanfragen
+        erforderlich ist, kann die Verarbeitung auf Grundlage unseres
+        berechtigten Interesses gemäß Art. 6 Abs. 1 lit. f DSGVO erfolgen.
+        Unser berechtigtes Interesse besteht in einer effizienten und
+        nachvollziehbaren Bearbeitung von Anfragen.
+      </p>
+
+
+      <h2>4. Verwendung von Airtable</h2>
+
+      <p>
+        Zur strukturierten Verwaltung von Anfragen und Studio-Check-Daten
+        nutzen wir Airtable.
+      </p>
+
+      <p>
+        Anbieter ist:
+      </p>
+
+      <p>
+        Formagrid Inc. dba Airtable<br>
+        1 Front Street, Floor 28<br>
+        San Francisco, CA 94111<br>
+        USA
+      </p>
+
+      <p>
+        In Airtable können insbesondere Name, E-Mail-Adresse,
+        Studio-Check-Ergebnisse, Studio-Score, erkannte Potenziale,
+        Kontaktstatus sowie interne Bearbeitungsvermerke gespeichert
+        werden.
+      </p>
+
+      <p>
+        Airtable wird zur Verwaltung und Bearbeitung von Interessenten-
+        und Kundenanfragen eingesetzt.
+      </p>
+
+      <p>
+        Dabei kann eine Verarbeitung personenbezogener Daten außerhalb
+        der Europäischen Union bzw. des Europäischen Wirtschaftsraums
+        stattfinden. Soweit hierfür erforderlich, werden geeignete
+        Garantien nach den geltenden Datenschutzvorschriften eingesetzt,
+        insbesondere die von der Europäischen Kommission vorgesehenen
+        Standardvertragsklauseln.
+      </p>
+
+      <p>
+        Weitere Informationen zum Datenschutz bei Airtable finden Sie
+        in den Datenschutzinformationen des Anbieters.
+      </p>
+
+
+      <h2>5. Hosting und technische Bereitstellung</h2>
+
+      <p>
+        Unsere Website und die für den Studio-Check erforderlichen
+        technischen Funktionen werden über externe Hosting- und
+        Infrastruktur-Dienstleister bereitgestellt.
+      </p>
+
+      <p>
+        Beim Aufruf unserer Website können technisch notwendige Daten
+        verarbeitet werden. Hierzu können insbesondere IP-Adresse,
+        Datum und Uhrzeit des Zugriffs, aufgerufene Seite,
+        Browserinformationen und technische Fehler- bzw. Protokolldaten
+        gehören.
+      </p>
+
+      <p>
+        Diese Verarbeitung dient der sicheren, stabilen und technisch
+        funktionsfähigen Bereitstellung der Website.
+      </p>
+
+      <p>
+        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO.
+        Unser berechtigtes Interesse besteht in der sicheren und
+        zuverlässigen Bereitstellung unseres Online-Angebots.
+      </p>
+
+
+      <h2>6. Keine automatische Einwilligung in Werbung</h2>
+
+      <p>
+        Die Angabe Ihrer E-Mail-Adresse im Rahmen des Studio-Checks
+        bedeutet nicht automatisch, dass Sie einen Newsletter oder
+        regelmäßige Werbe-E-Mails abonnieren.
+      </p>
+
+      <p>
+        Sollten wir zukünftig einen Newsletter oder andere
+        einwilligungsbasierte Marketing-Kommunikation anbieten,
+        wird hierfür eine gesonderte Einwilligung eingeholt,
+        soweit dies gesetzlich erforderlich ist.
+      </p>
+
+
+      <h2>7. Speicherdauer und Löschung</h2>
+
+      <p>
+        Personenbezogene Daten werden nur so lange gespeichert,
+        wie dies für den jeweiligen Verarbeitungszweck erforderlich ist
+        oder gesetzliche Aufbewahrungspflichten bestehen.
+      </p>
+
+      <p>
+        Daten aus Anfragen und dem Studio-Check können insbesondere so
+        lange gespeichert werden, wie dies für die Bearbeitung der
+        Anfrage, die angeforderte Auswertung oder eine daraus entstehende
+        Geschäftsbeziehung erforderlich ist.
+      </p>
+
+      <p>
+        Entfällt der Zweck der Verarbeitung und bestehen keine
+        gesetzlichen Aufbewahrungspflichten oder sonstigen
+        Rechtsgrundlagen für eine weitere Speicherung, werden die
+        personenbezogenen Daten gelöscht.
+      </p>
+
+
+      <h2>8. Datensicherheit</h2>
+
+      <p>
+        Wir treffen angemessene technische und organisatorische
+        Maßnahmen, um personenbezogene Daten vor Verlust,
+        unbefugtem Zugriff, Veränderung oder unzulässiger Offenlegung
+        zu schützen.
+      </p>
+
+      <p>
+        Die Übertragung unserer Website erfolgt grundsätzlich
+        verschlüsselt über HTTPS.
+      </p>
+
+
+      <h2>9. Ihre Rechte</h2>
+
+      <p>
+        Ihnen stehen nach Maßgabe der gesetzlichen Voraussetzungen
+        insbesondere folgende Datenschutzrechte zu:
+      </p>
+
+      <ul>
+        <li>Recht auf Auskunft über Ihre personenbezogenen Daten</li>
+        <li>Recht auf Berichtigung unrichtiger Daten</li>
+        <li>Recht auf Löschung</li>
+        <li>Recht auf Einschränkung der Verarbeitung</li>
+        <li>Recht auf Datenübertragbarkeit</li>
+        <li>Recht auf Widerspruch gegen bestimmte Verarbeitungen</li>
+        <li>
+          Recht auf Widerruf einer erteilten Einwilligung
+          mit Wirkung für die Zukunft
+        </li>
+      </ul>
+
+
+      <h2>10. Widerspruchsrecht</h2>
+
+      <p>
+        Soweit wir personenbezogene Daten auf Grundlage von
+        Art. 6 Abs. 1 lit. f DSGVO verarbeiten, haben Sie unter den
+        gesetzlichen Voraussetzungen das Recht, dieser Verarbeitung
+        zu widersprechen.
+      </p>
+
+
+      <h2>11. Beschwerderecht</h2>
+
+      <p>
+        Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde
+        über die Verarbeitung Ihrer personenbezogenen Daten zu
+        beschweren.
+      </p>
+
+
+      <h2>12. Änderungen dieser Datenschutzerklärung</h2>
+
+      <p>
+        Wir können diese Datenschutzerklärung anpassen, wenn sich unsere
+        Website, eingesetzte Dienste oder gesetzliche Anforderungen
+        ändern.
+      </p>
+
+      <p>
+        Stand: August 2026
+      </p>
+
+    </div>
+
+  </main>
+
+
+  <footer></footer>
+
+
+  <script>
+
+    document.getElementById("dateToday").textContent =
+      new Date().toLocaleDateString("de-DE", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+      });
+
+    (function () {
+      const saved = localStorage.getItem("theme");
+
+      if (saved) {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+
+      const button = document.getElementById("themeToggle");
+
+      button.onclick = () => {
+        const root = document.documentElement;
+
+        const next =
+          root.getAttribute("data-theme") === "dark"
+            ? "light"
+            : "dark";
+
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+
+      };
+    })();
+
+
+    fetch("/config/branding.json")
+      .then((response) => response.json())
+      .then((branding) => {
+        if (branding.brandName) {
+          document.getElementById("brandTitle").textContent =
+            branding.brandName;
+        }
+
+        if (branding.logo) {
+          document.getElementById("brandLogo").src =
+            "/" + branding.logo;
+        }
+      })
+      .catch(() => {
+        // Standard-Branding bleibt bestehen.
+      });
+
+    lucide.createIcons();
+
+  </script>
 
 </body>
+
 </html>
