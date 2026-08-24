@@ -431,25 +431,43 @@ function parseBookingIntent(text) {
 }
 
 // =======================================================
-// LOADING BRANDING
+// LOADING BRANDING – A.U.R.A. V2
 // =======================================================
 async function loadBranding() {
   try {
     const r = await fetch("/api/branding");
     const j = await r.json();
+
     if (!j.success) return;
 
     branding = j.branding || {};
     tenantId = j.tenant || tenantId;
 
-    if (branding.brandColor)
-      document.documentElement.style.setProperty("--brand", branding.brandColor);
-    if (branding.brandDark)
-      document.documentElement.style.setProperty("--brandDark", branding.brandDark);
+    if (branding.brandColor) {
+      document.documentElement.style.setProperty(
+        "--brand",
+        branding.brandColor
+      );
+    }
 
-    if (titleEl)
-      titleEl.textContent = `${branding.brandName || "Beauty Lounge"} – Beauty Agent`;
-    if (subtitleEl) subtitleEl.textContent = "Online-Termin & Fragen";
+    if (branding.brandDark) {
+      document.documentElement.style.setProperty(
+        "--brandDark",
+        branding.brandDark
+      );
+    }
+
+    const studioName = branding.brandName || "Beauty Lounge";
+
+    if (titleEl) {
+      titleEl.textContent = studioName;
+    }
+
+    if (subtitleEl) {
+      subtitleEl.textContent =
+        "Digitale Studio-Assistenz für Termine & Fragen";
+    }
+
   } catch (e) {
     console.warn("Branding Fehler:", e);
   }
@@ -507,34 +525,28 @@ async function loadServices() {
 }
 
 // =======================================================
-// WELCOME
+// WELCOME – A.U.R.A. V2
 // =======================================================
 function showWelcome() {
   const name = branding.brandName || "Beauty Lounge";
 
-  // 👉 Bot Antwort mit Animation (VERKAUFSTEXT)
   botReply(
-    `${goldIcon(ICONS.welcome)}<b>Willkommen bei ${name} 👋</b><br><br>
+    `${goldIcon(ICONS.welcome)}
+     <b>Schön, dass du da bist 👋</b><br><br>
 
-   ✨ <b>Probiere die KI jetzt aus.</b><br><br>
+     Ich bin <b>A.U.R.A.</b>, die digitale Assistenz
+     von <b>${name}</b>.<br><br>
 
-   💬 Augenbrauenlifting am 24.06.<br>
-   &nbsp;&nbsp;&nbsp;&nbsp;um 10 Uhr bei Anna.<br><br>
+     Ich helfe dir sofort bei Terminen,
+     Behandlungen, Preisen und Fragen.<br><br>
 
-   💬 Finger morgen um 17 Uhr.<br><br>
-
-   💬 Maniküre morgen 11:00.<br><br>
-
-   <span class="muted-small">
-   A.U.R.A erkennt automatisch Service,
-   Datum, Uhrzeit und fehlende Angaben.
-   </span>`,
-    600
+     <span class="muted-small">
+       Du kannst mir einfach schreiben, was du brauchst.
+     </span>`,
+    500
   );
 
-  // 👉 Buttons minimal verzögert (Flow bleibt gleich)
   setTimeout(() => {
-
     const box = $msg("");
 
     const row = document.createElement("div");
@@ -542,16 +554,39 @@ function showWelcome() {
 
     const btn = (txt, fn, icon, primary = false) => {
       const b = document.createElement("button");
-      b.className = "pill" + (primary ? " pill--primary" : "");
+      b.className =
+        "pill" + (primary ? " pill--primary" : "");
+
       b.innerHTML = `${goldIcon(icon)}${txt}`;
       b.onclick = fn;
+
       row.appendChild(b);
     };
 
-    btn("Termin buchen", startBookingFlow, ICONS.service, true);
-    btn("Öffnungszeiten", replyOpeningHours, ICONS.calendar);
-    btn("Adresse", replyAddress, ICONS.address);
-    btn("Preisliste", replyPriceList, ICONS.price);
+    btn(
+      "Termin finden",
+      startBookingFlow,
+      ICONS.service,
+      true
+    );
+
+    btn(
+      "Preise",
+      replyPriceList,
+      ICONS.price
+    );
+
+    btn(
+      "Öffnungszeiten",
+      replyOpeningHours,
+      ICONS.calendar
+    );
+
+    btn(
+      "Adresse",
+      replyAddress,
+      ICONS.address
+    );
 
     box.appendChild(row);
 
@@ -638,7 +673,16 @@ function startBookingFlow() {
 // --- Mitarbeiterwahl ---
 function showEmployeeChoice() {
   const box = $msg(
-    `${goldIcon(ICONS.employee)}Mit wem möchtest du den Termin buchen?`
+    `${goldIcon(ICONS.employee)}
+   <b>Wer darf sich um dich kümmern?</b><br><br>
+
+   Wähle deine bevorzugte Mitarbeiterin aus
+   oder überlass die Auswahl einfach <b>A.U.R.A.</b>.<br><br>
+
+   <span class="muted-small">
+      Wenn du „A.U.R.A. auswählen lassen“ wählst,
+      übernimmt A.U.R.A. die Mitarbeiterauswahl für dich.
+   </span>`
   );
 
   const row = document.createElement("div");
@@ -647,7 +691,7 @@ function showEmployeeChoice() {
   // 👉 BELIEBIG
   const any = document.createElement("button");
   any.className = "pill alt";
-  any.innerHTML = `${goldIcon(ICONS.employee)}Beliebig`;
+  any.innerHTML = `${goldIcon(ICONS.employee)}A.U.R.A. auswählen lassen`;
 
   any.onclick = () => {
 
@@ -655,7 +699,7 @@ function showEmployeeChoice() {
     chosenEmployee = "auto";
 
     $msg(
-      `<span class="tag">${goldIcon(ICONS.employee)}Beliebig gewählt</span>`
+      `<span class="tag">${goldIcon(ICONS.employee)}A.U.R.A. übernimmt die Mitarbeiterauswahl</span>`
     );
 
     // 🔥 FIX: Upsell nur wenn alles da ist
@@ -752,13 +796,17 @@ function showPhoneStep() {
   bookingPhase = "phone";
 
   const box = $msg(
-    `${goldIcon(ICONS.person)}Fast geschafft!<br>
-     Gib kurz deine WhatsApp-Nummer ein, damit wir deine Auswahl speichern können:<br><br>
+    `${goldIcon(ICONS.person)}
+   <b>Damit wir deine Buchung sicher zuordnen können</b><br><br>
 
-     <div class="muted-small" style="margin-top:10px;">
-       Mit der Buchung erklärst du dich einverstanden,
-       per WhatsApp Nachrichten (Erinnerungen & Termininfos) zu erhalten.
-     </div>`
+   Hinterlege kurz deine <b>WhatsApp-Nummer</b>.
+   Darüber erhältst du deine Terminbestätigung und wichtige
+   Informationen zu deinem Termin.<br><br>
+
+   <div class="muted-small">
+     🔒 Deine Nummer verwenden wir ausschließlich für deine
+     Buchung, Termininformationen und Erinnerungen – nicht für Werbung.
+   </div>`
   );
 
   const input = document.createElement("input");
@@ -1021,7 +1069,16 @@ function showCategoryChoice() {
     services.map(s => s.category).filter(Boolean)
   )];
 
-  const box = $msg(`${goldIcon(ICONS.service)}Welche Kategorie möchtest du?`);
+  const box = $msg(
+    `${goldIcon(ICONS.service)}
+   <b>Welche Art von Behandlung suchst du?</b><br><br>
+
+   Wähle einfach den Bereich aus, der zu deinem Wunsch passt.<br>
+
+   <span class="muted-small">
+     Danach zeigt dir A.U.R.A. die passenden Behandlungen.
+   </span>`
+  );
 
   const row = document.createElement("div");
   row.className = "row";
@@ -1057,7 +1114,16 @@ function showServicesByCategory(category) {
 
   const filtered = services.filter(s => s.category === category);
 
-  const box = $msg(`${goldIcon(ICONS.service)}Wähle deine Behandlung:`);
+  const box = $msg(
+    `${goldIcon(ICONS.service)}
+   <b>Welche Behandlung darf es sein?</b><br><br>
+
+   Wähle eine oder mehrere passende Behandlungen aus.<br>
+
+   <span class="muted-small">
+     Preis und Behandlungsdauer siehst du direkt bei der Auswahl.
+   </span>`
+  );
 
   const row = document.createElement("div");
   row.className = "row";
