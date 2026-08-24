@@ -1003,8 +1003,15 @@ function suggestUpsell(service, onDone = null) {
   }
 
   const box = $msg(
-    `${goldIcon(ICONS.service)}Viele Kunden buchen zusätzlich:<br>
-     <span class="muted-small">Möchtest du noch etwas dazubuchen?</span>`
+    `${goldIcon(ICONS.service)}
+   <b>Passt gut zu deiner Behandlung ✨</b><br><br>
+
+   Viele Kundinnen kombinieren ihre Behandlung gerne
+   mit einer passenden Ergänzung.<br>
+
+   <span class="muted-small">
+     Du entscheidest natürlich selbst, ob du etwas hinzufügen möchtest.
+   </span>`
   );
 
   const row = document.createElement("div");
@@ -1017,11 +1024,13 @@ function suggestUpsell(service, onDone = null) {
 
     const label = document.createElement("div");
     label.className = "muted-small";
-    label.innerHTML = `<b>${s.name}</b> (+${s.price}€)`;
+    label.innerHTML =
+      `<b>${s.name}</b><br>` +
+      `<span class="muted-small">+ ${s.price} € · ${s.duration || 0} Min.</span>`;
 
     const yes = document.createElement("button");
-    yes.className = "pill";
-    yes.textContent = "Ja";
+    yes.textContent = "Hinzufügen";
+    yes.className = "pill pill--primary";
 
     yes.onclick = () => {
       window.lastUserActivity = Date.now();
@@ -1039,7 +1048,7 @@ function suggestUpsell(service, onDone = null) {
 
     const no = document.createElement("button");
     no.className = "pill alt";
-    no.textContent = "Nein";
+    no.textContent = "Ohne Zusatz weiter";
 
     no.onclick = () => {
       window.lastUserActivity = Date.now();
@@ -1310,7 +1319,14 @@ function showDateChoice() {
   bookingPhase = "date";
 
   const box = $msg(
-    `${goldIcon(ICONS.calendar)}Perfekt 😊 Dann wählen wir jetzt dein Wunschdatum:`
+    `${goldIcon(ICONS.calendar)}
+   <b>Wann passt es dir am besten?</b><br><br>
+
+   Wähle dein gewünschtes Datum aus.<br>
+
+   <span class="muted-small">
+     A.U.R.A. prüft danach direkt die verfügbaren Zeiten für dich.
+   </span>`
   );
 
   const input = document.createElement("input");
@@ -1358,7 +1374,14 @@ async function showTimeChoice() {
 
   bookingPhase = "time";
 
-  $msg(`${goldIcon(ICONS.time)}⏳ Lade verfügbare Uhrzeiten …`);
+  $msg(
+    `${goldIcon(ICONS.time)}
+   <b>A.U.R.A. prüft die freien Termine …</b><br>
+
+   <span class="muted-small">
+     Einen Moment – ich suche passende Zeiten für dein Wunschdatum.
+   </span>`
+  );
 
   const empId =
     chosenEmployee === "auto"
@@ -1404,8 +1427,13 @@ async function showTimeChoice() {
 
       // ❌ Zeit nicht mehr gültig
       $msg(
-        `${goldIcon(ICONS.calendar)}⚠️ Diese Uhrzeit ist leider nicht mehr verfügbar.<br>` +
-        `<span class="muted-small">Bitte wähle ein neues Datum.</span>`
+        `${goldIcon(ICONS.time)}
+   <b>Diese Uhrzeit ist leider nicht mehr frei.</b><br>
+
+   <span class="muted-small">
+     Kein Problem – wähle einfach ein neues Datum.
+     A.U.R.A. prüft anschließend erneut die verfügbaren Zeiten.
+   </span>`
       );
 
       chosenTime = null;
@@ -1420,8 +1448,12 @@ async function showTimeChoice() {
     if (!slots.length) {
 
       $msg(
-        `${goldIcon(ICONS.calendar)}❌ An diesem Tag sind keine freien Termine.<br>` +
-        `<span class="muted-small">Bitte wähle ein anderes Datum.</span>`
+        `${goldIcon(ICONS.calendar)}
+   <b>An diesem Tag ist leider kein passender Termin frei.</b><br>
+
+   <span class="muted-small">
+     Wähle einfach ein anderes Datum – A.U.R.A. sucht direkt weiter.
+   </span>`
       );
 
       chosenDate = null;
@@ -1429,7 +1461,16 @@ async function showTimeChoice() {
       return;
     }
 
-    const box = $msg(`${goldIcon(ICONS.time)}Super ✨ Jetzt such dir eine passende Uhrzeit aus:`);
+    const box = $msg(
+      `${goldIcon(ICONS.time)}
+   <b>Ich habe freie Termine für dich gefunden ✨</b><br><br>
+
+   Welche Uhrzeit passt dir am besten?<br>
+
+   <span class="muted-small">
+     Tippe einfach auf deine Wunschzeit.
+   </span>`
+    );
 
     const row = document.createElement("div");
     row.className = "row";
@@ -1470,8 +1511,13 @@ async function showTimeChoice() {
     console.error("Slot Fehler:", e);
 
     $msg(
-      `${goldIcon(ICONS.info)}⚠️ Die freien Zeiten konnten gerade nicht geladen werden.<br>` +
-      `<span class="muted-small">Bitte melde dich kurz telefonisch im Studio.</span>`
+      `${goldIcon(ICONS.info)}
+   <b>Die freien Termine konnten gerade nicht geprüft werden.</b><br>
+
+   <span class="muted-small">
+     Versuche es bitte gleich noch einmal.
+     Sollte es weiterhin nicht funktionieren, melde dich direkt beim Studio.
+   </span>`
     );
   }
 }
@@ -1538,13 +1584,32 @@ function askUserDetails() {
 
   bookingPhase = "userdata";
 
+  const serviceSummary = [
+    chosenService?.name,
+    ...(chosenExtras || []).map((x) => x.name)
+  ]
+    .filter(Boolean)
+    .join(" + ");
+
+  const employeeLabel =
+    chosenEmployee === "auto"
+      ? "Auswahl durch A.U.R.A."
+      : chosenEmployee?.name || "Studio-Team";
+
   const box = $msg(
-    `${goldIcon(ICONS.person)}Fast geschafft!<br>
-     Bitte gib noch deine Kontaktdaten ein:<br><br>
+    `${goldIcon(ICONS.person)}
+     <b>Dein Wunschtermin ist verfügbar ✨</b><br><br>
+
+     <b>${serviceSummary}</b><br>
+     📅 ${formatDateDE(chosenDate)}<br>
+     🕒 ${chosenTime} Uhr<br>
+     👤 ${employeeLabel}<br><br>
+
+     Jetzt fehlen nur noch deine Kontaktdaten.<br>
 
      <span class="muted-small">
-       Mit der Buchung erklärst du dich einverstanden,
-       per WhatsApp Nachrichten zu deinem Termin zu erhalten.
+       Deine WhatsApp-Nummer haben wir bereits.
+       Die E-Mail-Adresse ist optional.
      </span>`
   );
 
@@ -1552,11 +1617,12 @@ function askUserDetails() {
   n.placeholder = "Vorname Nachname";
 
   const e = document.createElement("input");
-  e.placeholder = "E-Mail (optional)";
+  e.placeholder = "E-Mail-Adresse (optional)";
 
   const submit = document.createElement("button");
-  submit.className = "pill";
-  submit.innerHTML = `${goldIcon(ICONS.service)}Termin buchen`;
+  submit.className = "pill pill--primary";
+  submit.innerHTML =
+    `${goldIcon(ICONS.service)}Termin verbindlich buchen`;
 
   submit.onclick = async () => {
 
@@ -1571,7 +1637,7 @@ function askUserDetails() {
 
     submit.disabled = true;
     submit.style.opacity = "0.7";
-    submit.innerHTML = "Wird gebucht...";
+    submit.innerHTML = "A.U.R.A. bucht deinen Termin …";
 
     userData = {
       name: n.value.trim(),
@@ -1587,7 +1653,8 @@ function askUserDetails() {
       bookingSubmitting = false;
       submit.disabled = false;
       submit.style.opacity = "1";
-      submit.innerHTML = `${goldIcon(ICONS.service)}Termin buchen`;
+      submit.innerHTML =
+        `${goldIcon(ICONS.service)}Termin verbindlich buchen`;
     }
   };
 
@@ -1698,8 +1765,12 @@ async function createBooking() {
       if (j.error === "CONFLICT" || j.error === "SLOT_INVALID") {
 
         $msg(
-          `${goldIcon(ICONS.info)}⚠️ Diese Uhrzeit ist nicht mehr verfügbar.<br>` +
-          `<span class="muted-small">Bitte wähle eine andere Uhrzeit.</span>`
+          `${goldIcon(ICONS.info)}
+   <b>Dieser Termin wurde gerade vergeben.</b><br>
+
+   <span class="muted-small">
+     Kein Problem – A.U.R.A. zeigt dir direkt die aktuell verfügbaren Zeiten.
+   </span>`
         );
 
         chosenTime = null;
@@ -1710,8 +1781,13 @@ async function createBooking() {
       }
 
       $msg(
-        `${goldIcon(ICONS.info)}⚠️ Es gab ein Problem bei der Buchung.<br>` +
-        `<span class="muted-small">Bitte versuche es später noch einmal oder rufe im Studio an.</span>`
+        `${goldIcon(ICONS.info)}
+   <b>Dein Termin konnte noch nicht abgeschlossen werden.</b><br>
+
+   <span class="muted-small">
+     Versuche es bitte noch einmal.
+     Sollte es weiterhin nicht funktionieren, melde dich direkt beim Studio.
+   </span>`
       );
 
       resetBookingState();
@@ -1767,7 +1843,7 @@ async function createBooking() {
      target="_blank"
      class="download-link"
      style="display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:190px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"    >
-      📄 PDF herunterladen
+      📄 PDF-Bestätigung
     </a>
   `;
     }
@@ -1789,7 +1865,7 @@ async function createBooking() {
           download="termin.ics"
           class="download-link"
           style="display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:190px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"        >
-          📅 Kalender speichern
+          📅 Zum Kalender hinzufügen
         </a>
       `;
     }
@@ -1866,7 +1942,7 @@ async function createBooking() {
     "
     onclick="location.reload()"
   >
-    ✨ Neuen Termin buchen
+    ✨ Weiteren Termin buchen
   </button>
 `;
 
@@ -1874,9 +1950,33 @@ async function createBooking() {
       ? { ...chosenService }
       : null;
 
+    const confirmedEmployee =
+      chosenEmployee === "auto"
+        ? "Auswahl durch A.U.R.A."
+        : chosenEmployee?.name || "Studio-Team";
+
+    const formattedPrice =
+      Number(totalPrice)
+        .toFixed(2)
+        .replace(".", ",");
+
     $msg(
-      `${goldIcon(ICONS.info)}🎉 Dein Termin wurde erfolgreich bestätigt!<br>` +
-      `<span class="tag">${serviceNames}</span>` +
+      `${goldIcon(ICONS.info)}
+   <b>Termin bestätigt 🎉</b><br><br>
+
+   Dein Termin ist erfolgreich eingetragen.<br><br>
+
+   <b>${serviceNames}</b><br>
+   📅 ${formatDateDE(chosenDate)}<br>
+   🕒 ${chosenTime} Uhr<br>
+   👤 ${confirmedEmployee}<br>
+   💶 ${formattedPrice} €<br>
+   ⏱️ ${totalDuration} Min.<br><br>
+
+   <span class="muted-small">
+     Deine Termininformationen und Erinnerungen erhältst du
+     zusätzlich über WhatsApp.
+   </span>` +
       extra
     );
 
@@ -1889,8 +1989,13 @@ async function createBooking() {
     console.error("Booking Error:", e);
 
     $msg(
-      `${goldIcon(ICONS.info)}⚠️ Technischer Fehler bei der Buchung.<br>` +
-      `<span class="muted-small">Bitte vereinbare deinen Termin telefonisch.</span>`
+      `${goldIcon(ICONS.info)}
+   <b>Dein Termin konnte gerade nicht abgeschlossen werden.</b><br>
+
+   <span class="muted-small">
+     Versuche es bitte gleich noch einmal.
+     Sollte es weiterhin nicht funktionieren, melde dich direkt beim Studio.
+   </span>`
     );
   }
 
@@ -1900,18 +2005,23 @@ async function createBooking() {
 function showSoftClose(lastService = null) {
 
   const box = $msg(
-    `${goldIcon(ICONS.info)}✨ Möchtest du direkt deinen nächsten Termin sichern<br>
-     <span class="muted-small">✨ Viele Kunden buchen direkt vor, damit sie ihren Wunschslot behalten.</span>`
+    `${goldIcon(ICONS.info)}
+   <b>Möchtest du deinen nächsten Termin direkt mitplanen? ✨</b><br><br>
+
+   <span class="muted-small">
+     Wenn du regelmäßig kommst, kannst du dir schon jetzt
+     einen passenden Folgetermin sichern.
+   </span>`
   );
 
   const row = document.createElement("div");
   row.className = "row";
 
   const yes = document.createElement("button");
-  yes.className = "pill";
+  yes.className = "pill pill--primary";
   yes.style.minWidth = "200px";
   yes.style.justifyContent = "center";
-  yes.textContent = "Ja, nächsten Termin planen";
+  yes.textContent = "Nächsten Termin planen";
 
   yes.onclick = () => {
 
@@ -1929,16 +2039,19 @@ function showSoftClose(lastService = null) {
     window.bookingActive = true;
     bookingPhase = "repeat_choice";
 
-    $msg("Perfekt 💎 Dann planen wir direkt weiter.");
+    $msg("Sehr gerne ✨ Dann planen wir direkt weiter.");
 
-    const choiceBox = $msg("Möchtest du denselben Service erneut buchen?");
+    const choiceBox = $msg(
+      `${goldIcon(ICONS.service)}
+   <b>Möchtest du dieselbe Behandlung erneut buchen?</b>`
+    );
     const choiceRow = document.createElement("div");
     choiceRow.className = "row";
 
     // ✅ gleicher Service
     const sameBtn = document.createElement("button");
     sameBtn.className = "pill";
-    sameBtn.innerText = `Ja (${lastService?.name || "Service"})`;
+    sameBtn.innerText = `Gleiche Behandlung · ${lastService?.name || "Service"}`;
 
     sameBtn.onclick = () => {
 
@@ -1962,7 +2075,7 @@ function showSoftClose(lastService = null) {
     // ✅ anderer Service
     const newBtn = document.createElement("button");
     newBtn.className = "pill alt";
-    newBtn.innerText = "Anderen Service wählen";
+    newBtn.innerText = "Andere Behandlung wählen";
 
     newBtn.onclick = () => {
 
@@ -1989,10 +2102,14 @@ function showSoftClose(lastService = null) {
   later.className = "pill alt";
   later.style.minWidth = "95px";
   later.style.justifyContent = "center";
-  later.textContent = "Später";
+  later.textContent = "Für später";
 
   later.onclick = () => {
-    $msg("Alles klar 😊 Wir erinnern dich automatisch.");
+    $msg(
+      `${goldIcon(ICONS.info)}
+     Alles klar 😊 Du kannst jederzeit wieder einen neuen
+     Termin mit A.U.R.A. planen.`
+    );
   };
 
   row.appendChild(yes);
