@@ -376,18 +376,18 @@ app.post("/api/abandoned-booking", async (req, res) => {
         const msg =
           `Hey ${name || ""} 👋\n\n` +
 
-          `du warst gerade kurz davor deinen Termin zu sichern ✨\n\n` +
+          `du warst gerade dabei, deinen Termin zu buchen ✨\n\n` +
 
           (service ? `💅 *${service}*\n` : "") +
           (date ? `📅 ${date}\n` : "") +
-          (time ? `⏰ ${time}\n` : "") +
+          (time ? `🕒 ${time}\n` : "") +
 
-          `\nIch habe dir den Termin kurz freigehalten.\n\n` +
+          `\nWenn du möchtest, kannst du deine Buchung einfach fortsetzen.\n\n` +
 
-          `👉 Hier kannst du ihn direkt abschließen:\n` +
+          `👉 Hier geht es direkt weiter:\n` +
           `${BASE}\n\n` +
 
-          `Sichere ihn dir, bevor er vergeben ist 💛`;
+          `A.U.R.A. begleitet dich durch die restlichen Schritte.`;
 
         await sendWhatsAppReminder(phone, msg);
 
@@ -442,53 +442,94 @@ function formatDEDateTime(iso) {
 // 📩 TEXT TEMPLATES
 // =======================================================
 
-function waTextBookingConfirmation({ name, studioName, service, iso }) {
+function waTextBookingConfirmation({
+  name,
+  studioName,
+  service,
+  iso,
+  pdfLink,
+  icsLink
+}) {
   const { date, time } = formatDEDateTime(iso);
+
   return (
     `Hallo ${name || ""} 👋\n\n` +
-    `dein Termin bei ${studioName} wurde erfolgreich eingetragen:\n\n` +
-    `💅 ${service}\n📅 ${date}\n⏰ ${time}\n\n` +
-    `Du erhältst Erinnerungen 24h & 2h vorher.\n\n` +
-    `Falls du verhindert bist, gib bitte kurz Bescheid.\n\n` +
+    `dein Termin bei *${studioName}* ist bestätigt 🎉\n\n` +
+
+    `💅 ${service}\n` +
+    `📅 ${date}\n` +
+    `🕒 ${time} Uhr\n\n` +
+
+    `📄 *PDF-Bestätigung*\n${pdfLink}\n\n` +
+
+    `📅 *Zum Kalender hinzufügen*\n${icsLink}\n\n` +
+
+    `🔔 Du erhältst automatisch eine Erinnerung 24 Stunden und 2 Stunden vor deinem Termin.\n\n` +
+
+    `Falls du deinen Termin absagen möchtest, antworte einfach mit:\n` +
+    `❌ *STORNO*\n\n` +
+
+    `Wir freuen uns auf dich ✨\n` +
     `${studioName}`
   );
 }
 
+
 function waTextReminder24h({ name, studioName, service, iso }) {
   const { date, time } = formatDEDateTime(iso);
+
   return (
     `Hallo ${name || ""} 👋\n\n` +
-    `Erinnerung an deinen Termin morgen bei ${studioName}:\n\n` +
-    `💅 ${service}\n📅 ${date}\n⏰ ${time}\n\n` +
-    `Wir freuen uns auf dich ✨`
+    `kleine Erinnerung an deinen Termin morgen ✨\n\n` +
+
+    `💅 ${service}\n` +
+    `📅 ${date}\n` +
+    `🕒 ${time} Uhr\n\n` +
+
+    `Wir freuen uns auf dich.\n\n` +
+
+    `Falls du deinen Termin doch nicht wahrnehmen kannst, antworte einfach mit:\n` +
+    `❌ *STORNO*\n\n` +
+
+    `${studioName}`
   );
 }
 
 function waTextReminder2h({ name, studioName, service, iso }) {
   const { time } = formatDEDateTime(iso);
+
   return (
     `Hallo ${name || ""} 👋\n\n` +
-    `In 2 Stunden beginnt dein Termin bei ${studioName}:\n\n` +
-    `💅 ${service}\n⏰ ${time}\n\n` +
-    `Bis gleich ✨`
+    `dein Termin beginnt in etwa 2 Stunden ✨\n\n` +
+
+    `💅 ${service}\n` +
+    `🕒 ${time} Uhr\n\n` +
+
+    `Wir freuen uns gleich auf dich.\n\n` +
+
+    `Falls kurzfristig etwas dazwischenkommt, antworte einfach mit:\n` +
+    `❌ *STORNO*\n\n` +
+
+    `${studioName}`
   );
 }
 
 function waTextReviewRequest({ name, studioName, reviewUrl }) {
-  return `Hallo ${name} 😊
+  return (
+    `Hallo ${name || ""} 😊\n\n` +
+    `vielen Dank für deinen Besuch bei *${studioName}*.\n\n` +
 
-vielen Dank für deinen Besuch bei *${studioName}*.
+    `Wir hoffen, dass du dich wohlgefühlt hast und mit deinem Ergebnis zufrieden bist ✨\n\n` +
 
-Wir hoffen, du bist mit deinem Termin zufrieden und fühlst dich wohl mit dem Ergebnis ✨
+    `Wenn du einen kurzen Moment Zeit hast, würden wir uns sehr über deine Bewertung freuen:\n\n` +
 
-Falls du kurz 30 Sekunden Zeit hast, würden wir uns riesig über eine Bewertung freuen:
+    `⭐ ${reviewUrl}\n\n` +
 
-⭐ ${reviewUrl}
+    `Dein Feedback hilft uns dabei, unseren Service weiter zu verbessern und unterstützt unser Studio sehr.\n\n` +
 
-Dein Feedback hilft uns sehr und unterstützt unser Studio.
-
-Vielen Dank und bis bald 💛
-${studioName}`;
+    `Vielen Dank und bis bald 💛\n` +
+    `${studioName}`
+  );
 }
 
 // =======================================================
@@ -513,11 +554,16 @@ async function sendWhatsAppReminder(phone, message) {
   }
 }
 
+
 // =======================================================
 // ✅ BOOKING CONFIRMATION
 // =======================================================
 
-async function sendWhatsAppBookingConfirmation(booking) {
+async function sendWhatsAppBookingConfirmation(
+  booking,
+  pdfLink,
+  icsLink
+) {
   if (!twilioClient || !booking?.phone || !booking?.dateTime) return;
 
   const tenantId = booking.tenant || process.env.TENANT_DEFAULT;
@@ -529,9 +575,14 @@ async function sendWhatsAppBookingConfirmation(booking) {
     studioName,
     service: booking.service,
     iso: booking.dateTime,
+    pdfLink,
+    icsLink
   });
 
-  await sendWhatsAppReminder(booking.phone, msg);
+  await sendWhatsAppReminder(
+    booking.phone,
+    msg
+  );
 }
 
 // =======================================================
@@ -539,16 +590,40 @@ async function sendWhatsAppBookingConfirmation(booking) {
 // =======================================================
 
 function scheduleWhatsAppReminders(booking) {
-  if (!twilioClient || !booking?.phone || !booking?.dateTime) return;
+  console.log("🔥 scheduleWhatsAppReminders START", booking);
+
+  if (!twilioClient || !booking?.id || !booking?.phone || !booking?.dateTime) {
+    console.log("⏭️ WhatsApp Reminder nicht geplant: Daten fehlen", {
+      id: booking?.id,
+      phone: booking?.phone,
+      dateTime: booking?.dateTime,
+    });
+    return;
+  }
 
   try {
     const start = new Date(booking.dateTime);
-    if (isNaN(start.getTime())) return;
+
+    if (isNaN(start.getTime())) {
+      console.error(
+        "❌ Reminder Fehler: Ungültige booking.dateTime",
+        booking.dateTime
+      );
+      return;
+    }
 
     const now = new Date();
-    const tenantId = booking.tenant || process.env.TENANT_DEFAULT;
-    const cfg = loadTenantConfig(tenantId);
-    const studioName = cfg?.branding?.brandName || "Beauty Lounge";
+
+    const tenantId =
+      booking.tenant ||
+      process.env.TENANT_DEFAULT;
+
+    const cfg =
+      loadTenantConfig(tenantId);
+
+    const studioName =
+      cfg?.branding?.brandName ||
+      "Beauty Lounge";
 
     const msg24 = waTextReminder24h({
       name: booking.name,
@@ -565,21 +640,88 @@ function scheduleWhatsAppReminders(booking) {
     });
 
     [
-      { offset: 24 * 60 * 60 * 1000, msg: msg24, label: "24h" },
-      { offset: 2 * 60 * 60 * 1000, msg: msg2, label: "2h" },
+      { offset: 24 * 60 * 60 * 1000, msg: msg24, label: "24h" }, // 
+      { offset: 2 * 60 * 60 * 1000, msg: msg2, label: "2h" },   // 
     ].forEach(({ offset, msg, label }) => {
-      const runAt = new Date(start.getTime() - offset);
-      if (runAt <= now) return;
+      const runAt =
+        new Date(start.getTime() - offset);
 
-      schedule.scheduleJob(`wa_${booking.id}_${label}`, () => {
-        sendWhatsAppReminder(booking.phone, msg);
-      });
+      if (runAt <= now) {
+        console.log(
+          `⏭️ WhatsApp Reminder ${label} übersprungen, Zeitpunkt liegt in der Vergangenheit (${runAt.toISOString()})`
+        );
+        return;
+      }
 
-      log(`📆 WhatsApp Reminder ${label} geplant (${runAt.toISOString()})`);
+      const jobName =
+        `wa_${booking.id}_${label}`;
+
+      schedule.scheduleJob(
+        jobName,
+        runAt,
+        async () => {
+          try {
+            const latestBooking = getAllBookings()
+              .find(b => b.id === booking.id);
+
+            if (!latestBooking || latestBooking.status === "cancelled") {
+              console.log(
+                `⛔ WhatsApp Reminder ${label} nicht gesendet, Termin storniert oder nicht mehr vorhanden:`,
+                booking.id
+              );
+
+              return;
+            }
+
+            console.log(
+              `📲 WhatsApp Reminder ${label} wird jetzt gesendet:`,
+              booking.id
+            );
+
+            await sendWhatsAppReminder(
+              booking.phone,
+              msg
+            );
+
+          } catch (err) {
+            console.error(
+              `❌ WhatsApp Reminder ${label} Sende-Fehler:`,
+              err.message
+            );
+          }
+        }
+      );
+
+      log(
+        `📆 WhatsApp Reminder ${label} geplant (${runAt.toISOString()})`
+      );
     });
+
   } catch (err) {
-    console.error("❌ Reminder Fehler:", err.message);
+    console.error(
+      "❌ Reminder Fehler:",
+      err.message
+    );
   }
+}
+
+function cancelWhatsAppReminderJobs(bookingId) {
+  if (!bookingId) return;
+
+  const jobs = [
+    `wa_${bookingId}_24h`,
+    `wa_${bookingId}_2h`,
+  ];
+
+  jobs.forEach((jobName) => {
+    const cancelled = schedule.cancelJob(jobName);
+
+    console.log(
+      cancelled
+        ? `🛑 WhatsApp Reminder Job gelöscht: ${jobName}`
+        : `ℹ️ Kein aktiver WhatsApp Reminder Job gefunden: ${jobName}`
+    );
+  });
 }
 
 function scheduleReviewReminder(booking, reviewUrl) {
@@ -592,28 +734,49 @@ function scheduleReviewReminder(booking, reviewUrl) {
   }
 
   const bookingTime = new Date(booking.dateTime).getTime();
-  const delay = bookingTime + (3 * 60 * 60 * 1000) - Date.now();
+  const delay =
+    bookingTime + (3 * 60 * 60 * 1000) - Date.now();
+
   console.log("⭐ Review Reminder geplant:", delay, "ms");
 
   if (delay <= 0) return;
+
+  const tenantId =
+    booking.tenant ||
+    process.env.TENANT_DEFAULT;
+
+  const cfg =
+    loadTenantConfig(tenantId);
+
+  const studioName =
+    cfg?.branding?.brandName ||
+    "Ihr Studio";
 
   setTimeout(async () => {
     try {
       const text = waTextReviewRequest({
         name: booking.name,
-        studioName: booking.tenant || "Ihr Studio",
+        studioName,
         reviewUrl
       });
 
-      await sendWhatsAppReminder(booking.phone, text);
+      await sendWhatsAppReminder(
+        booking.phone,
+        text
+      );
 
-      // ⭐ Nach Versand speichern
       markReviewSent(booking.id);
 
-      console.log("⭐ Review Reminder gesendet:", booking.id);
+      console.log(
+        "⭐ Review Reminder gesendet:",
+        booking.id
+      );
 
     } catch (err) {
-      console.error("❌ Review Reminder Fehler:", err.message);
+      console.error(
+        "❌ Review Reminder Fehler:",
+        err.message
+      );
     }
   }, delay);
 }
@@ -1032,9 +1195,10 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
 
       const reply =
         "Hallo 👋\n\n" +
+        "ich bin *A.U.R.A.*, deine digitale Studio-Assistenz.\n\n" +
         "Wie kann ich dir helfen?\n\n" +
         "1️⃣ Termin buchen\n" +
-        "2️⃣ Preise\n" +
+        "2️⃣ Preise ansehen\n" +
         "3️⃣ Öffnungszeiten";
 
       await twilioClient.messages.create({
@@ -1086,6 +1250,8 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
         return res.sendStatus(200);
       }
 
+      cancelWhatsAppReminderJobs(booking.id);
+
       completedBookings.delete(
         from.replace("whatsapp:", "")
       );
@@ -1107,6 +1273,176 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
       console.log("🚫 Termin storniert:", booking.id);
 
       return res.sendStatus(200);
+    }
+
+
+    // =======================================================
+    // 🔁 UMBUCHUNG AUSWAHL (Mehrere Termine)
+    // Phase 2: Termin auswählen + neues Datum abfragen
+    // Noch KEIN Verschieben, KEIN updateBooking
+    // =======================================================
+
+    if (sessions[from]?.step === "reschedule_selection") {
+
+      const selection = Number(message);
+      const options = sessions[from].rescheduleOptions || [];
+      const booking = options[selection - 1];
+
+      if (!booking) {
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: from,
+          body:
+            "Bitte antworte mit der Nummer des Termins, den du umbuchen möchtest."
+        });
+
+        return res.sendStatus(200);
+      }
+
+      const niceDateTime = formatDEDateTime(booking.dateTime);
+
+      sessions[from] = {
+        step: "reschedule_date_pick",
+        rescheduleBooking: booking
+      };
+
+      await twilioClient.messages.create({
+        from: TWILIO_WHATSAPP_FROM,
+        to: from,
+        body:
+          "Alles klar 😊\n\n" +
+          "Diesen Termin möchtest du umbuchen:\n\n" +
+          `💅 ${booking.service}\n` +
+          `📅 ${niceDateTime.date}\n` +
+          `🕒 ${niceDateTime.time} Uhr\n\n` +
+          "Auf welches Datum möchtest du umbuchen?\n\n" +
+          "1️⃣ Heute\n" +
+          "2️⃣ Morgen\n" +
+          "3️⃣ Übermorgen\n\n" +
+          "oder schreibe ein Datum:\n" +
+          "z.B. 15.03.2026"
+      });
+
+      return res.sendStatus(200);
+    }
+
+
+    // =======================================================
+    // 🔁 GLOBAL UMBUCHUNG / TERMIN VERSCHIEBEN (Phase 1)
+    // Nur erkennen + Termine anzeigen
+    // Noch KEIN Verschieben, KEIN updateBooking
+    // =======================================================
+
+    if (
+      message.includes("umbuchen") ||
+      message.includes("verschieben") ||
+      message.includes("termin verschieben") ||
+      message.includes("termin ändern") ||
+      message.includes("termin aendern") ||
+      message === "ändern" ||
+      message === "aendern"
+    ) {
+
+      try {
+
+        const phone = from.replace("whatsapp:", "");
+
+        const upcoming = getAllBookings()
+          .filter(b =>
+            String(b.phone || "").replace(/\s+/g, "") ===
+            String(phone).replace(/\s+/g, "")
+          )
+          .filter(b => b.status !== "cancelled")
+          .filter(b => new Date(b.dateTime).getTime() > Date.now())
+          .sort((a, b) =>
+            new Date(a.dateTime) - new Date(b.dateTime)
+          );
+
+        if (!upcoming.length) {
+
+          await twilioClient.messages.create({
+            from: TWILIO_WHATSAPP_FROM,
+            to: from,
+            body:
+              "Ich konnte keinen zukünftigen Termin zu dieser Nummer finden.\n\n" +
+              "Falls du einen neuen Termin buchen möchtest, schreibe einfach:\n\n" +
+              "1️⃣ Termin buchen"
+          });
+
+          return res.sendStatus(200);
+        }
+
+        if (upcoming.length === 1) {
+
+          const booking = upcoming[0];
+          const niceDateTime = formatDEDateTime(booking.dateTime);
+
+          sessions[from] = {
+            step: "reschedule_date_pick",
+            rescheduleBooking: booking
+          };
+
+          await twilioClient.messages.create({
+            from: TWILIO_WHATSAPP_FROM,
+            to: from,
+            body:
+              "Ich habe deinen Termin gefunden:\n\n" +
+              `💅 ${booking.service}\n` +
+              `📅 ${niceDateTime.date}\n` +
+              `🕒 ${niceDateTime.time} Uhr\n\n` +
+              "Auf welches Datum möchtest du umbuchen?\n\n" +
+              "1️⃣ Heute\n" +
+              "2️⃣ Morgen\n" +
+              "3️⃣ Übermorgen\n\n" +
+              "oder schreibe ein Datum:\n" +
+              "z.B. 15.03.2026"
+          });
+
+          return res.sendStatus(200);
+        }
+
+        sessions[from] = {
+          step: "reschedule_selection",
+          rescheduleOptions: upcoming
+        };
+
+        const lines = upcoming
+          .map((b, i) => {
+
+            const niceDateTime = formatDEDateTime(b.dateTime);
+
+            return `${i + 1}️⃣ ${b.service}\n📅 ${niceDateTime.date}\n🕒 ${niceDateTime.time} Uhr`;
+
+          })
+          .join("\n\n");
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: from,
+          body:
+            "Ich habe mehrere zukünftige Termine gefunden.\n\n" +
+            "Welchen Termin möchtest du umbuchen?\n\n" +
+            lines +
+            "\n\nBitte antworte mit der entsprechenden Nummer."
+        });
+
+        return res.sendStatus(200);
+
+      } catch (err) {
+
+        console.error("❌ UMBUCHUNG PHASE 1 FEHLER:", err.message);
+
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_FROM,
+          to: from,
+          body:
+            "Beim Prüfen deiner Termine ist ein Fehler aufgetreten.\n\n" +
+            "Bitte versuche es gleich noch einmal."
+        });
+
+        return res.sendStatus(200);
+      }
     }
 
     // =======================================================
@@ -1151,6 +1487,8 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
 
             return res.sendStatus(200);
           }
+
+          cancelWhatsAppReminderJobs(booking.id);
 
           completedBookings.delete(phone);
           abandonedWhatsappSessions.delete(from);
@@ -1354,13 +1692,12 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
           session.upsellDone = true;
 
           reply =
-            `✨ Empfehlung\n\n` +
-            `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-            `${upsell}\n\n` +
-            `👉 spart Zeit & sieht gepflegter aus\n\n` +
-            `Möchtest du das dazu?\n\n` +
-            `1️⃣ Ja hinzufügen\n` +
-            `2️⃣ Nein weiter`;
+            `✨ *Passt gut zu deiner Behandlung*\n\n` +
+            `Viele Kundinnen kombinieren dazu gerne:\n\n` +
+            `➕ ${upsell}\n\n` +
+            `Möchtest du die Ergänzung hinzufügen?\n\n` +
+            `1️⃣ Hinzufügen\n` +
+            `2️⃣ Ohne Zusatz weiter`;
 
 
           await twilioClient.messages.create({
@@ -1389,8 +1726,8 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
               .join("\n");
 
             reply =
-              `Super 👍 ${session.service}\n\n` +
-              `Welcher Mitarbeiter?\n\n` +
+              `Perfekt ✨ Du hast *${session.service}* ausgewählt.\n\n` +
+              `Wer darf sich um dich kümmern?\n\n` +
               employeeLines;
           }
 
@@ -1410,12 +1747,12 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
           session.step = "date_pick";
 
           reply =
-            "Bitte wähle ein Datum:\n\n" +
+            "Wann passt es dir am besten? 📅\n\n" +
             "1️⃣ Heute\n" +
             "2️⃣ Morgen\n" +
             "3️⃣ Übermorgen\n\n" +
-            "oder schreibe ein Datum:\n" +
-            "z.B. 15.03.2026";
+            "Oder schreib mir einfach dein Wunschdatum,\n" +
+            "z.B. 15.03.2026.";
 
           await twilioClient.messages.create({
             from: TWILIO_WHATSAPP_FROM,
@@ -1486,23 +1823,30 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
             session.step = "upsell_offer";
 
             reply =
-              `✨ Empfehlung\n\n` +
-              `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-              `${upsell}\n\n` +
-              `👉 spart Zeit & sieht gepflegter aus\n\n` +
-              `Möchtest du das dazu?\n\n` +
-              `1️⃣ Ja hinzufügen\n` +
-              `2️⃣ Nein weiter`;
+              `✨ *Passt gut zu deiner Behandlung*\n\n` +
+              `Viele Kundinnen kombinieren dazu gerne:\n\n` +
+              `➕ ${upsell}\n\n` +
+              `Möchtest du die Ergänzung hinzufügen?\n\n` +
+              `1️⃣ Hinzufügen\n` +
+              `2️⃣ Ohne Zusatz weiter`;
 
           } else {
 
             session.step = "ask_name";
 
+            const niceDateTime = formatDEDateTime(
+              `${session.selectedDate}T${matchedSlot.time}:00`
+            );
+
             reply =
-              `Perfekt 👌\n\n` +
-              `${session.service}\n` +
-              `${session.selectedDate} um ${matchedSlot.time}\n\n` +
-              `Wie heißt du?`;
+              `Perfekt ✨ Dein Wunschtermin ist verfügbar.\n\n` +
+              `💅 ${session.service}\n` +
+              `📅 ${niceDateTime.date}\n` +
+              `🕒 ${niceDateTime.time} Uhr\n\n` +
+              `Jetzt fehlt nur noch dein Name.\n\n` +
+              `Wie heißt du?\n\n` +
+              `Datenschutzhinweis:\n` +
+              `Deine Angaben werden ausschließlich zur Terminabwicklung verwendet. Du erhältst per WhatsApp nur Nachrichten zu deinem Termin, z.B. Bestätigung, Erinnerungen oder Änderungen.`;
           }
 
 
@@ -1514,9 +1858,16 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
             .map((s, i) => `${i + 1}️⃣ ${s.time}`)
             .join("\n");
 
+          const niceDate = formatDEDateTime(
+            `${session.selectedDate}T00:00:00`
+          );
+
           reply =
-            `📅 ${session.selectedDate}\n\n` +
-            `Diese Uhrzeiten sind frei:\n\n${slotLines}`;
+            `Leider ist ${session.aiTime || "diese Uhrzeit"} nicht frei.\n\n` +
+            `📅 ${niceDate.date}\n\n` +
+            `Ich könnte dir anbieten:\n\n` +
+            `${slotLines}\n\n` +
+            `Welche Uhrzeit passt dir?`;
         }
 
         await twilioClient.messages.create({
@@ -1532,10 +1883,11 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
       // 🔥 Normales Menü
       // =======================================================
       reply =
-        "Hallo und willkommen bei GlowSuite.\n\n" +
+        "Hallo 👋\n\n" +
+        "ich bin *A.U.R.A.*, deine digitale Studio-Assistenz.\n\n" +
         "Wie kann ich dir helfen?\n\n" +
         "1️⃣ Termin buchen\n" +
-        "2️⃣ Preise\n" +
+        "2️⃣ Preise ansehen\n" +
         "3️⃣ Öffnungszeiten";
 
 
@@ -1588,10 +1940,11 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
       } else {
 
         reply =
-          "Hallo und willkommen bei GlowSuite.\n\n" +
+          "Hallo 👋\n\n" +
+          "ich bin *A.U.R.A.*, deine digitale Studio-Assistenz.\n\n" +
           "Wie kann ich dir helfen?\n\n" +
           "1️⃣ Termin buchen\n" +
-          "2️⃣ Preise\n" +
+          "2️⃣ Preise ansehen\n" +
           "3️⃣ Öffnungszeiten";
       }
     }
@@ -1654,13 +2007,12 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
           session.upsellDone = true;
 
           reply =
-            `✨ Empfehlung\n\n` +
-            `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-            `${upsell}\n\n` +
-            `👉 spart Zeit & sieht gepflegter aus\n\n` +
-            `Möchtest du das dazu?\n\n` +
-            `1️⃣ Ja hinzufügen\n` +
-            `2️⃣ Nein weiter`;
+            `✨ *Passt gut zu deiner Behandlung*\n\n` +
+            `Viele Kundinnen kombinieren dazu gerne:\n\n` +
+            `➕ ${upsell}\n\n` +
+            `Möchtest du die Ergänzung hinzufügen?\n\n` +
+            `1️⃣ Hinzufügen\n` +
+            `2️⃣ Ohne Zusatz weiter`;
 
         } else {
           const employees = getAllEmployees(TENANT_DEFAULT) || [];
@@ -1677,8 +2029,8 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
               .join("\n");
 
             reply =
-              `Super 👍 ${session.service}\n\n` +
-              `Welcher Mitarbeiter?\n\n` +
+              `Perfekt ✨ Du hast *${session.service}* ausgewählt.\n\n` +
+              `Wer darf sich um dich kümmern?\n\n` +
               employeeLines;
           }
         }
@@ -1755,23 +2107,30 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
               session.step = "upsell_offer";
 
               reply =
-                `✨ Empfehlung\n\n` +
-                `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-                `${upsell}\n\n` +
-                `👉 spart Zeit & sieht gepflegter aus\n\n` +
-                `Möchtest du das dazu?\n\n` +
-                `1️⃣ Ja hinzufügen\n` +
-                `2️⃣ Nein weiter`;
+                `✨ *Passt gut zu deiner Behandlung*\n\n` +
+                `Viele Kundinnen kombinieren dazu gerne:\n\n` +
+                `➕ ${upsell}\n\n` +
+                `Möchtest du die Ergänzung hinzufügen?\n\n` +
+                `1️⃣ Hinzufügen\n` +
+                `2️⃣ Ohne Zusatz weiter`;
 
             } else {
 
               session.step = "ask_name";
 
+              const niceDateTime = formatDEDateTime(
+                `${session.selectedDate}T${matchedSlot.time}:00`
+              );
+
               reply =
-                `Perfekt 👌\n\n` +
-                `${session.service}\n` +
-                `${session.selectedDate} um ${matchedSlot.time}\n\n` +
-                `Wie heißt du?`;
+                `Perfekt ✨ Dein Wunschtermin ist verfügbar.\n\n` +
+                `💅 ${session.service}\n` +
+                `📅 ${niceDateTime.date}\n` +
+                `🕒 ${niceDateTime.time} Uhr\n\n` +
+                `Jetzt fehlt nur noch dein Name.\n\n` +
+                `Wie heißt du?\n\n` +
+                `Datenschutzhinweis:\n` +
+                `Deine Angaben werden ausschließlich zur Terminabwicklung verwendet. Du erhältst per WhatsApp nur Nachrichten zu deinem Termin, z.B. Bestätigung, Erinnerungen oder Änderungen.`;
             }
 
           } else {
@@ -1783,8 +2142,16 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
               .map((s, i) => `${i + 1}️⃣ ${s.time}`)
               .join("\n");
 
+            const niceDate = formatDEDateTime(
+              `${session.selectedDate}T00:00:00`
+            );
+
             reply =
-              `Diese Uhrzeiten sind frei:\n\n${slotLines}`;
+              `Leider ist ${session.aiTime || "diese Uhrzeit"} nicht frei.\n\n` +
+              `📅 ${niceDate.date}\n\n` +
+              `Ich könnte dir anbieten:\n\n` +
+              `${slotLines}\n\n` +
+              `Welche Uhrzeit passt dir?`;
           }
         }
 
@@ -1809,8 +2176,8 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
             .join("\n");
 
           reply =
-            `Super 👍 ${session.service}\n\n` +
-            `Welcher Mitarbeiter?\n\n` +
+            `Perfekt ✨ Du hast *${session.service}* ausgewählt.\n\n` +
+            `Wer darf sich um dich kümmern?\n\n` +
             employeeLines;
         }
 
@@ -1824,12 +2191,12 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
         session.step = "date_pick";
 
         reply =
-          "Bitte wähle ein Datum:\n\n" +
+          "Wann passt es dir am besten? 📅\n\n" +
           "1️⃣ Heute\n" +
           "2️⃣ Morgen\n" +
           "3️⃣ Übermorgen\n\n" +
-          "oder schreibe ein Datum:\n" +
-          "z.B. 15.03.2026";
+          "Oder schreib mir einfach dein Wunschdatum,\n" +
+          "z.B. 15.03.2026.";
       }
     }
 
@@ -1884,11 +2251,19 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
               session.selectedSlot = matchedSlot;
               session.step = "ask_name";
 
+              const niceDateTime = formatDEDateTime(
+                `${session.selectedDate}T${matchedSlot.time}:00`
+              );
+
               reply =
-                `Perfekt 👌\n\n` +
-                `${session.service}\n` +
-                `${session.selectedDate} um ${matchedSlot.time}\n\n` +
-                `Wie heißt du?`;
+                `Perfekt ✨ Dein Wunschtermin ist verfügbar.\n\n` +
+                `💅 ${session.service}\n` +
+                `📅 ${niceDateTime.date}\n` +
+                `🕒 ${niceDateTime.time} Uhr\n\n` +
+                `Jetzt fehlt nur noch dein Name.\n\n` +
+                `Wie heißt du?\n\n` +
+                `Datenschutzhinweis:\n` +
+                `Deine Angaben werden ausschließlich zur Terminabwicklung verwendet. Du erhältst per WhatsApp nur Nachrichten zu deinem Termin, z.B. Bestätigung, Erinnerungen oder Änderungen.`;
 
             } else {
               session.slots = slots.slice(0, 5);
@@ -1898,11 +2273,16 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
                 .map((s, i) => `${i + 1}️⃣ ${s.time}`)
                 .join("\n");
 
+              const niceDate = formatDEDateTime(
+                `${session.selectedDate}T00:00:00`
+              );
+
               reply =
-                `📅 ${session.selectedDate}\n\n` +
-                `Die Uhrzeit ${session.aiTime} ist leider nicht frei.\n\n` +
-                "Diese Uhrzeiten sind frei:\n\n" +
-                slotLines;
+                `Leider ist ${session.aiTime || "diese Uhrzeit"} nicht frei.\n\n` +
+                `📅 ${niceDate.date}\n\n` +
+                `Ich könnte dir anbieten:\n\n` +
+                `${slotLines}\n\n` +
+                `Welche Uhrzeit passt dir?`;
             }
 
           } else {
@@ -1913,22 +2293,26 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
               .map((s, i) => `${i + 1}️⃣ ${s.time}`)
               .join("\n");
 
-            reply =
-              `📅 ${session.selectedDate}\n\n` +
-              "Diese Uhrzeiten sind frei:\n\n" +
-              slotLines;
-          }
+            const niceDate = formatDEDateTime(
+              `${session.selectedDate}T00:00:00`
+            );
 
+            reply =
+              `📅 ${niceDate.date}\n\n` +
+              `Diese Uhrzeiten sind noch verfügbar:\n\n` +
+              `${slotLines}\n\n` +
+              `Welche Zeit passt dir am besten?`;
+          }
         } else {
           session.step = "date_pick";
 
           reply =
-            "Bitte wähle ein Datum:\n\n" +
+            "Wann passt es dir am besten? 📅\n\n" +
             "1️⃣ Heute\n" +
             "2️⃣ Morgen\n" +
             "3️⃣ Übermorgen\n\n" +
-            "oder schreibe ein Datum:\n" +
-            "z.B. 15.03.2026";
+            "Oder schreib mir einfach dein Wunschdatum,\n" +
+            "z.B. 15.03.2026.";
         }
       }
     }
@@ -2017,23 +2401,30 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
                 session.step = "upsell_offer";
 
                 reply =
-                  `✨ Empfehlung\n\n` +
-                  `Viele Kundinnen kombinieren das direkt mit:\n\n` +
-                  `${upsell}\n\n` +
-                  `👉 spart Zeit & sieht gepflegter aus\n\n` +
-                  `Möchtest du das dazu?\n\n` +
-                  `1️⃣ Ja hinzufügen\n` +
-                  `2️⃣ Nein weiter`;
+                  `✨ *Passt gut zu deiner Behandlung*\n\n` +
+                  `Viele Kundinnen kombinieren dazu gerne:\n\n` +
+                  `➕ ${upsell}\n\n` +
+                  `Möchtest du die Ergänzung hinzufügen?\n\n` +
+                  `1️⃣ Hinzufügen\n` +
+                  `2️⃣ Ohne Zusatz weiter`;
 
               } else {
 
                 session.step = "ask_name";
 
+                const niceDateTime = formatDEDateTime(
+                  `${dateStr}T${matchedSlot.time}:00`
+                );
+
                 reply =
-                  `Perfekt 👌\n\n` +
-                  `${session.service}\n` +
-                  `${dateStr} um ${matchedSlot.time}\n\n` +
-                  `Wie heißt du?`;
+                  `Perfekt ✨ Dein Wunschtermin ist verfügbar.\n\n` +
+                  `💅 ${session.service}\n` +
+                  `📅 ${niceDateTime.date}\n` +
+                  `🕒 ${niceDateTime.time} Uhr\n\n` +
+                  `Jetzt fehlt nur noch dein Name.\n\n` +
+                  `Wie heißt du?\n\n` +
+                  `Datenschutzhinweis:\n` +
+                  `Deine Angaben werden ausschließlich zur Terminabwicklung verwendet. Du erhältst per WhatsApp nur Nachrichten zu deinem Termin, z.B. Bestätigung, Erinnerungen oder Änderungen.`;
               }
 
             } else {
@@ -2044,11 +2435,133 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
                 .map((s, i) => `${i + 1}️⃣ ${s.time}`)
                 .join("\n");
 
+              const niceDate = formatDEDateTime(
+                `${dateStr}T00:00:00`
+              );
+
               reply =
-                `📅 ${dateStr}\n\n` +
-                `Die Uhrzeit ${wishedTime} ist leider nicht frei.\n\n` +
-                "Diese Uhrzeiten sind frei:\n\n" +
-                slotLines;
+                `Leider ist ${wishedTime || "diese Uhrzeit"} nicht frei.\n\n` +
+                `📅 ${niceDate.date}\n\n` +
+                `Ich könnte dir anbieten:\n\n` +
+                `${slotLines}\n\n` +
+                `Welche Uhrzeit passt dir?`;
+            }
+          }
+        }
+      }
+    }
+
+    // =======================================================
+    // 🔁 UMBUCHUNG DATUM AUSWÄHLEN
+    // Kunde hat Termin ausgewählt → neues Datum prüfen
+    // Danach freie Uhrzeiten anzeigen
+    // Noch KEIN updateBooking
+    // =======================================================
+
+    else if (session.step === "reschedule_date_pick") {
+      let dateStr = null;
+      const rawDateInput = rawMessage.trim();
+
+      if (message === "1" || message.includes("heute")) {
+        dateStr = new Date().toISOString().slice(0, 10);
+      }
+      else if (message === "2" || message.includes("morgen")) {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        dateStr = d.toISOString().slice(0, 10);
+      }
+      else if (message === "3" || message.includes("übermorgen")) {
+        const d = new Date();
+        d.setDate(d.getDate() + 2);
+        dateStr = d.toISOString().slice(0, 10);
+      }
+      else {
+        dateStr = parseGermanDate(rawDateInput);
+      }
+
+      if (!dateStr) {
+        reply =
+          "Bitte gib ein gültiges Datum ein:\n\n" +
+          "1️⃣ Heute\n" +
+          "2️⃣ Morgen\n" +
+          "3️⃣ Übermorgen\n\n" +
+          "oder z.B. 15.03.2026";
+      } else {
+
+        const booking = session.rescheduleBooking;
+
+        if (!booking) {
+          reply =
+            "Ich konnte den umzubuchenden Termin nicht mehr finden.\n\n" +
+            "Bitte schreibe erneut:\n" +
+            "UMBUCHEN";
+
+          session.step = "menu";
+        } else {
+
+          const employeeId =
+            booking.employeeId ||
+            booking.employee_id ||
+            booking.employeeID ||
+            null;
+
+          const emp = employeeId
+            ? getEmployee(employeeId)
+            : null;
+
+          if (!emp) {
+            reply =
+              "Ich konnte den Mitarbeiter für diesen Termin leider nicht eindeutig finden.\n\n" +
+              "Bitte melde dich kurz direkt im Studio oder starte die Umbuchung erneut.";
+
+            session.step = "menu";
+          } else {
+
+            const serviceDuration =
+              Number(booking.duration || session.duration || 60);
+
+            const slots = calculateSlotsForEmployee({
+              emp,
+              serviceDuration,
+              date: dateStr,
+              tenant: TENANT_DEFAULT,
+            });
+
+            if (!slots.length) {
+              const niceDate = formatDEDateTime(
+                `${dateStr}T00:00:00`
+              );
+
+              reply =
+                `Am ${niceDate.date} sind leider keine freien Uhrzeiten verfügbar.\n\n` +
+                "Bitte wähle ein anderes Datum:\n\n" +
+                "1️⃣ Heute\n" +
+                "2️⃣ Morgen\n" +
+                "3️⃣ Übermorgen\n\n" +
+                "oder schreibe ein Datum:\n" +
+                "z.B. 15.03.2026";
+            } else {
+
+              session.rescheduleDate = dateStr;
+              session.rescheduleEmployee = emp;
+              session.rescheduleEmployeeId = emp.id;
+              session.rescheduleDuration = serviceDuration;
+              session.rescheduleSlots = slots.slice(0, 5);
+              session.step = "reschedule_slot_pick";
+
+              const slotLines = session.rescheduleSlots
+                .map((s, i) => `${i + 1}️⃣ ${s.time}`)
+                .join("\n");
+
+              const niceDate = formatDEDateTime(
+                `${dateStr}T00:00:00`
+              );
+
+              reply =
+                `📅 ${niceDate.date}\n\n` +
+                `Diese Uhrzeiten sind noch verfügbar:\n\n` +
+                `${slotLines}\n\n` +
+                `Welche Zeit passt dir am besten?`;
             }
           }
         }
@@ -2099,16 +2612,145 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
           .join("\n");
 
         reply =
-          `Diese Uhrzeit ist leider nicht verfügbar.\n\n` +
-          `Bitte wähle eine dieser Zeiten:\n\n` +
-          slotLines;
+          `Leider ist diese Uhrzeit bereits vergeben oder nicht verfügbar.\n\n` +
+          `Ich könnte dir anbieten:\n\n` +
+          `${slotLines}\n\n` +
+          `Welche Uhrzeit passt dir?`;
       } else {
         session.selectedSlot = slot;
         session.step = "ask_name";
 
+        const niceDateTime = formatDEDateTime(
+          `${session.selectedDate}T${slot.time}:00`
+        );
+
+
         reply =
-          `Termin ${slot.time}\n\n` +
-          "Wie heißt du?";
+          `Perfekt ✨ Dein Wunschtermin ist verfügbar.\n\n` +
+          `💅 ${session.service}\n` +
+          `📅 ${niceDateTime.date}\n` +
+          `🕒 ${niceDateTime.time} Uhr\n\n` +
+          `Jetzt fehlt nur noch dein Name.\n\n` +
+          `Wie heißt du?\n\n` +
+          `Datenschutzhinweis:\n` +
+          `Deine Angaben werden ausschließlich zur Terminabwicklung verwendet. Du erhältst per WhatsApp nur Nachrichten zu deinem Termin, z.B. Bestätigung, Erinnerungen oder Änderungen.`;
+      }
+    }
+
+    // =======================================================
+    // 🔁 UMBUCHUNG UHRZEIT AUSWÄHLEN
+    // Kunde wählt neue Uhrzeit → Termin wirklich verschieben
+    // updateBooking + Reminder neu planen
+    // =======================================================
+
+    else if (session.step === "reschedule_slot_pick") {
+      let slot = null;
+
+      const booking = session.rescheduleBooking;
+
+      if (!booking) {
+        reply =
+          "Ich konnte den umzubuchenden Termin nicht mehr finden.\n\n" +
+          "Bitte schreibe erneut:\n" +
+          "UMBUCHEN";
+
+        session.step = "menu";
+      } else {
+
+        const allSlots = calculateSlotsForEmployee({
+          emp: session.rescheduleEmployee,
+          serviceDuration: session.rescheduleDuration,
+          date: session.rescheduleDate,
+          tenant: TENANT_DEFAULT,
+        });
+
+        let cleanMessage = message
+          .toLowerCase()
+          .replace(/uhr/g, "")
+          .replace(/\./g, ":")
+          .replace(/\s+/g, "")
+          .trim();
+
+        // ✅ Auswahl per Zahl
+        if (!isNaN(cleanMessage)) {
+          slot = session.rescheduleSlots?.[Number(cleanMessage) - 1];
+        }
+
+        // ✅ Exakte Uhrzeit, z.B. 09:00
+        if (!slot && cleanMessage.includes(":")) {
+          slot = allSlots.find(s => s.time === cleanMessage);
+        }
+
+        // ✅ Stunde, z.B. 9 → 09:00
+        if (!slot) {
+          const hourMatch = cleanMessage.match(/\d{1,2}/);
+
+          if (hourMatch) {
+            const hour = hourMatch[0].padStart(2, "0");
+
+            slot = allSlots.find(s =>
+              s.time.startsWith(hour)
+            );
+          }
+        }
+
+        if (!slot) {
+          const slotLines = (session.rescheduleSlots || [])
+            .map((s, i) => `${i + 1}️⃣ ${s.time}`)
+            .join("\n");
+
+          reply =
+            "Diese Uhrzeit ist leider nicht verfügbar.\n\n" +
+            "Ich könnte dir anbieten:\n\n" +
+            `${slotLines}\n\n` +
+            "Welche Uhrzeit passt dir?";
+        } else {
+
+          const newDateTime =
+            `${session.rescheduleDate}T${slot.time}:00`;
+
+          const ok = updateBooking(
+            booking.id,
+            newDateTime,
+            session.rescheduleEmployeeId
+          );
+
+          if (!ok) {
+            reply =
+              "Der Termin konnte leider nicht verschoben werden.\n\n" +
+              "Bitte versuche es erneut oder melde dich direkt im Studio.";
+
+            session.step = "menu";
+          } else {
+
+            // alte Reminder löschen
+            cancelWhatsAppReminderJobs(booking.id);
+
+            const updatedBooking = {
+              ...booking,
+              id: booking.id,
+              dateTime: newDateTime,
+              employeeId: session.rescheduleEmployeeId,
+              employee_id: session.rescheduleEmployeeId,
+              tenant: booking.tenant || TENANT_DEFAULT
+            };
+
+            // neue Reminder planen
+            scheduleWhatsAppReminders(updatedBooking);
+
+            const niceDateTime = formatDEDateTime(newDateTime);
+
+            reply =
+              "Perfekt ✨ Dein Termin wurde umgebucht.\n\n" +
+              `💅 ${booking.service}\n` +
+              `📅 ${niceDateTime.date}\n` +
+              `🕒 ${niceDateTime.time} Uhr\n\n` +
+              "Deine Erinnerungen werden automatisch auf den neuen Termin angepasst.";
+
+            abandonedWhatsappSessions.delete(from);
+            delete sessions[from];
+          }
+        }
       }
     }
 
@@ -2200,6 +2842,10 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
                   phone,
                 });
 
+                // =======================================================
+                // 📲 WhatsApp Follow-Ups planen
+                // =======================================================
+
                 const bookingId =
                   booking?.appointment?.id ||
                   booking?.booking?.id ||
@@ -2215,26 +2861,81 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
                     "Bitte prüfe den Termin im Adminbereich.";
 
                   session.step = "done";
+
                   setTimeout(() => {
                     delete sessions[from];
                   }, 2000);
-                } else {
-                  const pdfLink = `${BASE}/api/bookings/${bookingId}/pdf`;
-                  const icsLink = `${BASE}/api/bookings/${bookingId}/ics`;
 
-                  reply =
-                    `Dein Termin wurde erfolgreich eingetragen!\n\n` +
-                    `Service: ${matchedService.name}\n` +
-                    (session.upsellSelected ? `Extra: ${session.upsellSelected}\n` : "") +
-                    `Datum: ${session.selectedDate}\n` +
-                    `Uhrzeit: ${session.selectedSlot.time}\n\n` +
-                    `PDF:\n${pdfLink}\n\n` +
-                    `Kalender:\n${icsLink}`;
+                } else {
+
+                  try {
+
+                    const bookingData = {
+                      id: bookingId,
+
+                      name: session.customerName,
+
+                      phone,
+
+                      service: matchedService.name,
+
+                      dateTime,
+
+                      tenant: TENANT_DEFAULT,
+                    };
+
+                    const pdfLink =
+                      `${BASE}/api/bookings/${bookingId}/pdf`;
+
+                    const icsLink =
+                      `${BASE}/api/bookings/${bookingId}/ics`;
+
+                    await sendWhatsAppBookingConfirmation(
+                      bookingData,
+                      pdfLink,
+                      icsLink
+                    );
+
+                    scheduleWhatsAppReminders(
+                      bookingData
+                    );
+
+                    const cfg = loadTenantConfig(
+                      TENANT_DEFAULT
+                    );
+
+                    const reviewUrl =
+                      cfg?.contact?.googleReviewUrl;
+
+                    if (reviewUrl) {
+                      scheduleReviewReminder(
+                        bookingData,
+                        reviewUrl
+                      );
+                    } else {
+                      console.log("⭐ Kein Google Review Link hinterlegt");
+                    }
+
+                    console.log(
+                      "✅ WhatsApp Reminder geplant"
+                    );
+
+                  } catch (err) {
+
+                    console.error(
+                      "❌ Reminder Planung Fehler:",
+                      err.message
+                    );
+
+                  }
 
                   session.step = "done";
+
                   setTimeout(() => {
                     delete sessions[from];
                   }, 2000);
+
+                  return res.sendStatus(200);
                 }
               }
             }
@@ -2256,9 +2957,10 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
     // =========================
     else if (session.step === "done") {
       reply =
-        "Dein Termin ist bereits gespeichert.\n\n" +
-        "1️⃣ Neuer Termin\n" +
-        "2️⃣ Preise\n" +
+        "Dein Termin ist bereits bestätigt ✨\n\n" +
+        "Wie kann ich dir noch helfen?\n\n" +
+        "1️⃣ Weiteren Termin buchen\n" +
+        "2️⃣ Preise ansehen\n" +
         "3️⃣ Öffnungszeiten";
 
       session.step = "menu";
@@ -2425,10 +3127,10 @@ setInterval(async () => {
         // 🔥 FOOTER (BLEIBT)
         // =======================================================
         msg +=
-          "\n\nIch habe dir deinen Termin kurz freigehalten.\n\n" +
-          "👉 Schreib einfach weiter oder buche hier:\n" +
+          "\n\nWenn du möchtest, können wir deine Buchung direkt fortsetzen.\n\n" +
+          "👉 Schreib einfach weiter oder öffne die Buchung hier:\n" +
           `${BASE}\n\n` +
-          "Sichere ihn dir, bevor er weg ist 💛";
+          "A.U.R.A. hilft dir bei den restlichen Schritten.";
 
         await sendWhatsAppReminder(data.phone, msg);
 
