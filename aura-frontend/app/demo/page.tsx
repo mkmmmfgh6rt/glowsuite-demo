@@ -3,13 +3,6 @@
 
 import Image from "next/image";
 
-import dashboardKpis from "../../public/demo.bilder/demo-dashboard-kpis.webp";
-import dashboardAnalytics from "../../public/demo.bilder/demo-dashboard-analytics.webp";
-import kalender from "../../public/demo.bilder/demo-kalender.webp";
-import whatsappUpsell from "../../public/demo.bilder/demo-whatsapp-upsell.webp";
-import whatsappMitarbeiter from "../../public/demo.bilder/demo-whatsapp-mitarbeiter.webp";
-import whatsappStorno from "../../public/demo.bilder/demo-whatsapp-storno.webp";
-import terminbestaetigung from "../../public/demo.bilder/demo-terminbestaetigung.webp";
 
 const automationEvents = [
   {
@@ -73,7 +66,7 @@ export default function DemoPage() {
               background: "rgba(255,255,255,0.04)",
             }}
           >
-            ● A.U.R.A Autonomous Salon OS
+            ● A.U.R.A · Digitale Studio-Assistenz
           </div>
         </div>
 
@@ -162,9 +155,11 @@ export default function DemoPage() {
             </button>
 
             <button
-              onClick={() => {
-                window.location.href = "/studio-check";
-              }}
+              onClick={() =>
+                document
+                  .getElementById("live-demo")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
               style={{
                 padding: "15px 28px",
                 borderRadius: 999,
@@ -598,48 +593,48 @@ export default function DemoPage() {
             {[
               {
                 src: "/demo.bilder/demo-dashboard-kpis.webp",
-                title: "Dashboard Übersicht",
-                text: "Buchungen, Umsatz, aktive Kunden und wichtige Kennzahlen auf einen Blick.",
-              },
-              {
-                src: "/demo.bilder/demo-dashboard-analytics.webp",
-                title: "Umsatzanalyse",
-                text: "GlowSuite erkennt Top-Services, Trends und Umsatzchancen im Studio.",
+                title: "Dein Studio auf einen Blick",
+                text: "Buchungen, Umsatz, aktive Kundinnen und wichtige Kennzahlen zentral im Dashboard.",
               },
               {
                 src: "/demo.bilder/demo-kalender.webp",
-                title: "Automatischer Kalender",
-                text: "Alle Buchungen landen übersichtlich und strukturiert im Kalender.",
-              },
-              {
-                src: "/demo.bilder/demo-terminbestaetigung.webp",
-                title: "Premium Terminbestätigung",
-                text: "Kundinnen erhalten automatisch eine hochwertige Bestätigung mit PDF und Kalenderdatei.",
-              },
-              {
-                src: "/demo.bilder/demo-whatsapp-upsell.webp",
-                title: "Intelligente Empfehlung",
-                text: "GlowSuite kann passende Zusatzleistungen empfehlen, bevor der Termin abgeschlossen wird.",
+                title: "Alle Termine übersichtlich im Kalender",
+                text: "Neue Buchungen werden automatisch erfasst und übersichtlich im Studio-Kalender dargestellt.",
               },
               {
                 src: "/demo.bilder/demo-whatsapp-mitarbeiter.webp",
-                title: "Mitarbeiter-Auswahl",
-                text: "Kundinnen können direkt per WhatsApp den passenden Mitarbeiter auswählen.",
+                title: "Buchung direkt über WhatsApp",
+                text: "Kundinnen wählen Behandlung, Mitarbeiter und Termin direkt in ihrer gewohnten Kommunikation.",
               },
               {
-                src: "/demo.bilder/demo-whatsapp-storno.webp",
-                title: "Storno per WhatsApp",
-                text: "Falls ein Termin nicht passt, kann die Kundin einfach per WhatsApp absagen.",
+                src: "/demo.bilder/demo-whatsapp-upsell.webp",
+                title: "Passende Zusatzleistungen empfehlen",
+                text: "Während der Buchung kann GlowSuite passende Ergänzungen anbieten – ohne zusätzlichen Aufwand für dein Team.",
+              },
+              {
+                src: "/demo.bilder/demo-terminbestaetigung.webp",
+                title: "Automatische Terminbestätigung",
+                text: "Nach der Buchung erhält die Kundin automatisch ihre Bestätigung inklusive PDF und Kalenderdatei.",
               },
               {
                 src: "/demo.bilder/demo-erinnerung.webp",
-                title: "Automatische Erinnerung",
-                text: "GlowSuite erinnert Kundinnen automatisch vor dem Termin und reduziert dadurch No-Shows.",
+                title: "Erinnerungen vor dem Termin",
+                text: "Automatische Erinnerungen helfen dabei, vergessene Termine und unnötige Ausfälle zu reduzieren.",
+              },
+              {
+                src: "/demo.bilder/demo-whatsapp-storno.webp",
+                title: "Absagen einfach per WhatsApp",
+                text: "Kann eine Kundin nicht kommen, lässt sich der Termin direkt per WhatsApp stornieren und wieder freigeben.",
               },
               {
                 src: "/demo.bilder/demo-google-review.webp",
-                title: "Google Bewertung nach dem Termin",
-                text: "Nach dem Besuch fragt GlowSuite automatisch nach einer Bewertung und stärkt so das Studio.",
+                title: "Nach dem Termin Bewertungen gewinnen",
+                text: "Nach dem Besuch kann GlowSuite automatisch um eine Google-Bewertung bitten.",
+              },
+              {
+                src: "/demo.bilder/demo-dashboard-analytics.webp",
+                title: "Erkennen, was im Studio funktioniert",
+                text: "Umsatzentwicklung, Top-Behandlungen und wichtige Trends helfen dir bei besseren Entscheidungen.",
               },
             ].map((item) => (
               <div
@@ -918,7 +913,7 @@ export default function DemoPage() {
                     marginBottom: 14,
                   }}
                 >
-                  Autopilot Status
+                  Automationen & Analyse
                 </div>
 
                 <h2
@@ -954,7 +949,7 @@ export default function DemoPage() {
                   "Google Bewertungen aktiv",
                   "Kundenreaktivierung aktiv",
                   "Umsatzanalyse aktiv",
-                  "Kampagnen Optimierung aktiv",
+                  "Kampagnenvorschläge bereit",
                   "Freie Slots Überwachung aktiv",
                 ].map((item) => (
                   <div
@@ -1035,7 +1030,7 @@ export default function DemoPage() {
                 >
                   → Rückholkampagne starten<br />
                   → Stammkunden reaktivieren<br />
-                  → WhatsApp Broadcast senden
+                  → WhatsApp Kampagne vorbereiten
                 </div>
               </div>
             </div>
@@ -1058,7 +1053,7 @@ export default function DemoPage() {
                   marginBottom: 14,
                 }}
               >
-                🤖 Automatisch von A.U.R.A erstellt
+                ✨ Von A.U.R.A vorbereitet
               </div>
 
               <h3
@@ -1123,7 +1118,7 @@ export default function DemoPage() {
                     fontWeight: 700,
                   }}
                 >
-                  Auto-generiert
+                  Vorschlag erstellt
                 </div>
               </div>
             </div>
@@ -1296,11 +1291,14 @@ export default function DemoPage() {
             style={{
               marginTop: 16,
               fontSize: 13,
-              opacity: 0.75,
+              opacity: 0.78,
+              lineHeight: 1.6,
             }}
           >
-            Du möchtest GlowSuite direkt ausprobieren?
-            Testphase später jederzeit möglich.
+            Noch unsicher? Kein Problem.
+            <br />
+            Nach deinem Studio-Check entscheidest du selbst,
+            ob du GlowSuite kostenlos testen möchtest.
           </p>
         </section>
 
