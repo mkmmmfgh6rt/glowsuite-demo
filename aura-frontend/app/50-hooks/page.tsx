@@ -36,6 +36,15 @@ export default function HooksPage() {
     setError("");
 
     try {
+      const trackingParams = new URLSearchParams(window.location.search);
+
+      const utmSource = trackingParams.get("utm_source") ?? "";
+      const utmMedium = trackingParams.get("utm_medium") ?? "";
+      const utmCampaign = trackingParams.get("utm_campaign") ?? "";
+      const utmContent = trackingParams.get("utm_content") ?? "";
+      const entryPage =
+        `${window.location.pathname}${window.location.search}`;
+
       const response = await fetch("/api/50-hooks", {
         method: "POST",
         headers: {
@@ -46,6 +55,11 @@ export default function HooksPage() {
           email: email.trim(),
           marketingConsent,
           company,
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          utmContent,
+          entryPage,
         }),
       });
 

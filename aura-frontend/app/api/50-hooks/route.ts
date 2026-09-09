@@ -13,6 +13,11 @@ type HooksPayload = {
   email?: string;
   marketingConsent?: boolean;
   company?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  entryPage?: string;
 };
 
 const escapeHtml = (value: string) =>
@@ -38,7 +43,23 @@ export async function POST(request: Request) {
     const firstName = body.firstName?.trim() ?? "";
     const email = body.email?.trim().toLowerCase() ?? "";
     const marketingConsent = body.marketingConsent === true;
-    
+    const utmSource = body.utmSource?.trim().slice(0, 200) ?? "";
+    const utmMedium = body.utmMedium?.trim().slice(0, 200) ?? "";
+    const utmCampaign = body.utmCampaign?.trim().slice(0, 200) ?? "";
+    const utmContent = body.utmContent?.trim().slice(0, 200) ?? "";
+    const entryPage = body.entryPage?.trim().slice(0, 500) ?? "";
+
+    const normalizedSource = utmSource.toLowerCase();
+
+    const leadSource =
+      normalizedSource === "instagram" || normalizedSource === "ig"
+        ? "Instagram"
+        : normalizedSource === "tiktok" ||
+          normalizedSource === "tik_tok" ||
+          normalizedSource === "tt"
+          ? "TikTok"
+          : "Website";
+
 
     /*
      * Unsichtbares Feld gegen einfache Spam-Bots.
@@ -84,8 +105,7 @@ export async function POST(request: Request) {
       "Lead automatisch über den kostenlosen 50-Hooks-Guide erfasst.",
       "Lead-Magnet: 50 Social-Media-Hooks für Beauty-Studios",
       `PDF: ${PDF_URL}`,
-      `Freiwillige Einwilligung für weitere E-Mail-Tipps: ${
-        marketingConsent ? "Ja" : "Nein"
+      `Freiwillige Einwilligung für weitere E-Mail-Tipps: ${marketingConsent ? "Ja" : "Nein"
       }`,
       marketingConsent
         ? `Einwilligung erteilt am: ${createdAt}`
@@ -115,9 +135,14 @@ export async function POST(request: Request) {
                 Studio: `50-Hooks – ${firstName}`,
                 Ansprechpartner: firstName,
                 "E-Mail": email,
-                Quelle: "Website",
+                Quelle: leadSource,
                 "Pipeline-Status": "Neu",
                 "Lead-Temperatur": "Warm",
+                "UTM Quelle": utmSource,
+                "UTM Medium": utmMedium,
+                "UTM Kampagne": utmCampaign,
+                "UTM Inhalt": utmContent,
+                Einstiegsseite: entryPage,
                 Notizen: notes,
               },
             },
