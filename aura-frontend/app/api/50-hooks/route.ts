@@ -36,6 +36,92 @@ const escapeHtml = (value: string) =>
 const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+type AirtableRecord = {
+  id: string;
+  fields: Record<string, unknown>;
+};
+
+const escapeAirtableFormulaValue = (value: string) =>
+  value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+
+const getTextField = (
+  record: AirtableRecord | null,
+  fieldName: string
+) => {
+  const value = record?.fields?.[fieldName];
+  return typeof value === "string" ? value : "";
+};
+
+const getMultiSelectField = (
+  record: AirtableRecord | null,
+  fieldName: string
+) => {
+  const value = record?.fields?.[fieldName];
+
+  return Array.isArray(value)
+    ? value.filter(
+      (item): item is string => typeof item === "string"
+    )
+    : [];
+};
+
+const appendNote = (
+  existingNotes: string,
+  newNote: string
+) => {
+  if (!existingNotes) return newNote;
+  if (existingNotes.includes(newNote)) return existingNotes;
+
+  return `${existingNotes}\n\n---\n${newNote}`;
+};
+
+async function findLeadByEmail({
+  airtableToken,
+  airtableBaseId,
+  airtableTableId,
+  email,
+}: {
+  airtableToken: string;
+  airtableBaseId: string;
+  airtableTableId: string;
+  email: string;
+}) {
+  const formula =
+    `LOWER(TRIM({E-Mail})) = '${escapeAirtableFormulaValue(email)}'`;
+
+  const query = new URLSearchParams({
+    maxRecords: "1",
+    filterByFormula: formula,
+  });
+
+  const response = await fetch(
+    `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableId}?${query.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${airtableToken}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  const data = (await response.json().catch(() => null)) as {
+    records?: AirtableRecord[];
+  } | null;
+
+  if (!response.ok) {
+    console.error(
+      "Airtable Lead-Suche fehlgeschlagen:",
+      data
+    );
+
+    throw new Error(
+      "Airtable Lead-Suche fehlgeschlagen."
+    );
+  }
+
+  return data?.records?.[0] ?? null;
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as HooksPayload;
@@ -43,6 +129,7 @@ export async function POST(request: Request) {
     const firstName = body.firstName?.trim() ?? "";
     const email = body.email?.trim().toLowerCase() ?? "";
     const marketingConsent = body.marketingConsent === true;
+    const honeypot = body.company?.trim() ?? "";
     const utmSource = body.utmSource?.trim().slice(0, 200) ?? "";
     const utmMedium = body.utmMedium?.trim().slice(0, 200) ?? "";
     const utmCampaign = body.utmCampaign?.trim().slice(0, 200) ?? "";
@@ -65,6 +152,13 @@ export async function POST(request: Request) {
      * Unsichtbares Feld gegen einfache Spam-Bots.
      * Echte Besucher lassen dieses Feld leer.
      */
+
+    if (honeypot) {
+      return NextResponse.json({
+        success: true,
+        emailSent: false,
+      });
+    }
 
     if (!firstName || !email) {
       return NextResponse.json(
@@ -118,33 +212,98 @@ export async function POST(request: Request) {
       .join("\n");
 
     /*
-     * LEAD IN AIRTABLE SPEICHERN
-     */
+ * LEAD IN AIRTABLE ANLEGEN ODER AKTUALISIEREN
+ */
+    const existingLead = await findLeadByEmail({
+      airtableToken,
+      airtableBaseId,
+      airtableTableId,
+      email,
+    });
+
+    const leadEvents = Array.from(
+      new Set([
+        ...getMultiSelectField(
+          existingLead,
+          "Lead-Ereignisse"
+        ),
+        "50-Hooks Download",
+      ])
+    );
+
+    const fields: Record<string, unknown> = {
+      Ansprechpartner: firstName,
+      "E-Mail": email,
+      "Lead-Ereignisse": leadEvents,
+      "Letzte Lead-Aktion": createdAt,
+      Automationsstatus: "Neu",
+      Notizen: appendNote(
+        getTextField(existingLead, "Notizen"),
+        notes
+      ),
+    };
+
+    if (!existingLead) {
+      fields.Studio = `50-Hooks – ${firstName}`;
+      fields.Quelle = leadSource;
+      fields["Pipeline-Status"] = "Neu";
+      fields["Lead-Temperatur"] = "Warm";
+      fields["Brevo-Status"] = "Nicht angemeldet";
+      fields["Marketing-Einwilligung"] = "Nicht erfasst";
+    }
+
+    if (utmSource) {
+      fields["UTM Quelle"] = utmSource;
+    }
+
+    if (utmMedium) {
+      fields["UTM Medium"] = utmMedium;
+    }
+
+    if (utmCampaign) {
+      fields["UTM Kampagne"] = utmCampaign;
+    }
+
+    if (utmContent) {
+      fields["UTM Inhalt"] = utmContent;
+    }
+
+    if (entryPage) {
+      fields.Einstiegsseite = entryPage;
+    }
+
+    if (marketingConsent) {
+      fields["Marketing-Einwilligung"] = "Erteilt";
+      fields["Einwilligung am"] = createdAt;
+
+      fields.Einwilligungstext =
+        "Tipps zu Social Media, Studio-Wachstum und Automatisierung per E-Mail. Jederzeit widerrufbar.";
+
+      fields.Einwilligungsquelle = "/50-hooks";
+    }
+
     const airtableResponse = await fetch(
       `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableId}`,
       {
-        method: "POST",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${airtableToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          ...(!existingLead
+            ? {
+              performUpsert: {
+                fieldsToMergeOn: ["E-Mail"],
+              },
+            }
+            : {}),
           records: [
             {
-              fields: {
-                Studio: `50-Hooks – ${firstName}`,
-                Ansprechpartner: firstName,
-                "E-Mail": email,
-                Quelle: leadSource,
-                "Pipeline-Status": "Neu",
-                "Lead-Temperatur": "Warm",
-                "UTM Quelle": utmSource,
-                "UTM Medium": utmMedium,
-                "UTM Kampagne": utmCampaign,
-                "UTM Inhalt": utmContent,
-                Einstiegsseite: entryPage,
-                Notizen: notes,
-              },
+              ...(existingLead
+                ? { id: existingLead.id }
+                : {}),
+              fields,
             },
           ],
           typecast: true,
@@ -152,9 +311,11 @@ export async function POST(request: Request) {
       }
     );
 
-    const airtableData = await airtableResponse
+    const airtableData = (await airtableResponse
       .json()
-      .catch(() => null);
+      .catch(() => null)) as {
+        records?: AirtableRecord[];
+      } | null;
 
     if (!airtableResponse.ok) {
       console.error("Airtable Fehler:", airtableData);
@@ -558,7 +719,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       emailSent,
-      recordId: airtableData?.records?.[0]?.id ?? null,
+      recordId:
+        airtableData?.records?.[0]?.id ??
+        existingLead?.id ??
+        null,
       brevoMessageId,
     });
   } catch (error) {
