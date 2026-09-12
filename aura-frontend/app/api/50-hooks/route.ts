@@ -712,6 +712,43 @@ export async function POST(request: Request) {
             "Brevo Kontakt konnte nicht hinzugefügt werden:",
             contactError
           );
+        } else {
+          const savedLeadId =
+            airtableData?.records?.[0]?.id ??
+            existingLead?.id;
+
+          if (savedLeadId) {
+            const statusResponse = await fetch(
+              `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableId}`,
+              {
+                method: "PATCH",
+                headers: {
+                  Authorization: `Bearer ${airtableToken}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  records: [
+                    {
+                      id: savedLeadId,
+                      fields: {
+                        "Brevo-Status": "Aktiv",
+                      },
+                    },
+                  ],
+                  typecast: true,
+                }),
+              }
+            );
+
+            if (!statusResponse.ok) {
+              console.error(
+                "Brevo-Status konnte nicht in Airtable aktualisiert werden:",
+                await statusResponse
+                  .json()
+                  .catch(() => null)
+              );
+            }
+          }
         }
       }
     }
