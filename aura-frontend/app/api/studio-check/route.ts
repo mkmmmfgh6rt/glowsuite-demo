@@ -15,16 +15,121 @@ type StudioCheckPayload = {
   recommendations?: string[];
 };
 
+
+type AirtableRecord = {
+  id: string;
+  fields: Record<string, unknown>;
+};
+
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+const escapeAirtableFormulaValue = (value: string) =>
+  value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+
+const getTextField = (
+  record: AirtableRecord | null,
+  fieldName: string
+) => {
+  const value = record?.fields?.[fieldName];
+  return typeof value === "string" ? value : "";
+};
+
+const getMultiSelectField = (
+  record: AirtableRecord | null,
+  fieldName: string
+) => {
+  const value = record?.fields?.[fieldName];
+
+  return Array.isArray(value)
+    ? value.filter(
+      (item): item is string =>
+        typeof item === "string"
+    )
+    : [];
+};
+
+const appendNote = (
+  existingNotes: string,
+  newNote: string
+) => {
+  if (!existingNotes) return newNote;
+  if (existingNotes.includes(newNote)) {
+    return existingNotes;
+  }
+
+  return `${existingNotes}\n\n---\n${newNote}`;
+};
+
+async function findLeadByEmail({
+  airtableToken,
+  baseId,
+  tableId,
+  email,
+}: {
+  airtableToken: string;
+  baseId: string;
+  tableId: string;
+  email: string;
+}) {
+  const formula =
+    `LOWER(TRIM({E-Mail})) = '${escapeAirtableFormulaValue(email)}'`;
+
+  const query = new URLSearchParams({
+    maxRecords: "1",
+    filterByFormula: formula,
+  });
+
+  const response = await fetch(
+    `https://api.airtable.com/v0/${baseId}/${tableId}?${query.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${airtableToken}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  const data = (await response
+    .json()
+    .catch(() => null)) as {
+      records?: AirtableRecord[];
+    } | null;
+
+  if (!response.ok) {
+    console.error(
+      "Airtable Lead-Suche fehlgeschlagen:",
+      data
+    );
+
+    throw new Error(
+      "Airtable Lead-Suche fehlgeschlagen."
+    );
+  }
+
+  return data?.records?.[0] ?? null;
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as StudioCheckPayload;
 
     const firstName = body.firstName?.trim();
-    const email = body.email?.trim();
+    const email = body.email?.trim().toLowerCase();
 
     if (!firstName || !email) {
       return NextResponse.json(
         { error: "Vorname und E-Mail sind erforderlich." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      firstName.length > 80 ||
+      !isValidEmail(email)
+    ) {
+      return NextResponse.json(
+        { error: "Bitte überprüfe deine Angaben." },
         { status: 400 }
       );
     }
@@ -34,6 +139,29 @@ export async function POST(request: Request) {
     const communication = Number(body.answers?.communication ?? 0);
     const reviews = Number(body.answers?.reviews ?? 0);
     const reactivation = Number(body.answers?.reactivation ?? 0);
+
+
+    const answerValues = [
+      booking,
+      reminders,
+      communication,
+      reviews,
+      reactivation,
+    ];
+
+    if (
+      answerValues.some(
+        (value) =>
+          !Number.isFinite(value) ||
+          value < 0 ||
+          value > 20
+      )
+    ) {
+      return NextResponse.json(
+        { error: "Die Studio-Check-Antworten sind ungültig." },
+        { status: 400 }
+      );
+    }
 
     const score =
       booking +
@@ -81,62 +209,111 @@ export async function POST(request: Request) {
       );
     }
 
-    const recommendations =
-      body.recommendations?.filter(Boolean) ?? [];
+    const recommendations = (
+      body.recommendations ?? []
+    )
+      .filter(
+        (item): item is string =>
+          typeof item === "string"
+      )
+      .map((item) => item.trim().slice(0, 500))
+      .filter(Boolean)
+      .slice(0, 3);
+
+    const createdAt = new Date().toISOString();
+
+    const existingLead = await findLeadByEmail({
+      airtableToken,
+      baseId,
+      tableId,
+      email,
+    });
+
+    const leadEvents = Array.from(
+      new Set([
+        ...getMultiSelectField(
+          existingLead,
+          "Lead-Ereignisse"
+        ),
+        "Studio-Check abgeschlossen",
+      ])
+    );
+
+    const fields: Record<string, unknown> = {
+      Ansprechpartner: firstName,
+      "E-Mail": email,
+
+      "Probleme / Potenzial": potential,
+
+      "Studio-Check Score": score,
+      "Check Terminbuchung": booking,
+      "Check Erinnerungen": reminders,
+      "Check Kommunikation": communication,
+      "Check Bewertungen": reviews,
+      "Check Reaktivierung": reactivation,
+
+      "Studio-Check Hebel":
+        recommendations.length > 0
+          ? recommendations
+            .map(
+              (text, index) =>
+                `${index + 1}. ${text}`
+            )
+            .join("\n")
+          : potential.join("\n"),
+
+      "Studio-Check Antworten": [
+        `Terminbuchung: ${booking}/20`,
+        `Erinnerungen: ${reminders}/20`,
+        `Kommunikation: ${communication}/20`,
+        `Bewertungen: ${reviews}/20`,
+        `Reaktivierung: ${reactivation}/20`,
+      ].join("\n"),
+
+      "Studio-Check Datum": createdAt,
+      "Lead-Ereignisse": leadEvents,
+      "Letzte Lead-Aktion": createdAt,
+      Automationsstatus: "Neu",
+
+      Notizen: appendNote(
+        getTextField(existingLead, "Notizen"),
+        "Lead automatisch über den GlowSuite Studio-Check erfasst."
+      ),
+    };
+
+    if (!existingLead) {
+      fields.Studio = `Studio-Check – ${firstName}`;
+      fields.Quelle = "Website";
+      fields["Pipeline-Status"] = "Neu";
+      fields["Lead-Temperatur"] = "Warm";
+      fields["Marketing-Einwilligung"] =
+        "Nicht erfasst";
+      fields["Brevo-Status"] =
+        "Nicht angemeldet";
+    }
 
     const airtableResponse = await fetch(
       `https://api.airtable.com/v0/${baseId}/${tableId}`,
       {
-        method: "POST",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${airtableToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          ...(!existingLead
+            ? {
+              performUpsert: {
+                fieldsToMergeOn: ["E-Mail"],
+              },
+            }
+            : {}),
           records: [
             {
-              fields: {
-                Studio: `Studio-Check – ${firstName}`,
-                Ansprechpartner: firstName,
-                "E-Mail": email,
-
-                Quelle: "Website",
-                "Pipeline-Status": "Neu",
-                "Lead-Temperatur": "Warm",
-
-                "Probleme / Potenzial": potential,
-
-                "Studio-Check Score": score,
-                "Check Terminbuchung": booking,
-                "Check Erinnerungen": reminders,
-                "Check Kommunikation": communication,
-                "Check Bewertungen": reviews,
-                "Check Reaktivierung": reactivation,
-
-                "Studio-Check Hebel":
-                  recommendations.length > 0
-                    ? recommendations
-                      .map(
-                        (text, index) =>
-                          `${index + 1}. ${text}`
-                      )
-                      .join("\n")
-                    : potential.join("\n"),
-
-                "Studio-Check Antworten": [
-                  `Terminbuchung: ${booking}/20`,
-                  `Erinnerungen: ${reminders}/20`,
-                  `Kommunikation: ${communication}/20`,
-                  `Bewertungen: ${reviews}/20`,
-                  `Reaktivierung: ${reactivation}/20`,
-                ].join("\n"),
-
-                "Studio-Check Datum":
-                  new Date().toISOString(),
-
-                Notizen:
-                  "Lead automatisch über den GlowSuite Studio-Check erfasst.",
-              },
+              ...(existingLead
+                ? { id: existingLead.id }
+                : {}),
+              fields,
             },
           ],
           typecast: true,
@@ -144,7 +321,10 @@ export async function POST(request: Request) {
       }
     );
 
-    const airtableData = await airtableResponse.json();
+    const airtableData =
+      (await airtableResponse.json()) as {
+        records?: AirtableRecord[];
+      };
 
     if (!airtableResponse.ok) {
       console.error(
@@ -1206,7 +1386,9 @@ export async function POST(request: Request) {
       success: true,
       score,
       recordId:
-        airtableData.records?.[0]?.id ?? null,
+        airtableData.records?.[0]?.id ??
+        existingLead?.id ??
+        null,
       emailSent,
       brevoMessageId,
     });
