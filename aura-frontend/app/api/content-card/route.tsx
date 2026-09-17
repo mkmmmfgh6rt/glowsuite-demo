@@ -442,15 +442,6 @@ export async function POST(request: Request) {
     }
   );
 
-  const imageBuffer = await image.arrayBuffer();
-
-  return new Response(imageBuffer, {
-    status: 200,
-    headers: {
-      "Content-Type": "image/png",
-      "Content-Length": String(imageBuffer.byteLength),
-      "Content-Disposition": `inline; filename="content-card-${slideNumber}.png"`,
-      "Cache-Control": "no-store",
-    },
-  });
+  image.headers.set("Cache-Control", "no-store");
+  return image;
 }
