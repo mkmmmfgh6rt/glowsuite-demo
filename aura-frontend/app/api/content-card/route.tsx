@@ -64,7 +64,7 @@ async function readPayload(request: Request) {
     }
 
     if (background.size > 5 * 1024 * 1024) {
-      throw new Error("Das Hintergrundbild darf höchstens 5 MB groß sein.");
+      throw new Error("Das Hintergrundbild darf hÃ¶chstens 5 MB groÃŸ sein.");
     }
 
     const base64 = arrayBufferToBase64(await background.arrayBuffer());
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Ungültige Anfrage.",
+            : "UngÃ¼ltige Anfrage.",
       },
       { status: 400 }
     );
@@ -150,14 +150,14 @@ export async function POST(request: Request) {
 
   if (!headline) {
     return Response.json(
-      { error: "Eine Überschrift wird benötigt." },
+      { error: "Eine Ãœberschrift wird benÃ¶tigt." },
       { status: 400 }
     );
   }
 
   if (!backgroundImage.startsWith("data:image/")) {
     return Response.json(
-      { error: "Ein gültiges Hintergrundbild wird benötigt." },
+      { error: "Ein gÃ¼ltiges Hintergrundbild wird benÃ¶tigt." },
       { status: 400 }
     );
   }
@@ -171,9 +171,9 @@ export async function POST(request: Request) {
     hook: "STUDIO-ALLTAG",
     eskalation: "DER DRUCK STEIGT",
     erkenntnis: "DER WAHRE GRUND",
-    beweis: "DIE LÖSUNG",
-    lösung: "DIE LÖSUNG",
-    cta: "DEIN NÄCHSTER SCHRITT",
+    beweis: "DIE LÃ–SUNG",
+    lÃ¶sung: "DIE LÃ–SUNG",
+    cta: "DEIN NÃ„CHSTER SCHRITT",
   };
 
   const purposeLabel =
@@ -384,7 +384,7 @@ export async function POST(request: Request) {
                     lineHeight: 1,
                   }}
                 >
-                  →
+                  â†’
                 </div>
               </div>
             ) : null}
@@ -404,7 +404,7 @@ export async function POST(request: Request) {
             zIndex: 5,
           }}
         >
-          {contentTitle || "Mehr Ruhe für deinen Studio-Alltag"}
+          {contentTitle || "Mehr Ruhe fÃ¼r deinen Studio-Alltag"}
         </div>
 
         <div
@@ -442,6 +442,27 @@ export async function POST(request: Request) {
     }
   );
 
-  image.headers.set("Cache-Control", "no-store");
-  return image;
+  try {
+    const imageBuffer = await image.arrayBuffer();
+
+    return new Response(imageBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/png",
+        "Content-Length": String(imageBuffer.byteLength),
+        "Content-Disposition": `inline; filename="content-card-${slideNumber}.png"`,
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? `Bild konnte nicht fertig gerendert werden: ${error.message}`
+            : "Bild konnte nicht fertig gerendert werden.",
+      },
+      { status: 500 }
+    );
+  }
 }
