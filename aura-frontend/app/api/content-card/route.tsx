@@ -29,6 +29,11 @@ function safeNumber(value: unknown, fallback: number) {
   return Number.isFinite(number) ? Math.round(number) : fallback;
 }
 
+function formText(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : "";
+}
+
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   const bytes = new Uint8Array(buffer);
   const chunkSize = 0x8000;
@@ -65,16 +70,16 @@ async function readPayload(request: Request) {
     const base64 = arrayBufferToBase64(await background.arrayBuffer());
 
     return {
-      headline: formData.get("headline"),
-      body: formData.get("body"),
-      purpose: formData.get("purpose"),
-      role: formData.get("role"),
-      layout: formData.get("layout"),
-      swipeCue: formData.get("swipeCue"),
-      screenToShow: formData.get("screenToShow"),
-      slideNumber: formData.get("slideNumber"),
-      slideTotal: formData.get("slideTotal"),
-      contentTitle: formData.get("contentTitle"),
+      headline: formText(formData, "headline"),
+      body: formText(formData, "body"),
+      purpose: formText(formData, "purpose"),
+      role: formText(formData, "role"),
+      layout: formText(formData, "layout"),
+      swipeCue: formText(formData, "swipeCue"),
+      screenToShow: formText(formData, "screenToShow"),
+      slideNumber: formText(formData, "slideNumber"),
+      slideTotal: formText(formData, "slideTotal"),
+      contentTitle: formText(formData, "contentTitle"),
       backgroundImage: `data:${background.type || "image/png"};base64,${base64}`,
     } satisfies ContentCardPayload;
   }
