@@ -7,9 +7,14 @@ type ContentCardPayload = {
   headline?: string;
   body?: string;
   purpose?: string;
-  slideNumber?: number;
-  slideTotal?: number;
+  role?: string;
+  layout?: string;
+  swipeCue?: string;
+  screenToShow?: string;
+  slideNumber?: number | string;
+  slideTotal?: number | string;
   contentTitle?: string;
+  backgroundImage?: string;
 };
 
 function cleanText(value: unknown, maximumLength: number) {
@@ -21,18 +26,67 @@ function cleanText(value: unknown, maximumLength: number) {
 
 function safeNumber(value: unknown, fallback: number) {
   const number = Number(value);
+  return Number.isFinite(number) ? Math.round(number) : fallback;
+}
 
-  if (!Number.isFinite(number)) {
-    return fallback;
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(
+      ...bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length))
+    );
   }
 
-  return Math.round(number);
+  return btoa(binary);
+}
+
+async function readPayload(request: Request) {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const background = formData.get("background");
+
+    if (!(background instanceof File)) {
+      throw new Error("Das Hintergrundbild im Feld 'background' fehlt.");
+    }
+
+    if (!background.type.startsWith("image/")) {
+      throw new Error("Die hochgeladene Datei ist kein Bild.");
+    }
+
+    if (background.size > 5 * 1024 * 1024) {
+      throw new Error("Das Hintergrundbild darf höchstens 5 MB groß sein.");
+    }
+
+    const base64 = arrayBufferToBase64(await background.arrayBuffer());
+
+    return {
+      headline: formData.get("headline"),
+      body: formData.get("body"),
+      purpose: formData.get("purpose"),
+      role: formData.get("role"),
+      layout: formData.get("layout"),
+      swipeCue: formData.get("swipeCue"),
+      screenToShow: formData.get("screenToShow"),
+      slideNumber: formData.get("slideNumber"),
+      slideTotal: formData.get("slideTotal"),
+      contentTitle: formData.get("contentTitle"),
+      backgroundImage: `data:${background.type || "image/png"};base64,${base64}`,
+    } satisfies ContentCardPayload;
+  }
+
+  return (await request.json()) as ContentCardPayload;
 }
 
 export async function GET() {
   return Response.json({
     success: true,
-    service: "GlowSuite Content Card Renderer",
+    service: "GlowSuite Visual Carousel Renderer",
+    format: "1080x1920",
   });
 }
 
@@ -42,18 +96,14 @@ export async function POST(request: Request) {
 
   if (!expectedKey) {
     return Response.json(
-      {
-        error: "CONTENT_RENDER_KEY ist nicht eingerichtet.",
-      },
+      { error: "CONTENT_RENDER_KEY ist nicht eingerichtet." },
       { status: 500 }
     );
   }
 
   if (providedKey !== expectedKey) {
     return Response.json(
-      {
-        error: "Nicht autorisiert.",
-      },
+      { error: "Nicht autorisiert." },
       { status: 401 }
     );
   }
@@ -61,20 +111,27 @@ export async function POST(request: Request) {
   let payload: ContentCardPayload;
 
   try {
-    payload = (await request.json()) as ContentCardPayload;
-  } catch {
+    payload = await readPayload(request);
+  } catch (error) {
     return Response.json(
       {
-        error: "Ungültige JSON-Daten.",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Ungültige Anfrage.",
       },
       { status: 400 }
     );
   }
 
   const headline = cleanText(payload.headline, 100);
-  const body = cleanText(payload.body, 240);
-  const purpose = cleanText(payload.purpose, 30) || "Inhalt";
-  const contentTitle = cleanText(payload.contentTitle, 80);
+  const body = cleanText(payload.body, 220);
+  const purpose = cleanText(payload.purpose, 30) || "INHALT";
+  const role = cleanText(payload.role, 30);
+  const layout = cleanText(payload.layout, 40);
+  const swipeCue = cleanText(payload.swipeCue, 40);
+  const contentTitle = cleanText(payload.contentTitle, 90);
+  const backgroundImage = String(payload.backgroundImage ?? "").trim();
 
   const slideTotal = Math.min(
     10,
@@ -88,48 +145,51 @@ export async function POST(request: Request) {
 
   if (!headline) {
     return Response.json(
-      {
-        error: "Eine Überschrift wird benötigt.",
-      },
+      { error: "Eine Überschrift wird benötigt." },
       { status: 400 }
     );
   }
 
-  const isCta = purpose.toLowerCase() === "cta";
+  if (!backgroundImage.startsWith("data:image/")) {
+    return Response.json(
+      { error: "Ein gültiges Hintergrundbild wird benötigt." },
+      { status: 400 }
+    );
+  }
+
+  const normalizedPurpose = purpose.toLowerCase();
+  const normalizedRole = role.toLowerCase();
+  const isCta = normalizedPurpose === "cta" || normalizedRole === "cta";
 
   const purposeLabels: Record<string, string> = {
-    hook: "AUFMERKSAMKEIT",
-    problem: "STUDIO-ALLTAG",
-    erkenntnis: "ERKENNTNIS",
-    lösung: "LÖSUNG",
+    schmerz: "STUDIO-ALLTAG",
+    hook: "STUDIO-ALLTAG",
+    eskalation: "DER DRUCK STEIGT",
+    erkenntnis: "DER WAHRE GRUND",
+    beweis: "DIE LÖSUNG",
+    lösung: "DIE LÖSUNG",
     cta: "DEIN NÄCHSTER SCHRITT",
   };
 
   const purposeLabel =
-    purposeLabels[purpose.toLowerCase()] ??
+    purposeLabels[normalizedPurpose] ??
+    purposeLabels[normalizedRole] ??
     purpose.toUpperCase();
+
+  const upperLayouts = new Set(["hero_full_bleed", "contrast_reveal"]);
+  const placeTextAtTop = upperLayouts.has(layout) && !isCta;
 
   const headlineSize =
     headline.length > 70
-      ? 58
-      : headline.length > 45
-        ? 66
-        : 76;
+      ? 70
+      : headline.length > 48
+        ? 78
+        : headline.length > 30
+          ? 88
+          : 98;
 
-  const bodySize =
-    body.length > 180
-      ? 34
-      : body.length > 110
-        ? 38
-        : 42;
-
-  const background = isCta
-    ? "linear-gradient(145deg, #241713 0%, #3B251E 52%, #6E4938 100%)"
-    : "linear-gradient(145deg, #FFF9F2 0%, #F1E3D4 55%, #D8BFA7 100%)";
-
-  const mainColor = isCta ? "#FFF9F2" : "#2F201B";
-  const bodyColor = isCta ? "#F0DDD0" : "#5F493F";
-  const accentColor = "#B88746";
+  const bodySize = body.length > 120 ? 35 : body.length > 75 ? 39 : 43;
+  const accentColor = "#D5A45B";
 
   const image = new ImageResponse(
     (
@@ -141,79 +201,83 @@ export async function POST(request: Request) {
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          padding: "76px 82px 66px",
-          background,
-          color: mainColor,
+          background: "#251712",
+          color: "#FFF9F2",
           fontFamily: "Arial, Helvetica, sans-serif",
         }}
       >
-        <div
+        <img
+          src={backgroundImage}
+          width="1080"
+          height="1920"
+          alt=""
           style={{
             position: "absolute",
-            width: 520,
-            height: 520,
-            borderRadius: 999,
-            right: -230,
-            top: -190,
-            background: isCta
-              ? "rgba(184,135,70,0.18)"
-              : "rgba(255,255,255,0.42)",
-            display: "flex",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center",
           }}
         />
 
         <div
           style={{
             position: "absolute",
-            width: 360,
-            height: 360,
-            borderRadius: 999,
-            left: -210,
-            bottom: -170,
-            background: isCta
-              ? "rgba(255,255,255,0.06)"
-              : "rgba(111,73,56,0.09)",
+            inset: 0,
             display: "flex",
+            background:
+              "linear-gradient(180deg, rgba(25,13,9,0.72) 0%, rgba(25,13,9,0.06) 31%, rgba(25,13,9,0.10) 54%, rgba(25,13,9,0.90) 100%)",
           }}
         />
 
         <div
           style={{
+            position: "absolute",
+            left: 58,
+            right: 58,
+            top: 58,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            zIndex: 2,
+            zIndex: 5,
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              fontSize: 28,
-              fontWeight: 700,
+              padding: "13px 19px",
+              borderRadius: 999,
+              background: "rgba(34,20,15,0.72)",
+              border: "1px solid rgba(255,255,255,0.20)",
+              fontSize: 22,
+              fontWeight: 800,
               letterSpacing: 1.5,
             }}
           >
             <div
               style={{
-                width: 17,
-                height: 17,
+                width: 14,
+                height: 14,
+                marginRight: 11,
                 borderRadius: 999,
-                marginRight: 13,
                 background: accentColor,
                 display: "flex",
               }}
             />
-
             GLOWSUITE AI
           </div>
 
           <div
             style={{
               display: "flex",
-              fontSize: 25,
-              fontWeight: 700,
-              color: isCta ? "#E3BD82" : "#8B623A",
+              padding: "13px 18px",
+              borderRadius: 999,
+              background: "rgba(34,20,15,0.72)",
+              border: "1px solid rgba(255,255,255,0.20)",
+              fontSize: 23,
+              fontWeight: 800,
             }}
           >
             {slideNumber}/{slideTotal}
@@ -222,127 +286,157 @@ export async function POST(request: Request) {
 
         <div
           style={{
-            flex: 1,
+            position: "absolute",
+            left: 58,
+            right: 58,
+            top: placeTextAtTop ? 245 : 820,
+            bottom: placeTextAtTop ? "auto" : 160,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center",
-            zIndex: 2,
-            maxWidth: 880,
+            justifyContent: placeTextAtTop ? "flex-start" : "flex-end",
+            alignItems: "flex-start",
+            zIndex: 4,
           }}
         >
           <div
             style={{
-              alignSelf: "flex-start",
+              width: "100%",
               display: "flex",
-              padding: "13px 22px",
-              marginBottom: 34,
-              borderRadius: 999,
+              flexDirection: "column",
+              padding: "34px 38px 38px",
+              borderRadius: 32,
               background: isCta
-                ? "rgba(227,189,130,0.15)"
-                : "rgba(139,98,58,0.10)",
-              color: isCta ? "#E3BD82" : "#805A37",
-              fontSize: 22,
-              fontWeight: 700,
-              letterSpacing: 2,
+                ? "rgba(47,27,20,0.90)"
+                : "rgba(35,20,15,0.80)",
+              border: "1px solid rgba(255,255,255,0.20)",
+              boxShadow: "0 18px 60px rgba(0,0,0,0.35)",
             }}
           >
-            {purposeLabel}
-          </div>
+            <div
+              style={{
+                alignSelf: "flex-start",
+                display: "flex",
+                padding: "10px 16px",
+                marginBottom: 24,
+                borderRadius: 999,
+                background: "rgba(213,164,91,0.18)",
+                color: "#F0C987",
+                fontSize: 20,
+                fontWeight: 800,
+                letterSpacing: 1.8,
+              }}
+            >
+              {purposeLabel}
+            </div>
 
-          <div
-            style={{
-              width: 90,
-              height: 7,
-              marginBottom: 34,
-              borderRadius: 999,
-              background: accentColor,
-              display: "flex",
-            }}
-          />
-
-          <div
-            style={{
-              display: "flex",
-              fontSize: headlineSize,
-              fontWeight: 800,
-              lineHeight: 1.08,
-              letterSpacing: -2,
-              marginBottom: body ? 34 : 0,
-            }}
-          >
-            {headline}
-          </div>
-
-          {body ? (
             <div
               style={{
                 display: "flex",
-                fontSize: bodySize,
-                fontWeight: 400,
-                lineHeight: 1.35,
-                color: bodyColor,
-                maxWidth: 850,
+                maxWidth: 910,
+                fontSize: headlineSize,
+                fontWeight: 900,
+                lineHeight: 1.02,
+                letterSpacing: -2.7,
               }}
             >
-              {body}
+              {headline}
             </div>
-          ) : null}
+
+            {body ? (
+              <div
+                style={{
+                  display: "flex",
+                  maxWidth: 900,
+                  marginTop: 24,
+                  color: "#F4E9E0",
+                  fontSize: bodySize,
+                  fontWeight: 500,
+                  lineHeight: 1.3,
+                }}
+              >
+                {body}
+              </div>
+            ) : null}
+
+            {swipeCue ? (
+              <div
+                style={{
+                  alignSelf: "flex-end",
+                  display: "flex",
+                  alignItems: "center",
+                  marginTop: 30,
+                  color: "#F0C987",
+                  fontSize: 27,
+                  fontWeight: 800,
+                }}
+              >
+                {swipeCue}
+                <div
+                  style={{
+                    display: "flex",
+                    marginLeft: 12,
+                    fontSize: 35,
+                    lineHeight: 1,
+                  }}
+                >
+                  →
+                </div>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div
           style={{
+            position: "absolute",
+            left: 62,
+            bottom: 58,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            zIndex: 2,
+            maxWidth: 690,
+            color: "rgba(255,249,242,0.76)",
+            fontSize: 19,
+            fontWeight: 600,
+            zIndex: 5,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              maxWidth: 700,
-              fontSize: 21,
-              color: isCta ? "#D8C5BA" : "#745C50",
-            }}
-          >
-            {contentTitle || "Mehr Ruhe und Wachstum für dein Studio"}
-          </div>
+          {contentTitle || "Mehr Ruhe für deinen Studio-Alltag"}
+        </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            {Array.from({ length: slideTotal }).map((_, index) => (
-              <div
-                key={index}
-                style={{
-                  width: index + 1 === slideNumber ? 30 : 10,
-                  height: 10,
-                  marginLeft: 9,
-                  borderRadius: 999,
-                  background:
-                    index + 1 === slideNumber
-                      ? accentColor
-                      : isCta
-                        ? "rgba(255,255,255,0.28)"
-                        : "rgba(47,32,27,0.20)",
-                  display: "flex",
-                }}
-              />
-            ))}
-          </div>
+        <div
+          style={{
+            position: "absolute",
+            right: 62,
+            bottom: 62,
+            display: "flex",
+            alignItems: "center",
+            zIndex: 5,
+          }}
+        >
+          {Array.from({ length: slideTotal }).map((_, index) => (
+            <div
+              key={index}
+              style={{
+                width: index + 1 === slideNumber ? 28 : 9,
+                height: 9,
+                marginLeft: 8,
+                borderRadius: 999,
+                background:
+                  index + 1 === slideNumber
+                    ? accentColor
+                    : "rgba(255,255,255,0.38)",
+                display: "flex",
+              }}
+            />
+          ))}
         </div>
       </div>
     ),
     {
       width: 1080,
-      height: 1350,
+      height: 1920,
     }
   );
 
   image.headers.set("Cache-Control", "no-store");
-
   return image;
 }
