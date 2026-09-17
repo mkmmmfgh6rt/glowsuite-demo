@@ -295,7 +295,7 @@ export async function POST(request: Request) {
             left: 58,
             right: 58,
             top: placeTextAtTop ? 245 : 820,
-            bottom: placeTextAtTop ? undefined : 160,
+            ...(placeTextAtTop ? {} : { bottom: 160 }),
             display: "flex",
             flexDirection: "column",
             justifyContent: placeTextAtTop ? "flex-start" : "flex-end",
