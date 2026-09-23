@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Datenschutz | GlowSuite AI",
+  description:
+    "Informationen zur Verarbeitung personenbezogener Daten bei GlowSuite AI.",
+  alternates: { canonical: "/datenschutz" },
+};
 
 export default function DatenschutzPage() {
   return (
@@ -12,15 +21,14 @@ export default function DatenschutzPage() {
           'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
-      {/* HEADER */}
       <header
         style={{
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-          background: "rgba(18,13,10,0.88)",
-          backdropFilter: "blur(18px)",
           position: "sticky",
           top: 0,
           zIndex: 20,
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          background: "rgba(18,13,10,0.88)",
+          backdropFilter: "blur(18px)",
         }}
       >
         <div
@@ -65,7 +73,6 @@ export default function DatenschutzPage() {
         </div>
       </header>
 
-      {/* HERO */}
       <section
         style={{
           maxWidth: 900,
@@ -96,7 +103,7 @@ export default function DatenschutzPage() {
         <h1
           style={{
             margin: 0,
-            fontSize: "clamp(38px, 6vw, 64px)",
+            fontSize: "clamp(38px,6vw,64px)",
             lineHeight: 1.02,
             letterSpacing: "-0.045em",
             color: "#fffaf4",
@@ -122,7 +129,6 @@ export default function DatenschutzPage() {
         </p>
       </section>
 
-      {/* CONTENT */}
       <section
         style={{
           maxWidth: 900,
@@ -132,301 +138,426 @@ export default function DatenschutzPage() {
       >
         <div
           style={{
-            padding: "clamp(24px, 5vw, 52px)",
+            padding: "clamp(24px,5vw,52px)",
             borderRadius: 28,
             background:
-              "linear-gradient(145deg, rgba(255,250,244,0.97), rgba(239,225,209,0.96))",
+              "linear-gradient(145deg,rgba(255,250,244,0.97),rgba(239,225,209,0.96))",
             color: "#35261f",
             border: "1px solid rgba(212,175,116,0.24)",
             boxShadow: "0 28px 80px rgba(0,0,0,0.28)",
           }}
         >
-          <LegalSection title="1. Verantwortlicher">
+          <LegalSection title="1. Verantwortliche Stelle">
             <p>
               Verantwortlich für die Datenverarbeitung im Sinne der
               Datenschutz-Grundverordnung (DSGVO) ist:
             </p>
-
             <p>
-              <strong>Jennifer Nowicki</strong>
+              <strong>GlowSuite AI</strong>
+              <br />
+              Inhaberin: Jennifer Nowicki
               <br />
               Oderstraße 24
               <br />
               16303 Schwedt/Oder
               <br />
-              <br />
-              E-Mail:{" "}
-              <a href="mailto:mmazur871@gmail.com">
-                mmazur871@gmail.com
+              Deutschland
+            </p>
+            <p>
+              E-Mail: {" "}
+              <a href="mailto:auswertung.glowsuite@gmail.com">
+                auswertung.glowsuite@gmail.com
               </a>
             </p>
           </LegalSection>
 
-          <LegalSection title="2. Verarbeitung personenbezogener Daten">
+          <LegalSection title="2. Grundsätze der Datenverarbeitung">
             <p>
               Wir verarbeiten personenbezogene Daten nur, soweit dies für die
-              Bereitstellung unserer Website, die Durchführung des GlowSuite
-              Studio-Checks, die Bearbeitung von Anfragen oder die Anbahnung
-              einer möglichen Geschäftsbeziehung erforderlich ist.
+              Bereitstellung unserer Website, angeforderte Inhalte, den
+              Studio-Check, die Bearbeitung von Anfragen, die Durchführung
+              vorvertraglicher Maßnahmen oder die Erbringung unserer Leistungen
+              erforderlich ist.
             </p>
-
-            <p>
-              Abhängig von der jeweiligen Nutzung können insbesondere folgende
-              Daten verarbeitet werden:
-            </p>
-
+            <p>Abhängig von der Nutzung können insbesondere verarbeitet werden:</p>
             <ul>
-              <li>Name bzw. Vorname</li>
-              <li>E-Mail-Adresse</li>
-              <li>freiwillig mitgeteilte Kontaktdaten</li>
-              <li>Angaben aus dem GlowSuite Studio-Check</li>
-              <li>ermittelter Studio-Score</li>
-              <li>erkannte Optimierungs- und Automatisierungspotenziale</li>
-              <li>Zeitpunkt der Übermittlung</li>
-              <li>technisch erforderliche Verbindungs- und Serverdaten</li>
+              <li>Name und Kontaktdaten</li>
+              <li>Studio- und Unternehmensangaben</li>
+              <li>Antworten und Ergebnisse aus dem Studio-Check</li>
+              <li>Nachrichten und Buchungsangaben</li>
+              <li>Einwilligungsstatus und Zeitpunkt einer Einwilligung</li>
+              <li>Herkunfts- und Kampagneninformationen wie UTM-Parameter</li>
+              <li>IP-Adresse, Browser-, Geräte- und Serverprotokolldaten</li>
             </ul>
-          </LegalSection>
-
-          <LegalSection title="3. GlowSuite Studio-Check">
             <p>
-              Auf unserer Website kann ein kostenloser Studio-Check
-              durchgeführt werden. Dabei werden Fragen zu ausgewählten
-              organisatorischen und digitalen Abläufen des Studios
-              beantwortet.
-            </p>
-
-            <p>
-              Zur Erstellung und Bereitstellung der persönlichen Auswertung
-              verarbeiten wir insbesondere Vorname, E-Mail-Adresse, Antworten,
-              den daraus berechneten Studio-Score sowie die daraus abgeleiteten
-              Optimierungspotenziale.
-            </p>
-
-            <p>
-              Die Verarbeitung erfolgt zur Durchführung des angeforderten
-              Studio-Checks und zur Bearbeitung einer daraus entstehenden
-              Kontakt- oder Geschäftsanfrage.
-            </p>
-
-            <p>
-              Rechtsgrundlage ist insbesondere Art. 6 Abs. 1 lit. b DSGVO,
-              soweit die Verarbeitung zur Durchführung vorvertraglicher
-              Maßnahmen auf Anfrage der betroffenen Person erforderlich ist.
-            </p>
-
-            <p>
-              Soweit darüber hinaus eine Verarbeitung zur Organisation,
-              Dokumentation und Bearbeitung eingehender Interessentenanfragen
-              erforderlich ist, kann die Verarbeitung auf Grundlage unseres
-              berechtigten Interesses gemäß Art. 6 Abs. 1 lit. f DSGVO
-              erfolgen.
+              Rechtsgrundlagen sind je nach Verarbeitung insbesondere Art. 6
+              Abs. 1 lit. a DSGVO bei einer Einwilligung, Art. 6 Abs. 1 lit. b
+              DSGVO bei Verträgen und vorvertraglichen Maßnahmen, Art. 6 Abs. 1
+              lit. c DSGVO bei gesetzlichen Pflichten sowie Art. 6 Abs. 1 lit. f
+              DSGVO bei berechtigten Interessen.
             </p>
           </LegalSection>
 
-          <LegalSection title="4. Verwendung von Airtable">
+          <LegalSection title="3. Hosting über Vercel">
             <p>
-              Zur strukturierten Verwaltung von Anfragen und Studio-Check-Daten
-              nutzen wir Airtable.
+              Unsere Website wird über <strong>Vercel Inc.</strong> technisch
+              bereitgestellt. Beim Aufruf der Website können insbesondere
+              IP-Adresse, Zeitpunkt des Zugriffs, aufgerufene Seite,
+              Browserinformationen, Geräteinformationen sowie technische
+              Protokoll- und Fehlerdaten verarbeitet werden.
             </p>
-
             <p>
-              Anbieter:
-              <br />
-              <strong>Formagrid Inc. dba Airtable</strong>
-              <br />
-              1 Front Street, Floor 28
-              <br />
-              San Francisco, CA 94111
-              <br />
-              USA
+              Die Verarbeitung dient der sicheren, stabilen und schnellen
+              Bereitstellung unseres Online-Angebots. Rechtsgrundlage ist Art. 6
+              Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse liegt im
+              zuverlässigen und sicheren Betrieb der Website.
             </p>
-
             <p>
-              In Airtable können insbesondere Name, E-Mail-Adresse,
-              Studio-Check-Ergebnisse, Studio-Score, erkannte Potenziale,
-              Kontaktstatus sowie interne Bearbeitungsvermerke gespeichert
+              Eine Verarbeitung in Staaten außerhalb der Europäischen Union
+              kann nicht ausgeschlossen werden. Dabei werden die gesetzlich
+              vorgesehenen Schutzmechanismen eingesetzt.
+            </p>
+            <ProviderLink href="https://vercel.com/legal/privacy-notice">
+              Datenschutzhinweise von Vercel
+            </ProviderLink>
+          </LegalSection>
+
+          <LegalSection title="4. Kontaktaufnahme per E-Mail">
+            <p>
+              Wenn du uns per E-Mail kontaktierst, verarbeiten wir deine
+              E-Mail-Adresse, den Inhalt deiner Nachricht und weitere freiwillig
+              übermittelte Angaben zur Bearbeitung deines Anliegens.
+            </p>
+            <p>
+              Die Kontaktadresse wird über Google-Dienste bereitgestellt. Dabei
+              kann eine Verarbeitung durch Google Ireland Limited und verbundene
+              Unternehmen stattfinden.
+            </p>
+            <p>
+              Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, wenn sich die
+              Anfrage auf einen Vertrag oder vorvertragliche Maßnahmen bezieht.
+              Im Übrigen erfolgt die Verarbeitung auf Grundlage von Art. 6 Abs.
+              1 lit. f DSGVO.
+            </p>
+            <ProviderLink href="https://policies.google.com/privacy?hl=de">
+              Datenschutzhinweise von Google
+            </ProviderLink>
+          </LegalSection>
+
+          <LegalSection title="5. Download der 50 Social-Media-Hooks">
+            <p>
+              Für die Bereitstellung der kostenlosen Hook-Sammlung verarbeiten
+              wir insbesondere Vorname, E-Mail-Adresse, Zeitpunkt der Anfrage,
+              Einwilligungsstatus sowie gegebenenfalls Herkunfts- und
+              Kampagneninformationen.
+            </p>
+            <p>
+              Die Verarbeitung zur Bereitstellung und Zusendung der angeforderten
+              PDF erfolgt gemäß Art. 6 Abs. 1 lit. b DSGVO. Eine freiwillige
+              Einwilligung für weitere E-Mail-Tipps ist keine Voraussetzung für
+              den Download und wird getrennt erfasst. Sie kann jederzeit mit
+              Wirkung für die Zukunft widerrufen werden.
+            </p>
+          </LegalSection>
+
+          <LegalSection title="6. GlowSuite Studio-Check">
+            <p>
+              Beim kostenlosen Studio-Check werden Angaben zu organisatorischen
+              und digitalen Abläufen eines Studios verarbeitet. Hierzu gehören
+              insbesondere Vorname, E-Mail-Adresse, Antworten, der errechnete
+              Studio-Score und daraus abgeleitete Optimierungshinweise.
+            </p>
+            <p>
+              Die Verarbeitung erfolgt zur Erstellung und Zusendung der
+              angeforderten Auswertung sowie zur Bearbeitung einer daraus
+              entstehenden Anfrage. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b
+              DSGVO. Die Organisation und Dokumentation eingehender Anfragen kann
+              ergänzend auf Art. 6 Abs. 1 lit. f DSGVO gestützt werden.
+            </p>
+            <p>
+              Der Studio-Score dient ausschließlich der unverbindlichen
+              Orientierung. Er entfaltet keine rechtliche Wirkung und führt nicht
+              zu einer ausschließlich automatisierten Entscheidung mit einer
+              vergleichbaren erheblichen Beeinträchtigung.
+            </p>
+          </LegalSection>
+
+          <LegalSection title="7. Verarbeitung mit Airtable">
+            <p>
+              Zur Verwaltung von Downloads, Studio-Checks, Interessenten- und
+              Kundenanfragen nutzen wir <strong>Airtable</strong>, einen Dienst
+              der Formagrid Inc. dba Airtable, 1 Front Street, Floor 28, San
+              Francisco, CA 94111, USA.
+            </p>
+            <p>
+              Dabei können insbesondere Name, E-Mail-Adresse, Studioangaben,
+              Ergebnisse, Einwilligungsstatus, Kontaktstatus,
+              Kampagneninformationen und interne Bearbeitungsvermerke gespeichert
               werden.
             </p>
-
             <p>
-              Airtable wird zur Verwaltung und Bearbeitung von Interessenten-
-              und Kundenanfragen eingesetzt.
+              Rechtsgrundlage ist je nach Vorgang Art. 6 Abs. 1 lit. a, b oder f
+              DSGVO. Bei Übermittlungen in Drittländer werden geeignete
+              Garantien, insbesondere Angemessenheitsbeschlüsse oder
+              Standardvertragsklauseln, eingesetzt.
             </p>
+            <ProviderLink href="https://www.airtable.com/company/privacy">
+              Datenschutzhinweise von Airtable
+            </ProviderLink>
+          </LegalSection>
 
+          <LegalSection title="8. E-Mail-Versand mit Brevo">
             <p>
-              Dabei kann eine Verarbeitung personenbezogener Daten außerhalb
-              der Europäischen Union bzw. des Europäischen Wirtschaftsraums
-              stattfinden. Soweit erforderlich, werden geeignete Garantien nach
-              den geltenden Datenschutzvorschriften eingesetzt.
+              Für transaktionale E-Mails, beispielsweise die Zusendung der
+              Hook-Sammlung oder einer Studio-Auswertung, sowie bei freiwilliger
+              Einwilligung für weitere Informationen nutzen wir
+              <strong> Brevo</strong>.
+            </p>
+            <p>
+              Dabei können insbesondere Name, E-Mail-Adresse, Inhalt und Status
+              der versendeten Nachricht sowie der dokumentierte
+              Einwilligungsstatus verarbeitet werden. Die Zusendung einer
+              angeforderten Datei oder Auswertung führt nicht automatisch zu
+              einem Newsletter-Abonnement.
+            </p>
+            <p>
+              Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO für angeforderte
+              E-Mails und Art. 6 Abs. 1 lit. a DSGVO für freiwillige
+              Marketing-Einwilligungen.
+            </p>
+            <ProviderLink href="https://www.brevo.com/de/legal/privacypolicy/">
+              Datenschutzhinweise von Brevo
+            </ProviderLink>
+          </LegalSection>
+
+          <LegalSection title="9. Automatisierungen mit n8n">
+            <p>
+              Zur technischen Automatisierung einzelner Abläufe nutzen wir
+              <strong> n8n Cloud</strong> der n8n GmbH, Novalisstraße 10, 10115
+              Berlin. n8n kann Daten zwischen den von uns eingesetzten Systemen
+              übertragen und Verarbeitungsschritte ausführen.
+            </p>
+            <p>
+              Abhängig vom Vorgang können dabei Kontaktdaten, Datensatz-IDs,
+              Statusinformationen sowie Ergebnisse aus Anfragen und Studio-Checks
+              verarbeitet werden. Rechtsgrundlage richtet sich nach dem
+              zugrunde liegenden Vorgang und ist insbesondere Art. 6 Abs. 1 lit.
+              b oder f DSGVO sowie bei freiwilliger Kommunikation Art. 6 Abs. 1
+              lit. a DSGVO.
+            </p>
+            <ProviderLink href="https://n8n.io/legal/privacy/">
+              Datenschutzhinweise von n8n
+            </ProviderLink>
+          </LegalSection>
+
+          <LegalSection title="10. KI-gestützter Assistent A.U.R.A.">
+            <p>
+              Bei Nutzung unseres KI-gestützten Assistenten A.U.R.A. werden die
+              eingegebenen Nachrichten, technische Sitzungsinformationen und der
+              für die Beantwortung notwendige Kontext verarbeitet. Vor Beginn
+              der Kommunikation wird darauf hingewiesen, dass die Unterhaltung
+              mit einem KI-System erfolgt.
+            </p>
+            <p>
+              Zur Erzeugung von Antworten können KI-Dienste von
+              <strong> OpenAI</strong> eingesetzt werden. Dabei können Inhalte
+              der Eingabe an OpenAI übermittelt werden. Bitte übermittle im Chat
+              keine Gesundheitsdaten, Zahlungsdaten, Passwörter oder andere
+              besonders sensible Informationen.
+            </p>
+            <p>
+              Soweit der Chat zur Bearbeitung einer konkreten Anfrage oder zur
+              Durchführung vorvertraglicher Maßnahmen genutzt wird, ist Art. 6
+              Abs. 1 lit. b DSGVO die Rechtsgrundlage. Für darüber hinausgehende
+              freiwillige Verarbeitungen wird eine gesonderte Einwilligung nach
+              Art. 6 Abs. 1 lit. a DSGVO eingeholt.
+            </p>
+            <ProviderLink href="https://openai.com/de-DE/policies/eu-privacy-policy/">
+              Datenschutzhinweise von OpenAI
+            </ProviderLink>
+          </LegalSection>
+
+          <LegalSection title="11. WhatsApp-Kommunikation und Twilio">
+            <p>
+              Wenn eine Kommunikation über WhatsApp angeboten und von dir
+              genutzt wird, können Telefonnummer, Profilinformationen,
+              Nachrichteninhalte, Zeitstempel sowie Zustell- und Statusdaten
+              verarbeitet werden.
+            </p>
+            <p>
+              Für die technische Nachrichtenübermittlung können Dienste von
+              <strong> Twilio</strong> und WhatsApp Ireland Limited eingesetzt
+              werden. Bei diesen Diensten kann eine Verarbeitung außerhalb der
+              Europäischen Union stattfinden.
+            </p>
+            <p>
+              Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, wenn die
+              Kommunikation zur Bearbeitung einer Anfrage oder Durchführung
+              eines Vertrags erforderlich ist. Im Übrigen kommt Art. 6 Abs. 1
+              lit. a oder f DSGVO in Betracht.
+            </p>
+            <ProviderLink href="https://www.twilio.com/en-us/legal/privacy">
+              Datenschutzhinweise von Twilio
+            </ProviderLink>
+            <br />
+            <ProviderLink href="https://www.whatsapp.com/legal/privacy-policy-eea">
+              Datenschutzhinweise von WhatsApp
+            </ProviderLink>
+          </LegalSection>
+
+          <LegalSection title="12. Zahlungsabwicklung mit Stripe">
+            <p>
+              Wenn kostenpflichtige Leistungen gebucht werden, kann die
+              Zahlungsabwicklung über <strong>Stripe</strong> erfolgen. Dabei
+              verarbeitet Stripe insbesondere Kontakt-, Rechnungs-, Zahlungs-
+              und Transaktionsdaten. Vollständige Zahlungsdaten werden nicht von
+              uns selbst gespeichert, sondern vom Zahlungsdienstleister
+              verarbeitet.
+            </p>
+            <p>
+              Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO zur Durchführung
+              des Vertrags sowie Art. 6 Abs. 1 lit. c DSGVO, soweit gesetzliche
+              Aufbewahrungs- und Nachweispflichten bestehen.
+            </p>
+            <ProviderLink href="https://stripe.com/de/privacy">
+              Datenschutzhinweise von Stripe
+            </ProviderLink>
+          </LegalSection>
+
+          <LegalSection title="13. Lokale Speicherung und technisch notwendige Funktionen">
+            <p>
+              Für technisch notwendige Funktionen können Informationen lokal im
+              Browser gespeichert werden. Dazu können eine zufällig erzeugte
+              Sitzungs-ID für den KI-Chat, eine gewählte Darstellung oder ein
+              technisch notwendiger Anmeldestatus gehören.
+            </p>
+            <p>
+              Diese Speicherungen dienen ausschließlich der Bereitstellung der
+              angeforderten Funktion. Sie werden nicht für personalisierte
+              Werbung verwendet. Rechtsgrundlage ist § 25 Abs. 2 TDDDG und,
+              soweit personenbezogene Daten verarbeitet werden, Art. 6 Abs. 1
+              lit. b oder f DSGVO.
             </p>
           </LegalSection>
 
-          <LegalSection title="5. Versand der Studio-Auswertung mit Brevo">
+          <LegalSection title="14. Einwilligungen und Werbekommunikation">
             <p>
-              Für den Versand der persönlichen GlowSuite Studio-Auswertung
-              per E-Mail nutzen wir den Dienst Brevo.
+              Die Angabe einer E-Mail-Adresse für einen Download, eine Auswertung
+              oder eine konkrete Anfrage bedeutet nicht automatisch die
+              Einwilligung in regelmäßige Werbung.
             </p>
-
             <p>
-              Wenn du im Rahmen des Studio-Checks deine E-Mail-Adresse
-              angibst und die Auswertung anforderst, werden die für den
-              Versand erforderlichen Daten an Brevo übermittelt.
-              Hierzu können insbesondere dein Vorname, deine E-Mail-Adresse,
-              dein Studio-Score sowie die aus dem Studio-Check abgeleiteten
-              Hinweise und Optimierungspotenziale gehören.
-            </p>
-
-            <p>
-              Die Verarbeitung erfolgt ausschließlich zur Erstellung und
-              Bereitstellung der von dir angeforderten Studio-Auswertung.
-              Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, soweit die
-              Verarbeitung zur Durchführung des Studio-Checks und
-              vorvertraglicher Maßnahmen auf deine Anfrage hin erforderlich ist.
-            </p>
-
-            <p>
-              Brevo wird dabei als Dienstleister für den Versand
-              transaktionaler E-Mails eingesetzt. Die über den Studio-Check
-              ausgelöste Ergebnis-E-Mail stellt keinen automatischen
-              Newsletter-Bezug dar.
-            </p>
-
-            <p>
-              Mit Brevo bestehen Regelungen zur Auftragsverarbeitung.
-              Nach Angaben von Brevo befinden sich die Hosting-Server,
-              auf denen die Datenbanken verarbeitet und gespeichert werden,
-              innerhalb der Europäischen Union.
-            </p>
-
-            <p>
-              Weitere Informationen zur Verarbeitung personenbezogener Daten
-              durch Brevo findest du in den Datenschutzinformationen des
-              Anbieters.
+              Soweit eine Einwilligung angeboten wird, ist sie freiwillig,
+              zweckbezogen und kann jederzeit mit Wirkung für die Zukunft
+              widerrufen werden. Der Widerruf kann per E-Mail an
+              auswertung.glowsuite@gmail.com erfolgen. Die Rechtmäßigkeit der bis
+              zum Widerruf erfolgten Verarbeitung bleibt unberührt.
             </p>
           </LegalSection>
 
-          <LegalSection title="6. Hosting und technische Bereitstellung">
+          <LegalSection title="15. Empfänger und Drittlandübermittlungen">
             <p>
-              Unsere Website und die für den Studio-Check erforderlichen
-              technischen Funktionen werden über externe Hosting- und
-              Infrastruktur-Dienstleister bereitgestellt.
+              Daten werden nur an Dienstleister und Empfänger übermittelt, wenn
+              dies für den jeweiligen Zweck erforderlich ist, eine gesetzliche
+              Pflicht besteht oder eine wirksame Einwilligung vorliegt.
             </p>
-
             <p>
-              Beim Aufruf unserer Website können technisch notwendige Daten
-              verarbeitet werden. Hierzu können insbesondere IP-Adresse, Datum
-              und Uhrzeit des Zugriffs, aufgerufene Seite,
-              Browserinformationen sowie technische Fehler- und
-              Protokolldaten gehören.
-            </p>
-
-            <p>
-              Diese Verarbeitung dient der sicheren, stabilen und technisch
-              funktionsfähigen Bereitstellung der Website.
-            </p>
-
-            <p>
-              Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser
-              berechtigtes Interesse besteht in der sicheren und zuverlässigen
-              Bereitstellung unseres Online-Angebots.
+              Bei Dienstleistern außerhalb der Europäischen Union oder des
+              Europäischen Wirtschaftsraums können Daten in Drittländern
+              verarbeitet werden. Soweit erforderlich, stützen wir solche
+              Übermittlungen auf einen Angemessenheitsbeschluss, das EU-US Data
+              Privacy Framework, EU-Standardvertragsklauseln oder andere
+              gesetzlich vorgesehene Garantien.
             </p>
           </LegalSection>
 
-          <LegalSection title="7. Keine automatische Einwilligung in Werbung">
+          <LegalSection title="16. Speicherdauer und Löschung">
             <p>
-              Die Angabe einer E-Mail-Adresse im Rahmen des Studio-Checks
-              bedeutet nicht automatisch, dass ein Newsletter oder regelmäßige
-              Werbe-E-Mails abonniert werden.
+              Wir speichern personenbezogene Daten nur so lange, wie sie für den
+              jeweiligen Zweck erforderlich sind oder gesetzliche
+              Aufbewahrungspflichten bestehen. Maßgebliche Kriterien sind Art,
+              Umfang und Zweck der Daten, der Bearbeitungsstand einer Anfrage,
+              eine bestehende Vertragsbeziehung sowie gesetzliche Nachweis- und
+              Aufbewahrungspflichten.
             </p>
-
             <p>
-              Sollten wir künftig einen Newsletter oder andere
-              einwilligungsbasierte Marketing-Kommunikation anbieten, wird
-              hierfür eine gesonderte Einwilligung eingeholt, soweit dies
-              gesetzlich erforderlich ist.
-            </p>
-          </LegalSection>
-
-          <LegalSection title="8. Speicherdauer und Löschung">
-            <p>
-              Personenbezogene Daten werden nur so lange gespeichert, wie dies
-              für den jeweiligen Verarbeitungszweck erforderlich ist oder
-              gesetzliche Aufbewahrungspflichten bestehen.
-            </p>
-
-            <p>
-              Daten aus Anfragen und dem Studio-Check können insbesondere so
-              lange gespeichert werden, wie dies für die Bearbeitung der
-              Anfrage, die angeforderte Auswertung oder eine daraus entstehende
-              Geschäftsbeziehung erforderlich ist.
-            </p>
-
-            <p>
-              Entfällt der Zweck der Verarbeitung und bestehen keine
-              gesetzlichen Aufbewahrungspflichten oder sonstigen
-              Rechtsgrundlagen für eine weitere Speicherung, werden die Daten
-              gelöscht.
+              Entfällt der Verarbeitungszweck und besteht keine weitere
+              Rechtsgrundlage, werden die Daten gelöscht oder anonymisiert.
             </p>
           </LegalSection>
 
-          <LegalSection title="9. Datensicherheit">
+          <LegalSection title="17. Datensicherheit">
             <p>
-              Wir treffen angemessene technische und organisatorische
-              Maßnahmen, um personenbezogene Daten vor Verlust, unbefugtem
-              Zugriff, Veränderung oder unzulässiger Offenlegung zu schützen.
-            </p>
-
-            <p>
-              Die Übertragung unserer Website erfolgt grundsätzlich
-              verschlüsselt über HTTPS.
+              Wir treffen angemessene technische und organisatorische Maßnahmen,
+              um personenbezogene Daten vor Verlust, unbefugtem Zugriff,
+              Veränderung und unzulässiger Offenlegung zu schützen. Die
+              Übertragung unserer Website erfolgt grundsätzlich verschlüsselt
+              über HTTPS.
             </p>
           </LegalSection>
 
-          <LegalSection title="10. Deine Rechte">
+          <LegalSection title="18. Deine Datenschutzrechte">
             <p>
-              Nach Maßgabe der gesetzlichen Voraussetzungen bestehen
-              insbesondere folgende Datenschutzrechte:
+              Nach Maßgabe der gesetzlichen Voraussetzungen stehen dir
+              insbesondere folgende Rechte zu:
             </p>
-
             <ul>
-              <li>Recht auf Auskunft</li>
-              <li>Recht auf Berichtigung</li>
-              <li>Recht auf Löschung</li>
-              <li>Recht auf Einschränkung der Verarbeitung</li>
-              <li>Recht auf Datenübertragbarkeit</li>
-              <li>Recht auf Widerspruch gegen bestimmte Verarbeitungen</li>
-              <li>
-                Recht auf Widerruf einer erteilten Einwilligung mit Wirkung für
-                die Zukunft
-              </li>
+              <li>Auskunft über deine personenbezogenen Daten</li>
+              <li>Berichtigung unrichtiger oder unvollständiger Daten</li>
+              <li>Löschung deiner Daten</li>
+              <li>Einschränkung der Verarbeitung</li>
+              <li>Datenübertragbarkeit</li>
+              <li>Widerspruch gegen bestimmte Verarbeitungen</li>
+              <li>Widerruf einer Einwilligung mit Wirkung für die Zukunft</li>
+              <li>Beschwerde bei einer Datenschutzaufsichtsbehörde</li>
             </ul>
-          </LegalSection>
-
-          <LegalSection title="11. Widerspruchsrecht">
             <p>
-              Soweit wir personenbezogene Daten auf Grundlage von Art. 6 Abs. 1
-              lit. f DSGVO verarbeiten, besteht unter den gesetzlichen
-              Voraussetzungen das Recht, dieser Verarbeitung zu widersprechen.
+              Zur Ausübung deiner Rechte kannst du dich an
+              auswertung.glowsuite@gmail.com wenden.
             </p>
           </LegalSection>
 
-          <LegalSection title="12. Beschwerderecht">
+          <LegalSection title="19. Widerspruchsrecht">
             <p>
-              Es besteht das Recht, sich bei einer
-              Datenschutz-Aufsichtsbehörde über die Verarbeitung
-              personenbezogener Daten zu beschweren.
+              Erfolgt eine Verarbeitung auf Grundlage von Art. 6 Abs. 1 lit. f
+              DSGVO, kannst du aus Gründen, die sich aus deiner besonderen
+              Situation ergeben, jederzeit Widerspruch gegen die Verarbeitung
+              einlegen. Gegen Direktwerbung kannst du jederzeit ohne Angabe
+              besonderer Gründe widersprechen.
             </p>
           </LegalSection>
 
-          <LegalSection title="13. Änderungen dieser Datenschutzerklärung">
+          <LegalSection title="20. Zuständige Datenschutzaufsicht">
             <p>
-              Wir können diese Datenschutzerklärung anpassen, wenn sich unsere
-              Website, eingesetzte Dienste oder gesetzliche Anforderungen
-              ändern.
+              Du hast das Recht, dich bei einer Datenschutzaufsichtsbehörde zu
+              beschweren. Für unsere verantwortliche Stelle ist insbesondere
+              folgende Behörde zuständig:
             </p>
-
             <p>
-              <strong>Stand: August 2026</strong>
+              <strong>
+                Die Landesbeauftragte für den Datenschutz und für das Recht auf
+                Akteneinsicht Brandenburg
+              </strong>
+              <br />
+              Stahnsdorfer Damm 77
+              <br />
+              14532 Kleinmachnow
+              <br />
+              E-Mail: Poststelle@LDA.Brandenburg.de
+            </p>
+            <ProviderLink href="https://www.lda.brandenburg.de/">
+              Website der Datenschutzaufsicht
+            </ProviderLink>
+          </LegalSection>
+
+          <LegalSection title="21. Änderungen dieser Datenschutzerklärung">
+            <p>
+              Wir passen diese Datenschutzerklärung an, wenn sich unsere
+              Website, eingesetzte Dienste, Verarbeitungsabläufe oder gesetzliche
+              Anforderungen ändern.
+            </p>
+            <p>
+              <strong>Stand: September 2026</strong>
             </p>
           </LegalSection>
 
@@ -468,7 +599,7 @@ function LegalSection({
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section
@@ -481,14 +612,13 @@ function LegalSection({
         style={{
           margin: "0 0 14px",
           color: "#3a261e",
-          fontSize: "clamp(20px, 3vw, 26px)",
+          fontSize: "clamp(20px,3vw,26px)",
           lineHeight: 1.25,
           letterSpacing: "-0.02em",
         }}
       >
         {title}
       </h2>
-
       <div
         style={{
           color: "#695247",
@@ -499,5 +629,28 @@ function LegalSection({
         {children}
       </div>
     </section>
+  );
+}
+
+function ProviderLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        color: "#8a5b25",
+        fontWeight: 750,
+        overflowWrap: "anywhere",
+      }}
+    >
+      {children}
+    </a>
   );
 }
