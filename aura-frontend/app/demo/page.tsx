@@ -1461,6 +1461,138 @@ export default function DemoPage() {
           </p>
         </section>
 
+
+        {/* TRUST & POSITIONING */}
+        <section
+          style={{
+            marginBottom: 42,
+            padding: "42px 28px",
+            borderRadius: 30,
+            background:
+              "linear-gradient(135deg,rgba(255,250,244,0.10),rgba(212,175,116,0.08))",
+            border: "1px solid rgba(212,175,116,0.24)",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 850,
+              margin: "0 auto 30px",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                marginBottom: 14,
+                padding: "7px 13px",
+                borderRadius: 999,
+                background: "rgba(212,175,116,0.14)",
+                color: "#d4af74",
+                fontSize: 12,
+                fontWeight: 800,
+              }}
+            >
+              WARUM GLOWSUITE
+            </div>
+
+            <h2
+              style={{
+                margin: "0 0 14px",
+                fontSize: "clamp(28px,5vw,44px)",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              Kein Marktplatz. Keine Provision.
+              <br />
+              Dein Studio bleibt deine Marke.
+            </h2>
+
+            <p
+              style={{
+                margin: "0 auto",
+                maxWidth: 720,
+                color: "rgba(255,248,234,0.72)",
+                fontSize: 16,
+                lineHeight: 1.7,
+              }}
+            >
+              GlowSuite schiebt sich nicht zwischen dich und deine Kundinnen.
+              Die digitale Assistenz arbeitet für dein Studio, unter deiner
+              Marke und passend zu deinen Abläufen.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+              gap: 16,
+              maxWidth: 1050,
+              margin: "0 auto",
+            }}
+          >
+            {[
+              {
+                title: "Deine Kundenbeziehung",
+                text: "Termine und Kommunikation laufen direkt über dein Studio – nicht über einen fremden Marktplatz.",
+              },
+              {
+                title: "0 % Buchungsprovision",
+                text: "Keine prozentuale Gebühr pro Termin. Deine Umsätze bleiben vollständig bei deinem Studio.",
+              },
+              {
+                title: "Passend eingerichtet",
+                text: "Services, Mitarbeitende und Abläufe werden passend zu deinem Studio eingerichtet.",
+              },
+              {
+                title: "Weniger Unterbrechungen",
+                text: "GlowSuite unterstützt bei Anfragen, Erinnerungen, Umbuchungen und wiederkehrenden Kundenfragen.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                style={{
+                  padding: 22,
+                  borderRadius: 20,
+                  background: "rgba(20,14,10,0.62)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    marginBottom: 16,
+                    borderRadius: 12,
+                    display: "grid",
+                    placeItems: "center",
+                    background: "rgba(212,175,116,0.16)",
+                    color: "#d4af74",
+                    fontWeight: 900,
+                  }}
+                >
+                  ✓
+                </div>
+
+                <h3 style={{ margin: "0 0 10px", fontSize: 18 }}>
+                  {item.title}
+                </h3>
+
+                <p
+                  style={{
+                    margin: 0,
+                    color: "rgba(255,248,234,0.66)",
+                    lineHeight: 1.65,
+                    fontSize: 14,
+                  }}
+                >
+                  {item.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* STUDIO CHECK CTA */}
         <section
           id="studio-check"
