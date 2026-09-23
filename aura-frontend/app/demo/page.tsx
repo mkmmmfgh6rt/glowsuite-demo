@@ -85,6 +85,13 @@ export default function DemoPage() {
             </a>
 
             <a
+              className="glowsuite-nav-link"
+              href="#preise"
+            >
+              Preise
+            </a>
+
+            <a
               className="glowsuite-nav-cta"
               href="/studio-check"
             >
@@ -1239,7 +1246,220 @@ export default function DemoPage() {
           </div>
         </section>
 
+        {/* PRICING */}
+        <section
+          id="preise"
+          style={{
+            marginBottom: 42,
+            padding: "38px 28px",
+            borderRadius: 30,
+            background: "#fffaf4",
+            color: "#1d1713",
+            boxShadow: "0 30px 80px rgba(0,0,0,0.18)",
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              marginBottom: 28,
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                marginBottom: 14,
+                padding: "7px 13px",
+                borderRadius: 999,
+                background: "#f1dfc7",
+                color: "#8a5b25",
+                fontSize: 12,
+                fontWeight: 800,
+              }}
+            >
+              Transparentes Pilotangebot
+            </div>
 
+            <h2
+              style={{
+                margin: "0 0 12px",
+                fontSize: "clamp(28px,5vw,42px)",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              30 Tage kostenlos testen.
+              <br />
+              Danach entscheidest du.
+            </h2>
+
+            <p
+              style={{
+                maxWidth: 720,
+                margin: "0 auto",
+                color: "#76675a",
+                lineHeight: 1.7,
+                fontSize: 16,
+              }}
+            >
+              Teste GlowSuite in deinem Studio-Alltag, bevor du dich
+              für die weitere Nutzung entscheidest.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(280px,1fr))",
+              gap: 18,
+              maxWidth: 900,
+              margin: "0 auto",
+            }}
+          >
+            <div
+              style={{
+                padding: 28,
+                borderRadius: 24,
+                background:
+                  "linear-gradient(135deg,#18110d,#2b1d15)",
+                color: "#fff8ea",
+                border: "1px solid rgba(212,175,116,0.40)",
+                boxShadow: "0 18px 45px rgba(0,0,0,0.20)",
+              }}
+            >
+              <div
+                style={{
+                  color: "#d4af74",
+                  fontSize: 13,
+                  fontWeight: 800,
+                  marginBottom: 14,
+                }}
+              >
+                EINFÜHRUNGSPREIS
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 8,
+                  marginBottom: 8,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "clamp(42px,7vw,58px)",
+                    fontWeight: 800,
+                    letterSpacing: "-0.05em",
+                  }}
+                >
+                  99 €
+                </span>
+
+                <span
+                  style={{
+                    color: "rgba(255,248,234,0.68)",
+                  }}
+                >
+                  pro Monat
+                </span>
+              </div>
+
+              <p
+                style={{
+                  color: "rgba(255,248,234,0.72)",
+                  lineHeight: 1.6,
+                  marginBottom: 22,
+                }}
+              >
+                Für die ersten 20 teilnehmenden Studios.
+              </p>
+
+              <a
+                href="/studio-check"
+                style={{
+                  display: "block",
+                  padding: "14px 20px",
+                  borderRadius: 14,
+                  background:
+                    "linear-gradient(135deg,#fffaf4,#eadcc9)",
+                  color: "#2a1a12",
+                  textAlign: "center",
+                  fontWeight: 800,
+                }}
+              >
+                30 Tage kostenlos testen
+              </a>
+            </div>
+
+            <div
+              style={{
+                padding: 28,
+                borderRadius: 24,
+                background: "#ffffff",
+                border: "1px solid rgba(184,121,91,0.20)",
+              }}
+            >
+              <h3
+                style={{
+                  margin: "0 0 18px",
+                  fontSize: 22,
+                }}
+              >
+                Im Pilotangebot enthalten
+              </h3>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 12,
+                  color: "#5f5147",
+                  lineHeight: 1.5,
+                }}
+              >
+                <div>✓ Digitale Terminbuchung</div>
+                <div>✓ Automatische Terminerinnerungen</div>
+                <div>✓ Umbuchung und Stornierung</div>
+                <div>✓ Bewertungsanfragen</div>
+                <div>✓ Kundenreaktivierung</div>
+                <div>✓ Persönliche Einrichtung</div>
+                <div>✓ 0 % Provision pro Buchung</div>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 22,
+                  padding: 16,
+                  borderRadius: 16,
+                  background: "#f7eee3",
+                  color: "#5f4634",
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                }}
+              >
+                Regulärer Preis für neue Studios nach den ersten
+                20 Plätzen: <strong>169 € pro Monat</strong>.
+                <br />
+                Jeder weitere Mitarbeiter:{" "}
+                <strong>25 € pro Monat</strong>.
+              </div>
+            </div>
+          </div>
+
+          <p
+            style={{
+              margin: "22px auto 0",
+              maxWidth: 760,
+              textAlign: "center",
+              color: "#76675a",
+              fontSize: 13,
+              lineHeight: 1.6,
+            }}
+          >
+            Keine Provision pro Buchung. Nach der kostenlosen
+            Testphase entscheidest du selbst, ob GlowSuite zu deinem
+            Studio passt.
+          </p>
+        </section>
 
         {/* STUDIO CHECK CTA */}
         <section
