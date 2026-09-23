@@ -44,31 +44,54 @@ export default function DemoPage() {
     >
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         {/* HEADER */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 36,
-          }}
-        >
-          <div style={{ fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>
-            GlowSuite AI
-          </div>
-
-          <div
-            style={{
-              fontSize: 13,
-              padding: "9px 14px",
-              border: "1px solid rgba(212,175,116,0.35)",
-              borderRadius: 999,
-              color: "#d4af74",
-              background: "rgba(255,255,255,0.04)",
-            }}
+        <header className="glowsuite-site-header">
+          <a
+            className="glowsuite-brand"
+            href="/"
+            aria-label="GlowSuite AI Startseite"
           >
-            ● A.U.R.A · Digitale Studio-Assistenz
-          </div>
-        </div>
+            <span className="glowsuite-brand-name">
+              GlowSuite AI
+            </span>
+
+            <span className="glowsuite-brand-subtitle">
+              A.U.R.A · Digitale Studio-Assistenz
+            </span>
+          </a>
+
+          <nav
+            className="glowsuite-nav"
+            aria-label="Hauptnavigation"
+          >
+            <a
+              className="glowsuite-nav-link"
+              href="#so-funktionierts"
+            >
+              So funktioniert&apos;s
+            </a>
+
+            <a
+              className="glowsuite-nav-link"
+              href="#live-demo"
+            >
+              Live-Demo
+            </a>
+
+            <a
+              className="glowsuite-nav-link"
+              href="#einblicke"
+            >
+              Einblicke
+            </a>
+
+            <a
+              className="glowsuite-nav-cta"
+              href="/studio-check"
+            >
+              Studio-Check
+            </a>
+          </nav>
+        </header>
 
         {/* HERO */}
         <section
@@ -362,6 +385,7 @@ export default function DemoPage() {
 
         {/* HOW IT WORKS */}
         <section
+          id="so-funktionierts"
           style={{
             marginBottom: 42,
             padding: "34px 28px",
@@ -549,6 +573,7 @@ export default function DemoPage() {
 
         {/* DEMO SCREENSHOTS */}
         <section
+          id="einblicke"
           style={{
             marginBottom: 42,
             padding: "34px 28px",
