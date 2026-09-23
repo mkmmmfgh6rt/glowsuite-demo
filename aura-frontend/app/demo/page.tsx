@@ -1679,17 +1679,106 @@ export default function DemoPage() {
           </p>
         </section>
 
-        <p
+        {/* FOOTER */}
+        <footer
           style={{
-            fontSize: 12,
-            opacity: 0.55,
-            textAlign: "center",
-            marginTop: 28,
+            marginTop: 32,
+            padding: "28px 24px",
+            borderRadius: 22,
+            background: "rgba(10,7,5,0.72)",
+            border: "1px solid rgba(212,175,116,0.18)",
           }}
         >
-          Hinweis: Teile der Kommunikation erfolgen automatisiert durch einen
-          KI-gestützten Assistenten.
-        </p>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 22,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  marginBottom: 5,
+                  color: "#fff8ea",
+                  fontSize: 18,
+                  fontWeight: 800,
+                }}
+              >
+                GlowSuite AI
+              </div>
+
+              <div
+                style={{
+                  color: "rgba(255,248,234,0.58)",
+                  fontSize: 13,
+                }}
+              >
+                Digitale Studio-Assistenz für Beauty-Studios
+              </div>
+            </div>
+
+            <nav
+              aria-label="Rechtliche Informationen"
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 18,
+              }}
+            >
+              <a
+                href="/impressum"
+                style={{
+                  color: "#d4af74",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                }}
+              >
+                Impressum
+              </a>
+
+              <a
+                href="/datenschutz"
+                style={{
+                  color: "#d4af74",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                }}
+              >
+                Datenschutz
+              </a>
+
+              <a
+                href="mailto:auswertung.glowsuite@gmail.com"
+                style={{
+                  color: "#d4af74",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                }}
+              >
+                Kontakt
+              </a>
+            </nav>
+          </div>
+
+          <div
+            style={{
+              marginTop: 22,
+              paddingTop: 20,
+              borderTop: "1px solid rgba(255,255,255,0.08)",
+              color: "rgba(255,248,234,0.52)",
+              fontSize: 12,
+              lineHeight: 1.6,
+            }}
+          >
+            Teile der Kommunikation erfolgen automatisiert durch einen
+            KI-gestützten Assistenten.
+            <br />
+            © 2026 GlowSuite AI
+          </div>
+        </footer>
       </div>
     </main>
   );
