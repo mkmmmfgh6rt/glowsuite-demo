@@ -1374,6 +1374,268 @@
     }
 
     /* =========================================================
+       KI- UND DATENSCHUTZHINWEIS
+    ========================================================= */
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body.privacy-locked {
+      overflow: hidden;
+    }
+
+    body.privacy-locked .chatbox {
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .privacy-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 18px;
+
+      background:
+        radial-gradient(
+          circle at 20% 0%,
+          rgba(212, 175, 116, 0.20),
+          transparent 36%
+        ),
+        rgba(18, 13, 10, 0.94);
+
+      backdrop-filter: blur(14px);
+    }
+
+    .privacy-card {
+      width: min(430px, 100%);
+      max-height: calc(100dvh - 36px);
+      overflow-y: auto;
+
+      padding: 26px;
+
+      border:
+        1px solid
+        rgba(212, 175, 116, 0.34);
+
+      border-radius: 24px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255, 253, 249, 0.99),
+          rgba(244, 234, 223, 0.99)
+        );
+
+      color: #33251f;
+
+      box-shadow:
+        0 32px 90px rgba(0, 0, 0, 0.46);
+    }
+
+    .privacy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+
+      margin-bottom: 15px;
+      padding: 7px 11px;
+
+      border:
+        1px solid
+        rgba(169, 110, 73, 0.22);
+
+      border-radius: 999px;
+
+      background:
+        rgba(200, 155, 93, 0.13);
+
+      color: #704729;
+
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .privacy-card h2 {
+      margin: 0;
+
+      color: #2f2019;
+
+      font-size: 24px;
+      line-height: 1.16;
+      letter-spacing: -0.025em;
+    }
+
+    .privacy-card p {
+      margin: 14px 0 0;
+
+      color: #6f5a4f;
+
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .privacy-warning {
+      margin-top: 16px;
+      padding: 13px 14px;
+
+      border:
+        1px solid
+        rgba(169, 110, 73, 0.16);
+
+      border-radius: 14px;
+
+      background:
+        rgba(169, 110, 73, 0.07);
+
+      color: #62493d;
+
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .privacy-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+
+      margin-top: 18px;
+      padding: 13px;
+
+      border:
+        1px solid
+        rgba(112, 81, 62, 0.14);
+
+      border-radius: 14px;
+
+      background:
+        rgba(255, 255, 255, 0.48);
+
+      color: #5e493e;
+
+      cursor: pointer;
+
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .privacy-check input {
+      width: 17px;
+      height: 17px;
+
+      flex: 0 0 17px;
+
+      margin: 1px 0 0;
+
+      accent-color: #a96e49;
+    }
+
+    .privacy-check a,
+    .ai-privacy-strip a {
+      color: var(--brandDark);
+      font-weight: 750;
+      text-underline-offset: 3px;
+    }
+
+    .privacy-start {
+      width: 100%;
+      min-height: 46px;
+
+      margin-top: 16px;
+      padding: 0 18px;
+
+      border: 0;
+      border-radius: 14px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #d7b275,
+          #b87955
+        );
+
+      color: #271811;
+
+      cursor: pointer;
+
+      font-size: 13px;
+      font-weight: 850;
+
+      box-shadow:
+        0 10px 26px
+        rgba(84, 50, 30, 0.18);
+
+      transition:
+        transform 0.15s ease,
+        opacity 0.15s ease,
+        filter 0.15s ease;
+    }
+
+    .privacy-start:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    .privacy-start:disabled {
+      cursor: not-allowed;
+      opacity: 0.42;
+      box-shadow: none;
+    }
+
+    .privacy-footnote {
+      margin-top: 11px !important;
+
+      text-align: center;
+
+      font-size: 10.5px !important;
+      line-height: 1.5 !important;
+    }
+
+    .ai-privacy-strip {
+      flex-shrink: 0;
+
+      padding: 7px 12px;
+
+      border-top:
+        1px solid
+        var(--line);
+
+      background:
+        var(--surface-soft);
+
+      color:
+        var(--text-faint);
+
+      text-align: center;
+
+      font-size: 9.5px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 480px) {
+      .privacy-card {
+        padding: 21px;
+        border-radius: 20px;
+      }
+
+      .privacy-card h2 {
+        font-size: 21px;
+      }
+
+      .ai-privacy-strip {
+        padding: 6px 9px;
+        font-size: 9px;
+      }
+    }
+
+    /* =========================================================
        REDUCED MOTION
     ========================================================= */
 
@@ -1397,9 +1659,70 @@
   </style>
 </head>
 
-<body>
+<body class="privacy-locked">
 
-  <div class="chatbox">
+  <section
+    id="aiPrivacyGate"
+    class="privacy-gate"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="aiPrivacyTitle"
+  >
+    <div class="privacy-card">
+      <div class="privacy-badge">
+        ✦ KI-gestützte Assistenz
+      </div>
+
+      <h2 id="aiPrivacyTitle">
+        Bevor du mit A.U.R.A. startest
+      </h2>
+
+      <p>
+        A.U.R.A. ist ein automatisierter, KI-gestützter Assistent. Deine
+        Eingaben werden verarbeitet, damit A.U.R.A. Fragen beantworten und dich
+        bei der Terminbuchung unterstützen kann. KI-Antworten können Fehler
+        enthalten.
+      </p>
+
+      <div class="privacy-warning">
+        Gib bitte nur die für deine Anfrage oder Buchung notwendigen Daten ein.
+        Teile keine Gesundheitsdaten, Zahlungsdaten, Passwörter oder andere
+        besonders sensible Informationen.
+      </div>
+
+      <label class="privacy-check">
+        <input
+          id="aiPrivacyCheckbox"
+          type="checkbox"
+        />
+
+        <span>
+          Ich habe den KI- und Datenschutzhinweis zur Kenntnis genommen. Weitere
+          Informationen stehen in der
+          <a
+            href="/datenschutz"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Datenschutzerklärung</a>.
+        </span>
+      </label>
+
+      <button
+        id="aiPrivacyStart"
+        class="privacy-start"
+        type="button"
+        disabled
+      >
+        A.U.R.A. starten
+      </button>
+
+      <p class="privacy-footnote">
+        Die Bestätigung ist keine Einwilligung in Werbung.
+      </p>
+    </div>
+  </section>
+
+  <div class="chatbox" inert>
 
     <!-- =====================================================
          A.U.R.A. HEADER
@@ -1431,7 +1754,7 @@
         <div class="identity">
 
           <div class="assistant-kicker">
-            A.U.R.A. · Studio Assistenz
+            A.U.R.A. · KI-Studio-Assistenz
           </div>
 
           <div
@@ -1480,6 +1803,16 @@
     ></main>
 
 
+    <div class="ai-privacy-strip">
+      KI-Assistent · Keine sensiblen Daten ·
+      <a
+        href="/datenschutz"
+        target="_blank"
+        rel="noopener noreferrer"
+      >Datenschutz</a>
+    </div>
+
+
     <!-- =====================================================
          COMPOSER
     ====================================================== -->
@@ -1505,6 +1838,57 @@
     </div>
 
   </div>
+
+  <script>
+    (() => {
+      const storageKey = "glowsuite_ai_notice_v1";
+      const gate = document.getElementById("aiPrivacyGate");
+      const checkbox = document.getElementById("aiPrivacyCheckbox");
+      const startButton = document.getElementById("aiPrivacyStart");
+      const chatbox = document.querySelector(".chatbox");
+      const input = document.getElementById("userInput");
+
+      const unlockChat = () => {
+        gate.hidden = true;
+        document.body.classList.remove("privacy-locked");
+        chatbox.removeAttribute("inert");
+        window.setTimeout(() => input?.focus(), 50);
+      };
+
+      let previouslyAcknowledged = false;
+
+      try {
+        previouslyAcknowledged =
+          window.localStorage.getItem(storageKey) === "acknowledged";
+      } catch (error) {
+        console.warn("Datenschutzhinweis konnte nicht gespeichert werden:", error);
+      }
+
+      if (previouslyAcknowledged) {
+        checkbox.checked = true;
+        unlockChat();
+      } else {
+        gate.hidden = false;
+        checkbox.focus();
+      }
+
+      checkbox.addEventListener("change", () => {
+        startButton.disabled = !checkbox.checked;
+      });
+
+      startButton.addEventListener("click", () => {
+        if (!checkbox.checked) return;
+
+        try {
+          window.localStorage.setItem(storageKey, "acknowledged");
+        } catch (error) {
+          console.warn("Datenschutzhinweis konnte nicht gespeichert werden:", error);
+        }
+
+        unlockChat();
+      });
+    })();
+  </script>
 
   <!-- Bestehende Widget-Logik bleibt in Phase 1 unangetastet -->
   <script
