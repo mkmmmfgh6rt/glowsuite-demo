@@ -24,6 +24,20 @@ type AirtableRecord = {
 const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+const formatFirstName = (value: string) =>
+  value
+    .trim()
+    .toLocaleLowerCase("de-DE")
+    .replace(
+      /(^|[\s'’-])(\p{L})/gu,
+      (
+        _match: string,
+        separator: string,
+        letter: string
+      ) =>
+        `${separator}${letter.toLocaleUpperCase("de-DE")}`
+    );
+
 const escapeAirtableFormulaValue = (value: string) =>
   value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
@@ -114,7 +128,9 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as StudioCheckPayload;
 
-    const firstName = body.firstName?.trim();
+    const firstName = formatFirstName(
+      body.firstName ?? ""
+    );
     const email = body.email?.trim().toLowerCase();
 
     if (!firstName || !email) {
@@ -630,7 +646,7 @@ export async function POST(request: Request) {
               ],
 
               subject:
-                `Deine persönliche GlowSuite Studio-Auswertung – ${score}/100`,
+                `${firstName}, dein GlowSuite Studio-Check: ${score}/100 Punkte`,
 
               tags: [
                 "studio-check",
@@ -694,8 +710,8 @@ export async function POST(request: Request) {
       color:transparent;
     "
   >
-    Dein Studio-Score ist ${score}/100.
-    Entdecke jetzt deine drei größten Hebel.
+    ${safeFirstName}, dein Studio-Score ist ${score}/100.
+    Diese drei Abläufe bieten aktuell das größte Potenzial.
   </div>
 
   <table
@@ -1071,6 +1087,61 @@ export async function POST(request: Request) {
           </tr>
 
 
+          <!-- EARLY CTA -->
+          <tr>
+            <td
+              align="center"
+              class="desktop-padding"
+              style="
+                padding:0 38px 34px;
+              "
+            >
+              <div
+                style="
+                  font-size:14px;
+                  line-height:1.65;
+                  color:#715C51;
+                  margin-bottom:14px;
+                "
+              >
+                Möchtest du sehen, wie GlowSuite genau
+                diesen Ablauf für dein Studio vereinfachen kann?
+              </div>
+
+              <a
+                href="https://www.glowsuite-ai.de/demo#live-demo"
+                style="
+                  display:inline-block;
+                  padding:16px 27px;
+                  border-radius:14px;
+                  background:#2B1D17;
+                  color:#FFF9F3;
+                  text-decoration:none;
+                  font-size:14px;
+                  line-height:1;
+                  font-weight:800;
+                  box-shadow:0 10px 26px rgba(43,29,23,0.18);
+                "
+              >
+                GlowSuite unverbindlich live ansehen →
+              </a>
+
+              <div
+                style="
+                  margin-top:12px;
+                  font-size:11px;
+                  line-height:1.6;
+                  color:#A39389;
+                "
+              >
+                30 Tage kostenlos testen · 0 % Provision
+                <br>
+                Keine neue App für deine Kundinnen
+              </div>
+            </td>
+          </tr>
+
+
           <!-- THREE LEVERS HEADING -->
           <tr>
             <td
@@ -1226,7 +1297,7 @@ export async function POST(request: Request) {
                   box-shadow:0 10px 26px rgba(43,29,23,0.18);
                 "
               >
-                GlowSuite live ansehen →
+                GlowSuite unverbindlich live ansehen →
               </a>
 
               <div
@@ -1237,7 +1308,9 @@ export async function POST(request: Request) {
                   color:#A39389;
                 "
               >
-                Unverbindlich ansehen · kein Kauf erforderlich
+                30 Tage kostenlos testen · 0 % Provision
+                <br>
+                Keine neue App für deine Kundinnen
               </div>
             </td>
           </tr>
