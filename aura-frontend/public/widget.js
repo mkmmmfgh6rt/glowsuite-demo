@@ -33,7 +33,9 @@ let chosenSlotSignature = null;
 let userData = {
   phone: null,
   name: null,
-  email: null
+  email: null,
+  privacyAcceptedAt: null,
+  marketingConsent: false
 };
 
 window.bookingActive = false;
@@ -812,6 +814,32 @@ function showPhoneStep() {
   const input = document.createElement("input");
   input.placeholder = "0177...";
 
+  const privacyCheckbox = document.createElement("input");
+  privacyCheckbox.type = "checkbox";
+  privacyCheckbox.checked = false;
+  privacyCheckbox.style.width = "18px";
+  privacyCheckbox.style.height = "18px";
+  privacyCheckbox.style.margin = "3px 0 0";
+  privacyCheckbox.style.flex = "0 0 auto";
+
+  const privacyText = document.createElement("span");
+  privacyText.innerHTML =
+    'Ich habe die <a href="/datenschutz" target="_blank" ' +
+    'rel="noopener noreferrer">Datenschutzhinweise</a> zur ' +
+    "Terminabwicklung gelesen. Mir ist bekannt, dass A.U.R.A. " +
+    "KI-gestützt arbeitet.";
+
+  const privacyLabel = document.createElement("label");
+  privacyLabel.style.display = "flex";
+  privacyLabel.style.alignItems = "flex-start";
+  privacyLabel.style.gap = "10px";
+  privacyLabel.style.margin = "12px 0";
+  privacyLabel.style.fontSize = "12px";
+  privacyLabel.style.lineHeight = "1.5";
+  privacyLabel.style.cursor = "pointer";
+
+  privacyLabel.append(privacyCheckbox, privacyText);
+
   const btn = document.createElement("button");
   btn.className = "pill";
   btn.textContent = "Weiter";
@@ -825,7 +853,13 @@ function showPhoneStep() {
       return;
     }
 
+    if (!privacyCheckbox.checked) {
+      alert("Bitte bestätige zuerst die Datenschutzhinweise.");
+      return;
+    }
+
     userData.phone = phone;
+    userData.privacyAcceptedAt = new Date().toISOString();
     window.lastUserActivity = Date.now();
 
     $msg(`<span class="tag">📱 ${phone}</span>`);
@@ -919,7 +953,7 @@ function showPhoneStep() {
     showEmployeeChoice();
   };
 
-  box.append(input, btn);
+  box.append(input, privacyLabel, btn);
 }
 
 
