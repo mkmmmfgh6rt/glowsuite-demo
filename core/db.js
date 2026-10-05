@@ -137,6 +137,176 @@ if (!bookingColumns.includes("reviewSent")) {
 }
 
 // =======================================================
+// 📣 MARKETING-EINWILLIGUNG + STOP-ABMELDUNG
+// Getrennt von Buchungen, damit Termin-Nachrichten weiter funktionieren.
+// =======================================================
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS customer_contact_preferences (
+    tenant TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    marketingConsent INTEGER NOT NULL DEFAULT 0,
+    marketingConsentAt TEXT,
+    marketingOptOut INTEGER NOT NULL DEFAULT 0,
+    marketingOptOutAt TEXT,
+    consentSource TEXT,
+    updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (tenant, phone)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_contact_preferences_marketing
+  ON customer_contact_preferences(
+    tenant,
+    marketingConsent,
+    marketingOptOut
+  );
+`);
+
+function normalizeContactPhone(phone) {
+  return String(phone || "")
+    .replace(/^whatsapp:/i, "")
+    .replace(/[^\d+]/g, "")
+    .trim();
+}
+
+export function getMarketingPreference({ tenant, phone }) {
+  const normalizedTenant = String(tenant || "").trim();
+  const normalizedPhone = normalizeContactPhone(phone);
+
+  if (!normalizedTenant || !normalizedPhone) {
+    return null;
+  }
+
+  return (
+    db
+      .prepare(`
+        SELECT *
+        FROM customer_contact_preferences
+        WHERE tenant = ? AND phone = ?
+      `)
+      .get(normalizedTenant, normalizedPhone) || null
+  );
+}
+
+export function hasMarketingConsent({ tenant, phone }) {
+  const preference = getMarketingPreference({
+    tenant,
+    phone,
+  });
+
+  return Boolean(
+    preference?.marketingConsent === 1 &&
+    preference?.marketingOptOut !== 1
+  );
+}
+
+export function isMarketingOptedOut({ tenant, phone }) {
+  const preference = getMarketingPreference({
+    tenant,
+    phone,
+  });
+
+  return preference?.marketingOptOut === 1;
+}
+
+export function setMarketingConsent({
+  tenant,
+  phone,
+  source = "explicit",
+}) {
+  const normalizedTenant = String(tenant || "").trim();
+  const normalizedPhone = normalizeContactPhone(phone);
+
+  if (!normalizedTenant || !normalizedPhone) {
+    return false;
+  }
+
+  db.prepare(`
+    INSERT INTO customer_contact_preferences (
+      tenant,
+      phone,
+      marketingConsent,
+      marketingConsentAt,
+      marketingOptOut,
+      marketingOptOutAt,
+      consentSource,
+      updatedAt
+    )
+    VALUES (
+      ?,
+      ?,
+      1,
+      datetime('now'),
+      0,
+      NULL,
+      ?,
+      datetime('now')
+    )
+    ON CONFLICT(tenant, phone) DO UPDATE SET
+      marketingConsent = 1,
+      marketingConsentAt = datetime('now'),
+      marketingOptOut = 0,
+      marketingOptOutAt = NULL,
+      consentSource = excluded.consentSource,
+      updatedAt = datetime('now')
+  `).run(
+    normalizedTenant,
+    normalizedPhone,
+    String(source)
+  );
+
+  return true;
+}
+
+export function setMarketingOptOut({
+  tenant,
+  phone,
+  source = "whatsapp_stop",
+}) {
+  const normalizedTenant = String(tenant || "").trim();
+  const normalizedPhone = normalizeContactPhone(phone);
+
+  if (!normalizedTenant || !normalizedPhone) {
+    return false;
+  }
+
+  db.prepare(`
+    INSERT INTO customer_contact_preferences (
+      tenant,
+      phone,
+      marketingConsent,
+      marketingConsentAt,
+      marketingOptOut,
+      marketingOptOutAt,
+      consentSource,
+      updatedAt
+    )
+    VALUES (
+      ?,
+      ?,
+      0,
+      NULL,
+      1,
+      datetime('now'),
+      ?,
+      datetime('now')
+    )
+    ON CONFLICT(tenant, phone) DO UPDATE SET
+      marketingConsent = 0,
+      marketingOptOut = 1,
+      marketingOptOutAt = datetime('now'),
+      consentSource = excluded.consentSource,
+      updatedAt = datetime('now')
+  `).run(
+    normalizedTenant,
+    normalizedPhone,
+    String(source)
+  );
+
+  return true;
+}
+
+// =======================================================
 // 👥 EMPLOYEES (mit Krank + Urlaub)
 // =======================================================
 db.exec(`

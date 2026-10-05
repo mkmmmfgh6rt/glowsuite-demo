@@ -303,7 +303,7 @@ router.get("/segments/pipeline-preview", async (req, res) => {
     const limit = Math.max(1, Math.min(10, Number(req.query.limit || 3)));
 
     // 🔒 Sicherheitsmodus
-    const DRY_RUN = false;
+    const DRY_RUN = true;
 
     if (DRY_RUN) {
       return res.json({

@@ -33,7 +33,9 @@ let chosenSlotSignature = null;
 let userData = {
   phone: null,
   name: null,
-  email: null
+  email: null,
+  privacyAcceptedAt: null,
+  marketingConsent: false
 };
 
 window.bookingActive = false;
@@ -431,25 +433,43 @@ function parseBookingIntent(text) {
 }
 
 // =======================================================
-// LOADING BRANDING
+// LOADING BRANDING – A.U.R.A. V2
 // =======================================================
 async function loadBranding() {
   try {
     const r = await fetch("/api/branding");
     const j = await r.json();
+
     if (!j.success) return;
 
     branding = j.branding || {};
     tenantId = j.tenant || tenantId;
 
-    if (branding.brandColor)
-      document.documentElement.style.setProperty("--brand", branding.brandColor);
-    if (branding.brandDark)
-      document.documentElement.style.setProperty("--brandDark", branding.brandDark);
+    if (branding.brandColor) {
+      document.documentElement.style.setProperty(
+        "--brand",
+        branding.brandColor
+      );
+    }
 
-    if (titleEl)
-      titleEl.textContent = `${branding.brandName || "Beauty Lounge"} – Beauty Agent`;
-    if (subtitleEl) subtitleEl.textContent = "Online-Termin & Fragen";
+    if (branding.brandDark) {
+      document.documentElement.style.setProperty(
+        "--brandDark",
+        branding.brandDark
+      );
+    }
+
+    const studioName = branding.brandName || "Beauty Lounge";
+
+    if (titleEl) {
+      titleEl.textContent = studioName;
+    }
+
+    if (subtitleEl) {
+      subtitleEl.textContent =
+        "Digitale Studio-Assistenz für Termine & Fragen";
+    }
+
   } catch (e) {
     console.warn("Branding Fehler:", e);
   }
@@ -507,25 +527,28 @@ async function loadServices() {
 }
 
 // =======================================================
-// WELCOME
+// WELCOME – A.U.R.A. V2
 // =======================================================
 function showWelcome() {
   const name = branding.brandName || "Beauty Lounge";
 
-  // 👉 Bot Antwort mit Animation (VERKAUFSTEXT)
   botReply(
-    `${goldIcon(ICONS.welcome)}<b>Willkommen bei ${name} 👋</b><br><br>
-     Ich bin dein automatischer Beauty-Agent 🤖<br><br>
-     ✔ buche Termine für dich<br>
-     ✔ beantworte Kundenfragen<br>
-     ✔ arbeite 24/7 für dein Studio<br><br>
-     👉 Teste jetzt einfach eine Buchung`,
-    600
+    `${goldIcon(ICONS.welcome)}
+     <b>Schön, dass du da bist 👋</b><br><br>
+
+     Ich bin <b>A.U.R.A.</b>, die digitale Assistenz
+     von <b>${name}</b>.<br><br>
+
+     Ich helfe dir sofort bei Terminen,
+     Behandlungen, Preisen und Fragen.<br><br>
+
+     <span class="muted-small">
+       Du kannst mir einfach schreiben, was du brauchst.
+     </span>`,
+    500
   );
 
-  // 👉 Buttons minimal verzögert (Flow bleibt gleich)
   setTimeout(() => {
-
     const box = $msg("");
 
     const row = document.createElement("div");
@@ -533,16 +556,39 @@ function showWelcome() {
 
     const btn = (txt, fn, icon, primary = false) => {
       const b = document.createElement("button");
-      b.className = "pill" + (primary ? " pill--primary" : "");
+      b.className =
+        "pill" + (primary ? " pill--primary" : "");
+
       b.innerHTML = `${goldIcon(icon)}${txt}`;
       b.onclick = fn;
+
       row.appendChild(b);
     };
 
-    btn("Termin buchen", startBookingFlow, ICONS.service, true);
-    btn("Öffnungszeiten", replyOpeningHours, ICONS.calendar);
-    btn("Adresse", replyAddress, ICONS.address);
-    btn("Preisliste", replyPriceList, ICONS.price);
+    btn(
+      "Termin finden",
+      startBookingFlow,
+      ICONS.service,
+      true
+    );
+
+    btn(
+      "Preise",
+      replyPriceList,
+      ICONS.price
+    );
+
+    btn(
+      "Öffnungszeiten",
+      replyOpeningHours,
+      ICONS.calendar
+    );
+
+    btn(
+      "Adresse",
+      replyAddress,
+      ICONS.address
+    );
 
     box.appendChild(row);
 
@@ -629,7 +675,16 @@ function startBookingFlow() {
 // --- Mitarbeiterwahl ---
 function showEmployeeChoice() {
   const box = $msg(
-    `${goldIcon(ICONS.employee)}Mit wem möchtest du den Termin buchen?`
+    `${goldIcon(ICONS.employee)}
+   <b>Wer darf sich um dich kümmern?</b><br><br>
+
+   Wähle deine bevorzugte Mitarbeiterin aus
+   oder überlass die Auswahl einfach <b>A.U.R.A.</b>.<br><br>
+
+   <span class="muted-small">
+      Wenn du „A.U.R.A. auswählen lassen“ wählst,
+      übernimmt A.U.R.A. die Mitarbeiterauswahl für dich.
+   </span>`
   );
 
   const row = document.createElement("div");
@@ -638,7 +693,7 @@ function showEmployeeChoice() {
   // 👉 BELIEBIG
   const any = document.createElement("button");
   any.className = "pill alt";
-  any.innerHTML = `${goldIcon(ICONS.employee)}Beliebig`;
+  any.innerHTML = `${goldIcon(ICONS.employee)}A.U.R.A. auswählen lassen`;
 
   any.onclick = () => {
 
@@ -646,7 +701,7 @@ function showEmployeeChoice() {
     chosenEmployee = "auto";
 
     $msg(
-      `<span class="tag">${goldIcon(ICONS.employee)}Beliebig gewählt</span>`
+      `<span class="tag">${goldIcon(ICONS.employee)}A.U.R.A. übernimmt die Mitarbeiterauswahl</span>`
     );
 
     // 🔥 FIX: Upsell nur wenn alles da ist
@@ -743,17 +798,47 @@ function showPhoneStep() {
   bookingPhase = "phone";
 
   const box = $msg(
-    `${goldIcon(ICONS.person)}Fast geschafft!<br>
-     Gib kurz deine WhatsApp-Nummer ein, damit wir deine Auswahl speichern können:<br><br>
+    `${goldIcon(ICONS.person)}
+   <b>Damit wir deine Buchung sicher zuordnen können</b><br><br>
 
-     <div class="muted-small" style="margin-top:10px;">
-       Mit der Buchung erklärst du dich einverstanden,
-       per WhatsApp Nachrichten (Erinnerungen & Termininfos) zu erhalten.
-     </div>`
+   Hinterlege kurz deine <b>WhatsApp-Nummer</b>.
+   Darüber erhältst du deine Terminbestätigung und wichtige
+   Informationen zu deinem Termin.<br><br>
+
+   <div class="muted-small">
+     🔒 Deine Nummer verwenden wir ausschließlich für deine
+     Buchung, Termininformationen und Erinnerungen – nicht für Werbung.
+   </div>`
   );
 
   const input = document.createElement("input");
   input.placeholder = "0177...";
+
+  const privacyCheckbox = document.createElement("input");
+  privacyCheckbox.type = "checkbox";
+  privacyCheckbox.checked = false;
+  privacyCheckbox.style.width = "18px";
+  privacyCheckbox.style.height = "18px";
+  privacyCheckbox.style.margin = "3px 0 0";
+  privacyCheckbox.style.flex = "0 0 auto";
+
+  const privacyText = document.createElement("span");
+  privacyText.innerHTML =
+    'Ich habe die <a href="/datenschutz" target="_blank" ' +
+    'rel="noopener noreferrer">Datenschutzhinweise</a> zur ' +
+    "Terminabwicklung gelesen. Mir ist bekannt, dass A.U.R.A. " +
+    "KI-gestützt arbeitet.";
+
+  const privacyLabel = document.createElement("label");
+  privacyLabel.style.display = "flex";
+  privacyLabel.style.alignItems = "flex-start";
+  privacyLabel.style.gap = "10px";
+  privacyLabel.style.margin = "12px 0";
+  privacyLabel.style.fontSize = "12px";
+  privacyLabel.style.lineHeight = "1.5";
+  privacyLabel.style.cursor = "pointer";
+
+  privacyLabel.append(privacyCheckbox, privacyText);
 
   const btn = document.createElement("button");
   btn.className = "pill";
@@ -768,7 +853,13 @@ function showPhoneStep() {
       return;
     }
 
+    if (!privacyCheckbox.checked) {
+      alert("Bitte bestätige zuerst die Datenschutzhinweise.");
+      return;
+    }
+
     userData.phone = phone;
+    userData.privacyAcceptedAt = new Date().toISOString();
     window.lastUserActivity = Date.now();
 
     $msg(`<span class="tag">📱 ${phone}</span>`);
@@ -862,7 +953,7 @@ function showPhoneStep() {
     showEmployeeChoice();
   };
 
-  box.append(input, btn);
+  box.append(input, privacyLabel, btn);
 }
 
 
@@ -946,8 +1037,15 @@ function suggestUpsell(service, onDone = null) {
   }
 
   const box = $msg(
-    `${goldIcon(ICONS.service)}Viele Kunden buchen zusätzlich:<br>
-     <span class="muted-small">Möchtest du noch etwas dazubuchen?</span>`
+    `${goldIcon(ICONS.service)}
+   <b>Passt gut zu deiner Behandlung ✨</b><br><br>
+
+   Viele Kundinnen kombinieren ihre Behandlung gerne
+   mit einer passenden Ergänzung.<br>
+
+   <span class="muted-small">
+     Du entscheidest natürlich selbst, ob du etwas hinzufügen möchtest.
+   </span>`
   );
 
   const row = document.createElement("div");
@@ -960,11 +1058,13 @@ function suggestUpsell(service, onDone = null) {
 
     const label = document.createElement("div");
     label.className = "muted-small";
-    label.innerHTML = `<b>${s.name}</b> (+${s.price}€)`;
+    label.innerHTML =
+      `<b>${s.name}</b><br>` +
+      `<span class="muted-small">+ ${s.price} € · ${s.duration || 0} Min.</span>`;
 
     const yes = document.createElement("button");
-    yes.className = "pill";
-    yes.textContent = "Ja";
+    yes.textContent = "Hinzufügen";
+    yes.className = "pill pill--primary";
 
     yes.onclick = () => {
       window.lastUserActivity = Date.now();
@@ -982,7 +1082,7 @@ function suggestUpsell(service, onDone = null) {
 
     const no = document.createElement("button");
     no.className = "pill alt";
-    no.textContent = "Nein";
+    no.textContent = "Ohne Zusatz weiter";
 
     no.onclick = () => {
       window.lastUserActivity = Date.now();
@@ -1012,7 +1112,16 @@ function showCategoryChoice() {
     services.map(s => s.category).filter(Boolean)
   )];
 
-  const box = $msg(`${goldIcon(ICONS.service)}Welche Kategorie möchtest du?`);
+  const box = $msg(
+    `${goldIcon(ICONS.service)}
+   <b>Welche Art von Behandlung suchst du?</b><br><br>
+
+   Wähle einfach den Bereich aus, der zu deinem Wunsch passt.<br>
+
+   <span class="muted-small">
+     Danach zeigt dir A.U.R.A. die passenden Behandlungen.
+   </span>`
+  );
 
   const row = document.createElement("div");
   row.className = "row";
@@ -1048,7 +1157,16 @@ function showServicesByCategory(category) {
 
   const filtered = services.filter(s => s.category === category);
 
-  const box = $msg(`${goldIcon(ICONS.service)}Wähle deine Behandlung:`);
+  const box = $msg(
+    `${goldIcon(ICONS.service)}
+   <b>Welche Behandlung darf es sein?</b><br><br>
+
+   Wähle eine oder mehrere passende Behandlungen aus.<br>
+
+   <span class="muted-small">
+     Preis und Behandlungsdauer siehst du direkt bei der Auswahl.
+   </span>`
+  );
 
   const row = document.createElement("div");
   row.className = "row";
@@ -1235,7 +1353,14 @@ function showDateChoice() {
   bookingPhase = "date";
 
   const box = $msg(
-    `${goldIcon(ICONS.calendar)}Perfekt 😊 Dann wählen wir jetzt dein Wunschdatum:`
+    `${goldIcon(ICONS.calendar)}
+   <b>Wann passt es dir am besten?</b><br><br>
+
+   Wähle dein gewünschtes Datum aus.<br>
+
+   <span class="muted-small">
+     A.U.R.A. prüft danach direkt die verfügbaren Zeiten für dich.
+   </span>`
   );
 
   const input = document.createElement("input");
@@ -1283,7 +1408,14 @@ async function showTimeChoice() {
 
   bookingPhase = "time";
 
-  $msg(`${goldIcon(ICONS.time)}⏳ Lade verfügbare Uhrzeiten …`);
+  $msg(
+    `${goldIcon(ICONS.time)}
+   <b>A.U.R.A. prüft die freien Termine …</b><br>
+
+   <span class="muted-small">
+     Einen Moment – ich suche passende Zeiten für dein Wunschdatum.
+   </span>`
+  );
 
   const empId =
     chosenEmployee === "auto"
@@ -1329,8 +1461,13 @@ async function showTimeChoice() {
 
       // ❌ Zeit nicht mehr gültig
       $msg(
-        `${goldIcon(ICONS.calendar)}⚠️ Diese Uhrzeit ist leider nicht mehr verfügbar.<br>` +
-        `<span class="muted-small">Bitte wähle ein neues Datum.</span>`
+        `${goldIcon(ICONS.time)}
+   <b>Diese Uhrzeit ist leider nicht mehr frei.</b><br>
+
+   <span class="muted-small">
+     Kein Problem – wähle einfach ein neues Datum.
+     A.U.R.A. prüft anschließend erneut die verfügbaren Zeiten.
+   </span>`
       );
 
       chosenTime = null;
@@ -1345,8 +1482,12 @@ async function showTimeChoice() {
     if (!slots.length) {
 
       $msg(
-        `${goldIcon(ICONS.calendar)}❌ An diesem Tag sind keine freien Termine.<br>` +
-        `<span class="muted-small">Bitte wähle ein anderes Datum.</span>`
+        `${goldIcon(ICONS.calendar)}
+   <b>An diesem Tag ist leider kein passender Termin frei.</b><br>
+
+   <span class="muted-small">
+     Wähle einfach ein anderes Datum – A.U.R.A. sucht direkt weiter.
+   </span>`
       );
 
       chosenDate = null;
@@ -1354,7 +1495,16 @@ async function showTimeChoice() {
       return;
     }
 
-    const box = $msg(`${goldIcon(ICONS.time)}Super ✨ Jetzt such dir eine passende Uhrzeit aus:`);
+    const box = $msg(
+      `${goldIcon(ICONS.time)}
+   <b>Ich habe freie Termine für dich gefunden ✨</b><br><br>
+
+   Welche Uhrzeit passt dir am besten?<br>
+
+   <span class="muted-small">
+     Tippe einfach auf deine Wunschzeit.
+   </span>`
+    );
 
     const row = document.createElement("div");
     row.className = "row";
@@ -1395,8 +1545,13 @@ async function showTimeChoice() {
     console.error("Slot Fehler:", e);
 
     $msg(
-      `${goldIcon(ICONS.info)}⚠️ Die freien Zeiten konnten gerade nicht geladen werden.<br>` +
-      `<span class="muted-small">Bitte melde dich kurz telefonisch im Studio.</span>`
+      `${goldIcon(ICONS.info)}
+   <b>Die freien Termine konnten gerade nicht geprüft werden.</b><br>
+
+   <span class="muted-small">
+     Versuche es bitte gleich noch einmal.
+     Sollte es weiterhin nicht funktionieren, melde dich direkt beim Studio.
+   </span>`
     );
   }
 }
@@ -1463,13 +1618,32 @@ function askUserDetails() {
 
   bookingPhase = "userdata";
 
+  const serviceSummary = [
+    chosenService?.name,
+    ...(chosenExtras || []).map((x) => x.name)
+  ]
+    .filter(Boolean)
+    .join(" + ");
+
+  const employeeLabel =
+    chosenEmployee === "auto"
+      ? "Auswahl durch A.U.R.A."
+      : chosenEmployee?.name || "Studio-Team";
+
   const box = $msg(
-    `${goldIcon(ICONS.person)}Fast geschafft!<br>
-     Bitte gib noch deine Kontaktdaten ein:<br><br>
+    `${goldIcon(ICONS.person)}
+     <b>Dein Wunschtermin ist verfügbar ✨</b><br><br>
+
+     <b>${serviceSummary}</b><br>
+     📅 ${formatDateDE(chosenDate)}<br>
+     🕒 ${chosenTime} Uhr<br>
+     👤 ${employeeLabel}<br><br>
+
+     Jetzt fehlen nur noch deine Kontaktdaten.<br>
 
      <span class="muted-small">
-       Mit der Buchung erklärst du dich einverstanden,
-       per WhatsApp Nachrichten zu deinem Termin zu erhalten.
+       Deine WhatsApp-Nummer haben wir bereits.
+       Die E-Mail-Adresse ist optional.
      </span>`
   );
 
@@ -1477,11 +1651,12 @@ function askUserDetails() {
   n.placeholder = "Vorname Nachname";
 
   const e = document.createElement("input");
-  e.placeholder = "E-Mail (optional)";
+  e.placeholder = "E-Mail-Adresse (optional)";
 
   const submit = document.createElement("button");
-  submit.className = "pill";
-  submit.innerHTML = `${goldIcon(ICONS.service)}Termin buchen`;
+  submit.className = "pill pill--primary";
+  submit.innerHTML =
+    `${goldIcon(ICONS.service)}Termin verbindlich buchen`;
 
   submit.onclick = async () => {
 
@@ -1496,7 +1671,7 @@ function askUserDetails() {
 
     submit.disabled = true;
     submit.style.opacity = "0.7";
-    submit.innerHTML = "Wird gebucht...";
+    submit.innerHTML = "A.U.R.A. bucht deinen Termin …";
 
     userData = {
       name: n.value.trim(),
@@ -1512,7 +1687,8 @@ function askUserDetails() {
       bookingSubmitting = false;
       submit.disabled = false;
       submit.style.opacity = "1";
-      submit.innerHTML = `${goldIcon(ICONS.service)}Termin buchen`;
+      submit.innerHTML =
+        `${goldIcon(ICONS.service)}Termin verbindlich buchen`;
     }
   };
 
@@ -1531,7 +1707,7 @@ async function createBooking() {
     return;
   }
 
-  // ❌ STOP: KEIN MITARBEITER → ABORT (kein UI hier!)
+  // ❌ STOP: KEIN MITARBEITER → ABORT
   if (!chosenEmployee) {
     console.warn("❌ BLOCK: NO EMPLOYEE → FLOW FEHLER");
     return;
@@ -1586,14 +1762,49 @@ async function createBooking() {
 
     const j = await r.json();
 
+    console.log("BOOKING RESPONSE:", j);
+
+    console.log(
+      "BOOKING RESPONSE FULL:",
+      JSON.stringify(j, null, 2)
+    );
+
+    console.log("PDF CHECK:", {
+      pdfUrl: j.pdfUrl,
+      icsUrl: j.icsUrl,
+
+      pdfBase64: j.pdfBase64
+        ? "PDF BASE64 VORHANDEN"
+        : "PDF BASE64 FEHLT",
+
+      icsBase64: j.icsBase64
+        ? "ICS BASE64 VORHANDEN"
+        : "ICS BASE64 FEHLT",
+
+      bookingPdfUrl: j.booking?.pdfUrl,
+      bookingIcsUrl: j.booking?.icsUrl,
+
+      bookingPdfBase64: j.booking?.pdfBase64
+        ? "BOOKING PDF BASE64 VORHANDEN"
+        : "BOOKING PDF BASE64 FEHLT",
+
+      bookingIcsBase64: j.booking?.icsBase64
+        ? "BOOKING ICS BASE64 VORHANDEN"
+        : "BOOKING ICS BASE64 FEHLT"
+    });
+
     // 🔥 SLOT KONFLIKT
     if (!j.success) {
 
       if (j.error === "CONFLICT" || j.error === "SLOT_INVALID") {
 
         $msg(
-          `${goldIcon(ICONS.info)}⚠️ Diese Uhrzeit ist nicht mehr verfügbar.<br>` +
-          `<span class="muted-small">Bitte wähle eine andere Uhrzeit.</span>`
+          `${goldIcon(ICONS.info)}
+   <b>Dieser Termin wurde gerade vergeben.</b><br>
+
+   <span class="muted-small">
+     Kein Problem – A.U.R.A. zeigt dir direkt die aktuell verfügbaren Zeiten.
+   </span>`
         );
 
         chosenTime = null;
@@ -1604,8 +1815,13 @@ async function createBooking() {
       }
 
       $msg(
-        `${goldIcon(ICONS.info)}⚠️ Es gab ein Problem bei der Buchung.<br>` +
-        `<span class="muted-small">Bitte versuche es später noch einmal oder rufe im Studio an.</span>`
+        `${goldIcon(ICONS.info)}
+   <b>Dein Termin konnte noch nicht abgeschlossen werden.</b><br>
+
+   <span class="muted-small">
+     Versuche es bitte noch einmal.
+     Sollte es weiterhin nicht funktionieren, melde dich direkt beim Studio.
+   </span>`
       );
 
       resetBookingState();
@@ -1615,106 +1831,188 @@ async function createBooking() {
     // ✅ ERFOLG
     window.bookingActive = false;
 
-    const bookingId = j.booking?.id || j.id || null;
+    // =====================================================
+    // PDF + ICS DATEN HOLEN
+    // =====================================================
 
-    const pdfUrl = j.pdfUrl || j.booking?.pdfUrl || null;
-    const icsUrl = j.icsUrl || j.booking?.icsUrl || null;
+    const pdfData =
+      j.pdfBase64 ||
+      j.booking?.pdfBase64 ||
+      j.pdfUrl ||
+      j.booking?.pdfUrl ||
+      null;
+
+    const icsData =
+      j.icsBase64 ||
+      j.booking?.icsBase64 ||
+      j.icsUrl ||
+      j.booking?.icsUrl ||
+      null;
+
+    const bookingId =
+      j.booking?.id ||
+      j.id ||
+      null;
 
     let extra = "";
 
-    if (pdfUrl) {
-      extra += `<br><a href="${pdfUrl}" target="_blank">📄 Bestätigung als PDF herunterladen</a>`;
+    // =====================================================
+    // PDF LINK
+    // =====================================================
+
+    if (pdfData) {
+
+      const pdfHref =
+        pdfData.startsWith("/pdf/")
+          ? pdfData
+          : pdfData.startsWith("data:")
+            ? pdfData
+            : `data:application/pdf;base64,${pdfData}`;
+
+      extra += `
+    <br><br>
+    <a
+     href="${pdfHref}"
+     download="terminbestaetigung.pdf"
+     target="_blank"
+     class="download-link"
+     style="display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:190px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"    >
+      📄 PDF-Bestätigung
+    </a>
+  `;
     }
 
-    if (icsUrl) {
-      extra += `<br><a href="${icsUrl}" target="_blank">📅 Termin in Kalender speichern</a>`;
+    // =====================================================
+    // ICS LINK
+    // =====================================================
+
+    if (icsData) {
+
+      const icsHref = icsData.startsWith("data:")
+        ? icsData
+        : `data:text/calendar;base64,${icsData}`;
+
+      extra += `
+        <br>
+        <a
+          href="${icsHref}"
+          download="termin.ics"
+          class="download-link"
+          style="display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:190px;background:radial-gradient(circle at 30% 0%, #fff8ea, #d9a057 60%, #8a5320 100%);color:#4b2619;text-decoration:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:500;margin-top:8px;box-shadow:0 10px 25px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5);"        >
+          📅 Zum Kalender hinzufügen
+        </a>
+      `;
     }
 
-    const lastServiceForRepeat = chosenService ? { ...chosenService } : null;
+    // =====================================================
+    // STORNIER BUTTON
+    // =====================================================
 
-    const successBox = $msg(
-      `${goldIcon(ICONS.info)}✅ Dein Termin wurde erfolgreich eingetragen!<br>` +
-      `<span class="tag">${serviceNames}</span>` +
-      extra
-    );
-
-    // =======================================================
-    // 🔥 STORNO BUTTON
-    // =======================================================
     if (bookingId) {
 
-      const row = document.createElement("div");
-      row.className = "row";
-      row.style.marginTop = "12px";
+      extra += `
+    <br><br>
 
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "pill alt";
-      cancelBtn.innerHTML = "❌ Termin stornieren";
+    <button
+      class="pill alt"
+      style="
+        min-width:200px;
+        justify-content:center;
+      "
+      onclick="
+        (async () => {
 
-      cancelBtn.onclick = async () => {
+          const ok = confirm('Termin wirklich stornieren?');
 
-        const confirmCancel = confirm(
-          "Möchtest du den Termin wirklich stornieren?"
-        );
+          if (!ok) return;
 
-        if (!confirmCancel) return;
+          try {
 
-        cancelBtn.disabled = true;
-        cancelBtn.style.opacity = "0.6";
-        cancelBtn.innerHTML = "⏳ Wird storniert...";
+            const r = await fetch('/api/bookings/${bookingId}', {
+              method: 'DELETE'
+            });
 
-        try {
+            const j = await r.json();
 
-          const res = await fetch(`/api/bookings/${bookingId}`, {
-            method: "DELETE"
-          });
+            if (j.success) {
 
-          const result = await res.json();
+              alert('Termin erfolgreich storniert');
 
-          if (!result.success) {
+              location.reload();
 
-            cancelBtn.disabled = false;
-            cancelBtn.style.opacity = "1";
-            cancelBtn.innerHTML = "❌ Termin stornieren";
+            } else {
 
-            $msg(
-              `${goldIcon(ICONS.info)}⚠️ Der Termin konnte nicht storniert werden.`
-            );
+              alert('Stornierung fehlgeschlagen');
 
-            return;
+            }
+
+          } catch(e) {
+
+            console.error(e);
+            alert('Technischer Fehler');
+
           }
 
-          cancelBtn.innerHTML = "✅ Termin storniert";
-
-          $msg(
-            `${goldIcon(ICONS.info)}✨ Termin erfolgreich storniert.<br>` +
-
-            `<span class="muted-small">Der Platz wurde wieder freigegeben.</span><br><br>` +
-
-            `<button class="pill" onclick="location.reload()">` +
-
-            `✨ Neuen Termin buchen` +
-
-            `</button>`
-          );
-
-        } catch (err) {
-
-          console.error("Cancel Error:", err);
-
-          cancelBtn.disabled = false;
-          cancelBtn.style.opacity = "1";
-          cancelBtn.innerHTML = "❌ Termin stornieren";
-
-          $msg(
-            `${goldIcon(ICONS.info)}⚠️ Fehler beim Stornieren des Termins.`
-          );
-        }
-      };
-
-      row.appendChild(cancelBtn);
-      successBox.appendChild(row);
+        })()
+      "
+    >
+      ❌ Termin stornieren
+    </button>
+  `;
     }
+
+    // =====================================================
+    // RELOAD BUTTON
+    // =====================================================
+
+    extra += `
+  <br><br>
+
+  <button
+    class="pill"
+    style="
+      min-width:200px;
+      justify-content:center;
+    "
+    onclick="location.reload()"
+  >
+    ✨ Weiteren Termin buchen
+  </button>
+`;
+
+    const lastServiceForRepeat = chosenService
+      ? { ...chosenService }
+      : null;
+
+    const confirmedEmployee =
+      chosenEmployee === "auto"
+        ? "Auswahl durch A.U.R.A."
+        : chosenEmployee?.name || "Studio-Team";
+
+    const formattedPrice =
+      Number(totalPrice)
+        .toFixed(2)
+        .replace(".", ",");
+
+    $msg(
+      `${goldIcon(ICONS.info)}
+   <b>Termin bestätigt 🎉</b><br><br>
+
+   Dein Termin ist erfolgreich eingetragen.<br><br>
+
+   <b>${serviceNames}</b><br>
+   📅 ${formatDateDE(chosenDate)}<br>
+   🕒 ${chosenTime} Uhr<br>
+   👤 ${confirmedEmployee}<br>
+   💶 ${formattedPrice} €<br>
+   ⏱️ ${totalDuration} Min.<br><br>
+
+   <span class="muted-small">
+     Deine Termininformationen und Erinnerungen erhältst du
+     zusätzlich über WhatsApp.
+   </span>` +
+      extra
+    );
 
     setTimeout(() => {
       showSoftClose(lastServiceForRepeat);
@@ -1725,28 +2023,39 @@ async function createBooking() {
     console.error("Booking Error:", e);
 
     $msg(
-      `${goldIcon(ICONS.info)}⚠️ Technischer Fehler bei der Buchung.<br>` +
-      `<span class="muted-small">Bitte vereinbare deinen Termin telefonisch.</span>`
+      `${goldIcon(ICONS.info)}
+   <b>Dein Termin konnte gerade nicht abgeschlossen werden.</b><br>
+
+   <span class="muted-small">
+     Versuche es bitte gleich noch einmal.
+     Sollte es weiterhin nicht funktionieren, melde dich direkt beim Studio.
+   </span>`
     );
   }
 
   resetBookingState();
 }
 
-
 function showSoftClose(lastService = null) {
 
   const box = $msg(
-    `${goldIcon(ICONS.info)}✨ Möchtest du direkt deinen nächsten Termin sichern?<br>
-     <span class="muted-small">Viele Kunden buchen direkt vor, damit sie ihren Wunschslot behalten.</span>`
+    `${goldIcon(ICONS.info)}
+   <b>Möchtest du deinen nächsten Termin direkt mitplanen? ✨</b><br><br>
+
+   <span class="muted-small">
+     Wenn du regelmäßig kommst, kannst du dir schon jetzt
+     einen passenden Folgetermin sichern.
+   </span>`
   );
 
   const row = document.createElement("div");
   row.className = "row";
 
   const yes = document.createElement("button");
-  yes.className = "pill";
-  yes.textContent = "Ja, nächsten Termin planen";
+  yes.className = "pill pill--primary";
+  yes.style.minWidth = "200px";
+  yes.style.justifyContent = "center";
+  yes.textContent = "Nächsten Termin planen";
 
   yes.onclick = () => {
 
@@ -1764,16 +2073,19 @@ function showSoftClose(lastService = null) {
     window.bookingActive = true;
     bookingPhase = "repeat_choice";
 
-    $msg("Perfekt 💎 Dann planen wir direkt weiter.");
+    $msg("Sehr gerne ✨ Dann planen wir direkt weiter.");
 
-    const choiceBox = $msg("Möchtest du denselben Service erneut buchen?");
+    const choiceBox = $msg(
+      `${goldIcon(ICONS.service)}
+   <b>Möchtest du dieselbe Behandlung erneut buchen?</b>`
+    );
     const choiceRow = document.createElement("div");
     choiceRow.className = "row";
 
     // ✅ gleicher Service
     const sameBtn = document.createElement("button");
     sameBtn.className = "pill";
-    sameBtn.innerText = `Ja (${lastService?.name || "Service"})`;
+    sameBtn.innerText = `Gleiche Behandlung · ${lastService?.name || "Service"}`;
 
     sameBtn.onclick = () => {
 
@@ -1797,7 +2109,7 @@ function showSoftClose(lastService = null) {
     // ✅ anderer Service
     const newBtn = document.createElement("button");
     newBtn.className = "pill alt";
-    newBtn.innerText = "Anderen Service wählen";
+    newBtn.innerText = "Andere Behandlung wählen";
 
     newBtn.onclick = () => {
 
@@ -1822,10 +2134,16 @@ function showSoftClose(lastService = null) {
 
   const later = document.createElement("button");
   later.className = "pill alt";
-  later.textContent = "Später";
+  later.style.minWidth = "95px";
+  later.style.justifyContent = "center";
+  later.textContent = "Für später";
 
   later.onclick = () => {
-    $msg("Alles klar 😊 Wir erinnern dich automatisch.");
+    $msg(
+      `${goldIcon(ICONS.info)}
+     Alles klar 😊 Du kannst jederzeit wieder einen neuen
+     Termin mit A.U.R.A. planen.`
+    );
   };
 
   row.appendChild(yes);

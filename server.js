@@ -41,6 +41,7 @@ import {
   createEmployee,
   updateEmployee,
   deleteEmployee,
+  setMarketingOptOut,
 } from "./core/db.js";
 
 import { createBooking } from "./core/booking.js";
@@ -1206,6 +1207,60 @@ app.post("/api/whatsapp/incoming", async (req, res) => {
         to: from,
         body: reply,
       });
+
+      return res.sendStatus(200);
+    }
+
+
+    // =======================================================
+    // 🚫 MARKETING-ABMELDUNG PER WHATSAPP
+    // Terminbezogene Nachrichten bleiben weiterhin möglich.
+    // =======================================================
+
+    const normalizedStopMessage = message
+      .replace(/[.!?]/g, "")
+      .trim();
+
+    const marketingStopCommands = new Set([
+      "stop",
+      "stopp",
+      "abmelden",
+      "keine werbung",
+      "werbung stop",
+      "widerruf",
+      "unsubscribe",
+    ]);
+
+    if (marketingStopCommands.has(normalizedStopMessage)) {
+      const saved = setMarketingOptOut({
+        tenant: TENANT_DEFAULT,
+        phone: from,
+        source: "whatsapp_stop",
+      });
+
+      if (!saved) {
+        console.error(
+          "❌ Marketing-Abmeldung konnte nicht gespeichert werden:",
+          from
+        );
+
+        return res.sendStatus(500);
+      }
+
+      delete sessions[from];
+
+      await twilioClient.messages.create({
+        from: TWILIO_WHATSAPP_FROM,
+        to: from,
+        body:
+          "✅ Du wurdest erfolgreich abgemeldet.\n\n" +
+          "Du erhältst ab sofort keine Marketing- oder " +
+          "Reaktivierungsnachrichten mehr.\n\n" +
+          "Terminbestätigungen, Erinnerungen und Antworten " +
+          "auf deine eigenen Anfragen bleiben weiterhin möglich.",
+      });
+
+      console.log("🚫 Marketing-Abmeldung gespeichert:", from);
 
       return res.sendStatus(200);
     }
@@ -5391,19 +5446,16 @@ app.listen(PORT, "0.0.0.0", () => {
   // 🔁 AUTO REBOOKING CHECK (täglich)
   // =======================================================
 
-  setInterval(() => {
-
-    try {
-
-      runRebookingCheck();
-
-      console.log("🔁 Rebooking Check ausgeführt");
-
-    } catch (err) {
-
-      console.error("❌ Rebooking Fehler:", err.message);
-
-    }
-
-  }, 1000 * 60 * 60 * 24);
+  if (process.env.ENABLE_REBOOKING_CAMPAIGNS === "true") {
+    setInterval(async () => {
+      try {
+        await runRebookingCheck();
+        console.log("🔁 Rebooking Check ausgeführt");
+      } catch (err) {
+        console.error("❌ Rebooking Fehler:", err.message);
+      }
+    }, 1000 * 60 * 60 * 24);
+  } else {
+    console.log("🔒 Automatische Rebooking-Kampagnen sind deaktiviert");
+  }
 });
