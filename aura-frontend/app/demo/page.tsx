@@ -624,26 +624,16 @@ export default function DemoPage() {
               gap: 18,
             }}
           >
-            {[
-              {
-                src: "/demo.bilder/demo-dashboard-kpis.webp",
-                title: "Dein Studio auf einen Blick",
-                text: "Buchungen, Umsatz, aktive Kundinnen und wichtige Kennzahlen zentral im Dashboard.",
-              },
-              {
-                src: "/demo.bilder/demo-kalender.webp",
-                title: "Alle Termine übersichtlich im Kalender",
-                text: "Neue Buchungen werden automatisch erfasst und übersichtlich im Studio-Kalender dargestellt.",
-              },
+            {[ 
               {
                 src: "/demo.bilder/demo-whatsapp-mitarbeiter.webp",
                 title: "Buchung direkt über WhatsApp",
                 text: "Kundinnen wählen Behandlung, Mitarbeiter und Termin direkt in ihrer gewohnten Kommunikation.",
               },
               {
-                src: "/demo.bilder/demo-whatsapp-upsell.webp",
-                title: "Passende Zusatzleistungen empfehlen",
-                text: "Während der Buchung kann GlowSuite passende Ergänzungen anbieten – ohne zusätzlichen Aufwand für dein Team.",
+                src: "/demo.bilder/demo-kalender.webp",
+                title: "Alle Termine übersichtlich im Kalender",
+                text: "Neue Buchungen werden automatisch erfasst und übersichtlich im Studio-Kalender dargestellt.",
               },
               {
                 src: "/demo.bilder/demo-terminbestaetigung.webp",
@@ -656,19 +646,9 @@ export default function DemoPage() {
                 text: "Automatische Erinnerungen helfen dabei, vergessene Termine und unnötige Ausfälle zu reduzieren.",
               },
               {
-                src: "/demo.bilder/demo-whatsapp-storno.webp",
-                title: "Absagen einfach per WhatsApp",
-                text: "Kann eine Kundin nicht kommen, lässt sich der Termin direkt per WhatsApp stornieren und wieder freigeben.",
-              },
-              {
                 src: "/demo.bilder/demo-google-review.webp",
                 title: "Nach dem Termin Bewertungen gewinnen",
                 text: "Nach dem Besuch kann GlowSuite automatisch um eine Google-Bewertung bitten.",
-              },
-              {
-                src: "/demo.bilder/demo-dashboard-analytics.webp",
-                title: "Erkennen, was im Studio funktioniert",
-                text: "Umsatzentwicklung, Top-Behandlungen und wichtige Trends helfen dir bei besseren Entscheidungen.",
               },
             ].map((item) => (
               <div
@@ -722,83 +702,6 @@ export default function DemoPage() {
             ))}
           </div>
         </section>
-
-
-        {/* TRUST FEATURES */}
-        <section
-          style={{
-            marginBottom: 34,
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-            gap: 16,
-          }}
-        >
-          {
-            [
-              {
-                icon: "📲",
-                title: "WhatsApp & Website",
-                text: "für Kundinnen einfach nutzbar",
-              },
-              {
-                icon: "🛠️",
-                title: "Persönliche Einrichtung",
-                text: "auf dein Studio abgestimmt",
-              },
-              {
-                icon: "💄",
-                title: "Für Beauty Studios",
-                text: "nicht für irgendeine Branche",
-              },
-              {
-                icon: "🔒",
-                title: "Du behältst Kontrolle",
-                text: "persönliche Fragen bleiben beim Team",
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(212,175,116,0.18)",
-                  borderRadius: 22,
-                  padding: "22px 18px",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 28,
-                    marginBottom: 10,
-                  }}
-                >
-                  {item.icon}
-                </div>
-
-                <div
-                  style={{
-                    color: "#f8f3ec",
-                    fontWeight: 700,
-                    fontSize: 16,
-                    marginBottom: 4,
-                  }}
-                >
-                  {item.title}
-                </div>
-
-                <div
-                  style={{
-                    color: "rgba(248,243,236,0.72)",
-                    fontSize: 14,
-                  }}
-                >
-                  {item.text}
-                </div>
-              </div>
-            ))}
-        </section>
-
-
 
         {/* AUTOMATION FEED */}
         <section
