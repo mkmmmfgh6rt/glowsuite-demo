@@ -1,4 +1,7 @@
-import { getAllBookings } from "../../../core/db.js";
+import {
+  getAllBookings,
+  hasMarketingConsent
+} from "../../../core/db.js";
 import twilio from "twilio";
 import fs from "fs";
 import path from "path";
@@ -9,6 +12,8 @@ const client = twilio(
 );
 
 const WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM;
+const PUBLIC_BOOKING_URL =
+  process.env.PUBLIC_BOOKING_URL || "https://www.glowsuite-ai.de";
 
 // nach wie vielen Tagen erinnert werden soll
 const REBOOK_DAYS = 35;
@@ -32,9 +37,23 @@ function saveLog(log) {
 
 }
 
-export async function runRebookingCheck() {
+export async function runRebookingCheck({ tenant } = {}) {
 
-  const bookings = getAllBookings();
+  const tenantId = String(tenant || "").trim();
+
+  if (!tenantId) {
+    console.warn("🔒 Rebooking übersprungen: tenant fehlt");
+    return {
+      success: false,
+      error: "tenant_required",
+      sent: 0
+    };
+  }
+
+  const bookings = (getAllBookings() || []).filter(b =>
+    String(b?.tenant || "").trim() === tenantId &&
+    String(b?.phone || "").trim()
+  );
 
   const customers = {};
 
@@ -60,10 +79,18 @@ export async function runRebookingCheck() {
   }
 
   const now = new Date();
+  let sent = 0;
 
   for (const phone in customers) {
 
     const booking = customers[phone];
+
+    if (!hasMarketingConsent({
+      tenant: tenantId,
+      phone
+    })) {
+      continue;
+    }
 
     const lastVisit = new Date(booking.dateTime);
 
@@ -71,22 +98,34 @@ export async function runRebookingCheck() {
       (now - lastVisit) / (1000 * 60 * 60 * 24)
     );
 
-    const alreadySent = log[phone];
+    const logKey = `${tenantId}:${phone}`;
+    const alreadySent = log[logKey];
 
     if (diffDays >= REBOOK_DAYS && !alreadySent) {
 
-      await sendRebookingReminder(phone);
+      const delivered = await sendRebookingReminder(phone);
 
-      log[phone] = {
-        sentAt: new Date().toISOString(),
-        lastVisit: booking.dateTime
-      };
+      if (delivered) {
+        log[logKey] = {
+          tenant: tenantId,
+          phone,
+          sentAt: new Date().toISOString(),
+          lastVisit: booking.dateTime
+        };
+        sent += 1;
+      }
 
     }
 
   }
 
   saveLog(log);
+
+  return {
+    success: true,
+    tenant: tenantId,
+    sent
+  };
 
 }
 
@@ -106,14 +145,18 @@ wir haben dich länger nicht gesehen.
 Zeit für deine nächste Behandlung 💅
 
 Buche dir deinen Termin hier:
-https://yourbookinglink.de`
+${PUBLIC_BOOKING_URL}`
     });
 
     console.log("Rebooking Reminder gesendet:", phone);
 
+    return true;
+
   } catch (err) {
 
     console.error("Rebooking Fehler:", err.message);
+
+    return false;
 
   }
 

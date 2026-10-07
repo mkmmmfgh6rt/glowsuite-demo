@@ -41,6 +41,7 @@ import {
   createEmployee,
   updateEmployee,
   deleteEmployee,
+  setMarketingConsent,
   setMarketingOptOut,
 } from "./core/db.js";
 
@@ -3983,6 +3984,9 @@ app.post("/api/bookings", async (req, res) => {
       time,
       employeeId,
       tenant,
+      source,
+      privacyAcceptedAt,
+      marketingConsent,
     } = req.body || {};
 
     if (!name || !service || !date || !time) {
@@ -4013,6 +4017,23 @@ app.post("/api/bookings", async (req, res) => {
 
     // 💾 Booking speichern
     insertBooking(booking);
+
+    // 📣 Freiwillige Marketing-Einwilligung getrennt speichern.
+    // Eine nicht gesetzte Checkbox wird bewusst NICHT als Opt-out gespeichert.
+    if (marketingConsent === true && booking.phone) {
+      const consentSaved = setMarketingConsent({
+        tenant: tenantId,
+        phone: booking.phone,
+        source:
+          source === "widget" && privacyAcceptedAt
+            ? "widget_booking_checkbox"
+            : "booking_explicit",
+      });
+
+      if (!consentSaved) {
+        console.warn("⚠️ Marketing-Einwilligung konnte nicht gespeichert werden.");
+      }
+    }
 
     // 🔥 STOP-SYSTEM (sehr wichtig)
     if (booking.phone) {
@@ -5331,7 +5352,7 @@ app.get("/api/aura/optimize", async (req, res) => {
 // AURA CAMPAIGN EXECUTOR
 // -------------------------------------------------------
 
-app.all("/api/aura/execute", async (req, res) => {
+app.post("/api/aura/execute", authMiddleware, async (req, res) => {
 
   try {
 
@@ -5449,7 +5470,7 @@ app.listen(PORT, "0.0.0.0", () => {
   if (process.env.ENABLE_REBOOKING_CAMPAIGNS === "true") {
     setInterval(async () => {
       try {
-        await runRebookingCheck();
+        await runRebookingCheck({ tenant: TENANT_DEFAULT });
         console.log("🔁 Rebooking Check ausgeführt");
       } catch (err) {
         console.error("❌ Rebooking Fehler:", err.message);

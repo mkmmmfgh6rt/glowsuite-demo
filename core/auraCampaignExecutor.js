@@ -3,9 +3,18 @@
 // Führt Marketing Aktionen aus
 // =======================================================
 
-import { getAllBookings } from "./db.js";
+import { getAllBookings, hasMarketingConsent } from "./db.js";
 
 export async function executeAuraCampaign({ tenant, action }) {
+
+  const tenantId = String(tenant || "").trim();
+
+  if (!tenantId) {
+    return {
+      success: false,
+      error: "tenant_required"
+    };
+  }
 
   if (!action) {
     return {
@@ -14,11 +23,18 @@ export async function executeAuraCampaign({ tenant, action }) {
     };
   }
 
-  const bookings = getAllBookings() || [];
+  const bookings = (getAllBookings() || []).filter(b =>
+    String(b?.tenant || "").trim() === tenantId &&
+    String(b?.phone || "").trim()
+  );
 
-  // Kundenliste aus Buchungen generieren
+  // Letzte Buchung pro Kunde und Mandant bestimmen.
   const customers = [...new Map(
-    bookings.map(b => [b.phone, b])
+    [...bookings]
+      .sort((a, b) =>
+        new Date(a?.dateTime || 0) - new Date(b?.dateTime || 0)
+      )
+      .map(b => [b.phone, b])
   ).values()];
 
   // =====================================================
@@ -28,6 +44,13 @@ export async function executeAuraCampaign({ tenant, action }) {
   if (action === "start_marketing") {
 
     const inactiveCustomers = customers.filter(c => {
+
+      if (!hasMarketingConsent({
+        tenant: tenantId,
+        phone: c.phone
+      })) {
+        return false;
+      }
 
       if (!c.dateTime) return true;
 

@@ -35,7 +35,7 @@ let userData = {
   name: null,
   email: null,
   privacyAcceptedAt: null,
-  marketingConsent: false
+  marketingConsent: false,
 };
 
 window.bookingActive = false;
@@ -653,7 +653,13 @@ function resetBookingState() {
   chosenDate = null;
   chosenTime = null;
   chosenSlotSignature = null;
-  userData = {};
+  userData = {
+    phone: null,
+    name: null,
+    email: null,
+    privacyAcceptedAt: null,
+    marketingConsent: false,
+  };
   window.bookingActive = false;
   bookingPhase = null;
   chosenExtras = [];
@@ -806,8 +812,9 @@ function showPhoneStep() {
    Informationen zu deinem Termin.<br><br>
 
    <div class="muted-small">
-     🔒 Deine Nummer verwenden wir ausschließlich für deine
-     Buchung, Termininformationen und Erinnerungen – nicht für Werbung.
+     🔒 Deine Nummer verwenden wir für deine Buchung,
+     Termininformationen und Erinnerungen. Werbung erhältst du nur,
+     wenn du unten freiwillig zustimmst.
    </div>`
   );
 
@@ -840,6 +847,34 @@ function showPhoneStep() {
 
   privacyLabel.append(privacyCheckbox, privacyText);
 
+  const marketingCheckbox = document.createElement("input");
+  marketingCheckbox.type = "checkbox";
+  marketingCheckbox.checked = false;
+  marketingCheckbox.style.width = "18px";
+  marketingCheckbox.style.height = "18px";
+  marketingCheckbox.style.margin = "3px 0 0";
+  marketingCheckbox.style.flex = "0 0 auto";
+
+  const marketingText = document.createElement("span");
+  marketingText.textContent =
+    "Ja, ich möchte gelegentlich Angebote und Hinweise zur " +
+    "Wiederbuchung per WhatsApp erhalten. Diese Einwilligung ist " +
+    "freiwillig und jederzeit mit STOPP widerrufbar.";
+
+  const marketingLabel = document.createElement("label");
+  marketingLabel.style.display = "flex";
+  marketingLabel.style.alignItems = "flex-start";
+  marketingLabel.style.gap = "10px";
+  marketingLabel.style.margin = "12px 0";
+  marketingLabel.style.padding = "12px";
+  marketingLabel.style.borderRadius = "12px";
+  marketingLabel.style.background = "rgba(212,175,116,0.10)";
+  marketingLabel.style.fontSize = "12px";
+  marketingLabel.style.lineHeight = "1.5";
+  marketingLabel.style.cursor = "pointer";
+
+  marketingLabel.append(marketingCheckbox, marketingText);
+
   const btn = document.createElement("button");
   btn.className = "pill";
   btn.textContent = "Weiter";
@@ -860,6 +895,7 @@ function showPhoneStep() {
 
     userData.phone = phone;
     userData.privacyAcceptedAt = new Date().toISOString();
+    userData.marketingConsent = marketingCheckbox.checked;
     window.lastUserActivity = Date.now();
 
     $msg(`<span class="tag">📱 ${phone}</span>`);
@@ -953,7 +989,7 @@ function showPhoneStep() {
     showEmployeeChoice();
   };
 
-  box.append(input, privacyLabel, btn);
+  box.append(input, privacyLabel, marketingLabel, btn);
 }
 
 
@@ -1674,6 +1710,7 @@ function askUserDetails() {
     submit.innerHTML = "A.U.R.A. bucht deinen Termin …";
 
     userData = {
+      ...userData,
       name: n.value.trim(),
       phone: userData.phone,
       email: e.value.trim(),
@@ -1750,6 +1787,8 @@ async function createBooking() {
     tenant: tenantId,
     slotSignature: chosenSlotSignature,
     source: "widget",
+    privacyAcceptedAt: userData.privacyAcceptedAt,
+    marketingConsent: userData.marketingConsent === true,
   };
 
   try {
