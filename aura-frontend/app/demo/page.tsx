@@ -1523,6 +1523,123 @@ export default function DemoPage() {
           </p>
         </section>
 
+        {/* FOUNDER & PILOT TRUST */}
+        <section
+          style={{
+            marginBottom: 42,
+            padding: "34px 28px",
+            borderRadius: 30,
+            background: "linear-gradient(135deg,#fffaf4,#f2e3d1)",
+            color: "#1d1713",
+            border: "1px solid rgba(184,121,91,0.22)",
+            boxShadow: "0 30px 80px rgba(0,0,0,0.18)",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
+              alignItems: "center",
+              gap: 30,
+              maxWidth: 1000,
+              margin: "0 auto",
+            }}
+          >
+            <div
+              style={{
+                overflow: "hidden",
+                borderRadius: 24,
+                border: "1px solid rgba(184,121,91,0.24)",
+                boxShadow: "0 20px 50px rgba(73,44,24,0.18)",
+                background: "#28180f",
+              }}
+            >
+              <Image
+                src="/assets/markus-mazur-glowsuite.png"
+                alt="Markus Mazur, Gründer von GlowSuite AI"
+                width={900}
+                height={900}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  aspectRatio: "1 / 1",
+                  objectFit: "cover",
+                  objectPosition: "center top",
+                }}
+              />
+            </div>
+
+            <div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  marginBottom: 14,
+                  padding: "7px 13px",
+                  borderRadius: 999,
+                  background: "#ead3b7",
+                  color: "#7a4c22",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                PERSÖNLICH BEGLEITETE PILOTPHASE
+              </div>
+
+              <h2
+                style={{
+                  margin: "0 0 14px",
+                  fontSize: "clamp(28px,5vw,42px)",
+                  letterSpacing: "-0.04em",
+                  lineHeight: 1.08,
+                }}
+              >
+                Persönlich eingerichtet.
+                <br />
+                Gemeinsam verbessert.
+              </h2>
+
+              <p
+                style={{
+                  margin: "0 0 18px",
+                  color: "#66584e",
+                  fontSize: 16,
+                  lineHeight: 1.75,
+                }}
+              >
+                Ich bin Markus Mazur, Gründer von GlowSuite AI. In der
+                Pilotphase richte ich jedes teilnehmende Studio persönlich ein
+                und begleite den Start direkt. Gemeinsam passen wir Services,
+                Mitarbeitende und Abläufe an dein Studio an.
+              </p>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 10,
+                  color: "#4f4036",
+                  fontSize: 14,
+                  lineHeight: 1.55,
+                }}
+              >
+                <div>✓ Persönliche Einrichtung statt anonymer Standardlösung</div>
+                <div>✓ Direkte Begleitung während des Starts</div>
+                <div>✓ Dein Feedback fließt in die Weiterentwicklung ein</div>
+              </div>
+
+              <p
+                style={{
+                  margin: "20px 0 0",
+                  color: "#8a5b25",
+                  fontWeight: 800,
+                }}
+              >
+                Markus Mazur · Gründer von GlowSuite AI
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* STUDIO CHECK CTA */}
         <section
           id="studio-check"

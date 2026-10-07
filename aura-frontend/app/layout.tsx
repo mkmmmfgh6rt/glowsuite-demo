@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "GlowSuite unterstützt Beauty-Studios bei Terminbuchung, Kundenkommunikation, Erinnerungen, Bewertungen und Reaktivierung – automatisch und ohne Provision pro Buchung.",
+    "GlowSuite unterstützt kleine Beauty-Studios bei Terminbuchung, WhatsApp-Kommunikation, Erinnerungen, Bewertungen und Kampagnenvorschlägen – ohne Provision pro Buchung.",
 
   keywords: [
     "Beauty-Studio Software",
