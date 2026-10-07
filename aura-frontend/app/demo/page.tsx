@@ -26,9 +26,10 @@ const automationEvents = [
 ];
 
 const stats = [
-  ["24/7", "Kundenanfragen beantworten"],
-  ["0%", "Provision pro Buchung"],
-  ["1", "System für Termine & Kundenkommunikation"],
+  ["30 Tage", "Kostenlos im Studio testen"],
+  ["0 %", "Provision pro Buchung"],
+  ["Persönlich", "Einrichtung in der Pilotphase"],
+  ["Beauty-Fokus", "Kosmetik, Nails, Lashes & Brows"],
 ];
 
 export default function DemoPage() {
@@ -125,7 +126,7 @@ export default function DemoPage() {
               fontWeight: 700,
             }}
           >
-            Für Beauty Studios, Kosmetikstudios & Salons
+            Pilotphase · Persönlich eingerichtet für kleine Beauty-Studios
           </div>
 
           <h1
@@ -149,9 +150,10 @@ export default function DemoPage() {
               margin: "0 auto 24px",
             }}
           >
-            GlowSuite übernimmt Terminanfragen, Erinnerungen,
-            Umbuchungen und wiederkehrende Kundenfragen für dein
-            Beauty-Studio – automatisch und rund um die Uhr.
+            GlowSuite ist der KI- und WhatsApp-Assistent für kleine
+            Beauty-Studios. Er beantwortet Anfragen, begleitet Buchungen und
+            automatisiert Terminerinnerungen – ohne Marktplatz-Provision und
+            ohne zusätzliche App für deine Kundinnen.
           </p>
 
           <div
@@ -201,7 +203,7 @@ export default function DemoPage() {
                 cursor: "pointer",
               }}
             >
-              GlowSuite live ansehen
+              Live-Demo direkt testen
             </button>
           </div>
 
@@ -212,7 +214,7 @@ export default function DemoPage() {
               color: "rgba(248,243,236,0.62)",
             }}
           >
-            Keine neue App für deine Kundinnen · 0 % Provision pro Buchung
+            Unverbindlich starten · Persönliche Einrichtung · Du behältst die Kontrolle
           </p>
         </section>
 
