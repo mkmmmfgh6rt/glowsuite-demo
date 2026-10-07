@@ -1367,7 +1367,7 @@ export default function DemoPage() {
         </section>
 
 
-        {/* TRUST & POSITIONING */}
+        {/* COMPARISON */}
         <section
           style={{
             marginBottom: 42,
@@ -1397,7 +1397,7 @@ export default function DemoPage() {
                 fontWeight: 800,
               }}
             >
-              WARUM GLOWSUITE
+              GLOWSUITE IM VERGLEICH
             </div>
 
             <h2
@@ -1407,9 +1407,9 @@ export default function DemoPage() {
                 letterSpacing: "-0.04em",
               }}
             >
-              Kein Marktplatz. Keine Provision.
+              Deine Kundinnen. Deine Marke.
               <br />
-              Dein Studio bleibt deine Marke.
+              Keine Plattform dazwischen.
             </h2>
 
             <p
@@ -1421,81 +1421,106 @@ export default function DemoPage() {
                 lineHeight: 1.7,
               }}
             >
-              GlowSuite schiebt sich nicht zwischen dich und deine Kundinnen.
-              Die digitale Assistenz arbeitet für dein Studio, unter deiner
-              Marke und passend zu deinen Abläufen.
+              Marktplätze können Reichweite bringen. GlowSuite stärkt dagegen
+              die direkte Kundenbeziehung deines Studios und automatisiert die
+              wiederkehrende Kommunikation unter deiner eigenen Marke.
             </p>
           </div>
 
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-              gap: 16,
+              overflowX: "auto",
               maxWidth: 1050,
               margin: "0 auto",
+              borderRadius: 24,
+              border: "1px solid rgba(212,175,116,0.24)",
+              background: "rgba(12,8,6,0.48)",
             }}
           >
-            {[
-              {
-                title: "Deine Kundenbeziehung",
-                text: "Termine und Kommunikation laufen direkt über dein Studio – nicht über einen fremden Marktplatz.",
-              },
-              {
-                title: "0 % Buchungsprovision",
-                text: "Keine prozentuale Gebühr pro Termin. Deine Umsätze bleiben vollständig bei deinem Studio.",
-              },
-              {
-                title: "Passend eingerichtet",
-                text: "Services, Mitarbeitende und Abläufe werden passend zu deinem Studio eingerichtet.",
-              },
-              {
-                title: "Weniger Unterbrechungen",
-                text: "GlowSuite unterstützt bei Anfragen, Erinnerungen, Umbuchungen und wiederkehrenden Kundenfragen.",
-              },
-            ].map((item) => (
+            <div style={{ minWidth: 720 }}>
               <div
-                key={item.title}
                 style={{
-                  padding: 22,
-                  borderRadius: 20,
-                  background: "rgba(20,14,10,0.62)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  display: "grid",
+                  gridTemplateColumns: "minmax(170px,0.8fr) repeat(2,minmax(220px,1fr))",
+                  background: "rgba(212,175,116,0.12)",
+                  borderBottom: "1px solid rgba(212,175,116,0.22)",
                 }}
               >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    marginBottom: 16,
-                    borderRadius: 12,
-                    display: "grid",
-                    placeItems: "center",
-                    background: "rgba(212,175,116,0.16)",
-                    color: "#d4af74",
-                    fontWeight: 900,
-                  }}
-                >
-                  ✓
+                <div style={{ padding: "18px 20px" }} />
+                <div style={{ padding: "18px 20px", color: "rgba(255,248,234,0.66)", fontWeight: 800 }}>
+                  Marktplatz-Plattform
                 </div>
+                <div style={{ padding: "18px 20px", color: "#d4af74", fontWeight: 900 }}>
+                  GlowSuite
+                </div>
+              </div>
 
-                <h3 style={{ margin: "0 0 10px", fontSize: 18 }}>
-                  {item.title}
-                </h3>
-
-                <p
+              {[
+                ["Kundenbeziehung", "Plattform steht zwischen Studio und Kundin", "Bleibt direkt bei deinem Studio"],
+                ["Buchungsprovision", "Je nach Anbieter möglich", "0 % Provision pro Buchung"],
+                ["WhatsApp-Automation", "Oft nicht der Hauptfokus", "Zentraler Bestandteil"],
+                ["Einrichtung", "Häufig weitgehend selbst", "Persönlich auf dein Studio abgestimmt"],
+                ["Außenwirkung", "Plattform steht im Vordergrund", "Deine Studiomarke steht im Vordergrund"],
+              ].map(([label, marketplace, glowsuite], index, rows) => (
+                <div
+                  key={label}
                   style={{
-                    margin: 0,
-                    color: "rgba(255,248,234,0.66)",
-                    lineHeight: 1.65,
-                    fontSize: 14,
+                    display: "grid",
+                    gridTemplateColumns: "minmax(170px,0.8fr) repeat(2,minmax(220px,1fr))",
+                    borderBottom:
+                      index < rows.length - 1
+                        ? "1px solid rgba(255,255,255,0.08)"
+                        : "none",
                   }}
                 >
-                  {item.text}
-                </p>
-              </div>
-            ))}
+                  <div
+                    style={{
+                      padding: "18px 20px",
+                      color: "#fff8ea",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {label}
+                  </div>
+                  <div
+                    style={{
+                      padding: "18px 20px",
+                      color: "rgba(255,248,234,0.60)",
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {marketplace}
+                  </div>
+                  <div
+                    style={{
+                      padding: "18px 20px",
+                      color: "#fff8ea",
+                      lineHeight: 1.55,
+                      background: "rgba(212,175,116,0.08)",
+                    }}
+                  >
+                    <span style={{ color: "#d4af74", fontWeight: 900 }}>✓ </span>
+                    {glowsuite}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+
+          <p
+            style={{
+              margin: "22px auto 0",
+              maxWidth: 760,
+              textAlign: "center",
+              color: "rgba(255,248,234,0.68)",
+              fontSize: 14,
+              lineHeight: 1.65,
+            }}
+          >
+            GlowSuite ist dafür gebaut, dass dein Studio die Kundenbeziehung
+            selbst behält – mit persönlicher Einrichtung und ohne Provision pro
+            Buchung.
+          </p>
         </section>
 
         {/* STUDIO CHECK CTA */}
