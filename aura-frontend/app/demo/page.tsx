@@ -20,7 +20,7 @@ const automationEvents = [
   {
     icon: "🔄",
     title: "Wochen später",
-    text: "Länger inaktive Kundinnen können gezielt wieder angesprochen werden.",
+    text: "GlowSuite erkennt inaktive Kundinnen und bereitet passende Vorschläge vor – versendet wird nur nach deiner Freigabe und mit Einwilligung.",
     badge: "Reaktivierung",
   },
 ];
@@ -356,7 +356,7 @@ export default function DemoPage() {
             {
               icon: "⭐",
               title: "Mehr aus deinem Kundenstamm",
-              text: "Bewertungen, Reaktivierung und passende Zusatzleistungen automatisieren.",
+              text: "Bewertungsanfragen, passende Zusatzleistungen und Reaktivierung mit deiner Freigabe unterstützen.",
             },
           ].map((item) => (
             <div
@@ -816,7 +816,7 @@ export default function DemoPage() {
               GlowSuite hört nach der Buchung nicht auf
             </h2>
             <p style={{ margin: 0, color: "#76675a", fontSize: 16 }}>
-              Vor dem Termin, nach dem Termin und Wochen später laufen wichtige Kundenprozesse automatisch weiter.
+              Vor dem Termin, nach dem Termin und Wochen später unterstützt dich GlowSuite bei wichtigen Kundenprozessen.
             </p>
           </div>
 
@@ -981,7 +981,7 @@ export default function DemoPage() {
                 {[
                   "WhatsApp Erinnerungen aktiv",
                   "Google Bewertungen aktiv",
-                  "Kundenreaktivierung aktiv",
+                  "Reaktivierung nur nach Freigabe",
                   "Umsatzanalyse aktiv",
                   "Kampagnenvorschläge bereit",
                   "Freie Slots Überwachung aktiv",
@@ -1039,7 +1039,7 @@ export default function DemoPage() {
                   lineHeight: 1.6,
                 }}
               >
-                A.U.R.A hat das Problem erkannt und empfiehlt automatisch eine Rückgewinnungskampagne für inaktive Kundinnen.
+                A.U.R.A hat das Problem erkannt und bereitet einen Vorschlag für eine Rückgewinnungskampagne vor. Der Versand erfolgt erst nach Freigabe und nur mit Einwilligung.
 
               </p>
 
@@ -1062,8 +1062,8 @@ export default function DemoPage() {
                     lineHeight: 1.6,
                   }}
                 >
-                  → Rückholkampagne starten<br />
-                  → Stammkunden reaktivieren<br />
+                  → Rückholkampagne prüfen<br />
+                  → passende Zielgruppe auswählen<br />
                   → WhatsApp Kampagne vorbereiten
                 </div>
               </div>
@@ -1212,7 +1212,7 @@ export default function DemoPage() {
           >
             <div>✅ weniger vergessene Termine durch automatische Erinnerungen</div>
             <div>✅ weniger No-Shows durch einfache STORNO-Antwort per WhatsApp</div>
-            <div>✅ mehr Wiederbuchungen durch automatische Kundenreaktivierung</div>
+            <div>✅ mehr Wiederbuchungen durch gezielte Reaktivierung nach Freigabe und Einwilligung</div>
             <div>✅ mehr Vertrauen durch automatische Google-Bewertungsanfragen</div>
             <div>✅ weniger verlorene Anfragen, weil GlowSuite sofort antwortet</div>
           </div>
@@ -1422,7 +1422,7 @@ export default function DemoPage() {
                 <div>✓ Automatische Terminerinnerungen</div>
                 <div>✓ Umbuchung und Stornierung</div>
                 <div>✓ Bewertungsanfragen</div>
-                <div>✓ Kundenreaktivierung</div>
+                <div>✓ Kampagnenvorschläge zur Kundenreaktivierung</div>
                 <div>✓ Persönliche Einrichtung</div>
                 <div>✓ 0 % Provision pro Buchung</div>
               </div>
